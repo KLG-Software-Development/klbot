@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31402.337
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "klbot", "klbot\klbot.csproj", "{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "klbotlib", "klbotlib\klbotlib.csproj", "{33FDB64C-44D3-4D57-90D9-25840721703E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33FDB64C-44D3-4D57-90D9-25840721703E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33FDB64C-44D3-4D57-90D9-25840721703E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33FDB64C-44D3-4D57-90D9-25840721703E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33FDB64C-44D3-4D57-90D9-25840721703E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69B10E39-6FB5-4D9D-868C-0F5042B9F199}
+	EndGlobalSection
+EndGlobal
