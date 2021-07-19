@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
-
-namespace klbotlib
+﻿namespace klbotlib.Internal
 {
-    public class JSendMessageResponse :JMiraiResponse
+    internal class JSendMessageResponse :JMiraiResponse
     {
         public long messageId;
     }
-
 }

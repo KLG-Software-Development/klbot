@@ -1,4 +1,4 @@
-﻿using System;
+﻿using klbotlib.Internal;
 
 namespace klbotlib
 {
@@ -22,10 +22,11 @@ namespace klbotlib
         }
     }
 
+    ///@分支对象-5种
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型
-    public static class MessageFactory
+    internal static class MessageFactory
     {
-        public static Message BuildMessage(JMessagePackage msg_package)
+        internal static Message BuildMessage(JMessagePackage msg_package)
         {
             bool is_after_at = false;
             Message ret = null;

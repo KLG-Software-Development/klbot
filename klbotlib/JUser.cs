@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace klbotlib
+﻿namespace klbotlib.Internal
 {
-    public class JUser
+    internal class JUser
     {
         public long id;
         public string memberName;

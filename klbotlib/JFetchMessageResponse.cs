@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using System.Collections.Generic;
 
-namespace klbotlib
+namespace klbotlib.Internal
 {
-    public class JFetchMessageResponse : JMiraiResponse
+    internal class JFetchMessageResponse : JMiraiResponse
     {
         public List<JMessagePackage> data;
     }
-
 }

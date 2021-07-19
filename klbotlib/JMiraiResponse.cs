@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
 
-namespace klbotlib
+namespace klbotlib.Internal
 {
-    public class JMiraiResponse
+    internal class JMiraiResponse
     {
         public int code;
         public string msg;

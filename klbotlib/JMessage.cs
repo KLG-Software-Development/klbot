@@ -1,13 +1,13 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace klbotlib
+namespace klbotlib.Internal
 {
 
     /// <summary>
     /// 直接从JSON解析的消息对象
     /// </summary>
-    public class JMessage
+    internal class JMessage
     {
         public string type;
         public long id;

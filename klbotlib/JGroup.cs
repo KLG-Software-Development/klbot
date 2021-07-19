@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace klbotlib
+namespace klbotlib.Internal
 {
-    public class JGroup
+    internal class JGroup
     {
         public int id;
         public string name;
