@@ -54,7 +54,7 @@ namespace klbotlib
         public static string ToKLGBuildString(this Version version)
         {
             TimeSpan seconds = new TimeSpan(0, 0, version.Revision * 2);
-            return version.Build + "_" +seconds.ToString("hhmmss");
+            return version.Build + "_" +seconds.ToString("hhmm");
         }
     }
     public static class UnitStringExtension
@@ -110,6 +110,14 @@ namespace klbotlib
             }
             return base_type;
         }
+        public static PropertyInfo GetProperty_All(this Type type, string name) 
+            => type.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+        public static FieldInfo GetField_All(this Type type, string name)
+            => type.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+        public static PropertyInfo[] GetProperties_All(this Type type) 
+            => type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+        public static FieldInfo[] GetFields_All(this Type type)
+            => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
     }
     public static class MemberInfoExtension
     {

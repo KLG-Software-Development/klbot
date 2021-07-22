@@ -6,11 +6,14 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 ///所有命令都在本文件本命名空间中定义
-namespace klbotlib.Modules.CommandModule.Commands
+namespace klbotlib.Modules.CommandModuleNamespace.Commands
 {
-    //执行型通用命令的基类-无参数
+    /// <summary>
+    /// 执行型通用任务的命令基类-无参数
+    /// </summary>
     public abstract class SimpleActionCommand : Command
     {
         private static readonly Stopwatch sw = new Stopwatch();
@@ -21,7 +24,7 @@ namespace klbotlib.Modules.CommandModule.Commands
         public sealed override string Format => CommandString;
         public sealed override string Usage => $"执行{ActionDescription}操作";
         public sealed override bool IsCmd(string cmd) => cmd == CommandString;
-        public sealed override string Task(KLBot bot, MessagePlain cmd_msg, string __)
+        public sealed override string CommandTask(KLBot bot, MessagePlain cmd_msg, string __)
         {
             sw.Restart();
             Action(bot, cmd_msg);
@@ -29,7 +32,10 @@ namespace klbotlib.Modules.CommandModule.Commands
             return $"{ActionDescription}执行成功，耗时{sw.ElapsedMilliseconds.ToTimeSpanString(2)}。";
         } 
     }
-    //执行通用命令的基类-有参数
+    /// <summary>
+    /// 执行通用任务的命令基类-有参数
+    /// </summary>
+    /// <typeparam name="T">参数的类型</typeparam>
     public abstract class ActionCommand<T> : Command
     {
         private static readonly Stopwatch sw = new Stopwatch();
@@ -43,7 +49,7 @@ namespace klbotlib.Modules.CommandModule.Commands
         public sealed override string Format => $"{CommandString} [{ParameterDescription}]";
         public sealed override string Usage => ActionDescription;
         public sealed override bool IsCmd(string cmd) => cmd.StartsWith($"{CommandString} ");
-        public sealed override string Task(KLBot bot, MessagePlain cmd_msg, string cmd)
+        public sealed override string CommandTask(KLBot bot, MessagePlain cmd_msg, string cmd)
         {
             sw.Restart();
             string value_string = cmd.Substring(CommandString.Length + 1);
@@ -53,7 +59,9 @@ namespace klbotlib.Modules.CommandModule.Commands
             return $"{ActionName}执行成功，耗时{sw.ElapsedMilliseconds.ToTimeSpanString(2)}。";
         }
     }
-    //通用信息型命令基类
+    /// <summary>
+    /// 返回信息的命令 的基类
+    /// </summary>
     public abstract class InfoCommand : Command
     {
         public abstract string CommandString { get; }
@@ -64,16 +72,18 @@ namespace klbotlib.Modules.CommandModule.Commands
         public sealed override string Format => CommandString;
         public sealed override string Usage => $"获取{InfoDescription}信息";
         public sealed override bool IsCmd(string cmd) => cmd == CommandString;
-        public sealed override string Task(KLBot bot, MessagePlain _, string __) => GetInfo(bot);
+        public sealed override string CommandTask(KLBot bot, MessagePlain _, string __) => GetInfo(bot);
     }
-    //开关型命令的基类. 统一调用方法：^[命令字符串]$
+    /// <summary>
+    /// 开关型命令的基类. 统一调用方法：^[命令字符串]$
+    /// </summary>
     public abstract class SwitchCommand : Command
     {
         public abstract string SwitchName { get; }
         public abstract bool GetBotProperty(KLBot bot);
         public abstract void SetBotProperty(KLBot bot, bool value);
         public sealed override string Usage => "打开/关闭" + SwitchName;
-        public sealed override string Task(KLBot bot, MessagePlain _, string __)
+        public sealed override string CommandTask(KLBot bot, MessagePlain _, string __)
         {
             bool current_state = GetBotProperty(bot);
             SetBotProperty(bot, !current_state);
@@ -82,7 +92,10 @@ namespace klbotlib.Modules.CommandModule.Commands
         }
         public sealed override bool IsCmd(string cmd) => cmd == Format;
     }
-    //赋值型命令的基类. 统一调用方法：^[命令字符串] 参数$
+    /// <summary>
+    /// 赋值型命令的基类. 统一调用方法：^[命令字符串] 参数$
+    /// </summary>
+    /// <typeparam name="T">参数的类型</typeparam>
     public abstract class AssignmentCommand<T> : Command
     {
         public abstract string CommandString { get; }   //调用的命令
@@ -95,7 +108,7 @@ namespace klbotlib.Modules.CommandModule.Commands
         public sealed override string Usage => "查询/设置" + PropertyName;
         public sealed override string Format => $"查询：{CommandString} ?\r\n设置：{CommandString} [{ParameterDescription}]";
         public sealed override bool IsCmd(string cmd) => cmd.StartsWith($"{CommandString} ");
-        public sealed override string Task(KLBot bot, MessagePlain msg, string cmd)
+        public sealed override string CommandTask(KLBot bot, MessagePlain msg, string cmd)
         {
             T current_value = GetBotProperty(bot);
             string value_string = cmd.Substring(CommandString.Length + 1);
@@ -115,7 +128,7 @@ namespace klbotlib.Modules.CommandModule.Commands
         }
     }
 
-    //命令
+//所有命令
     //通用命令
     [DefaultCommand]
     public class HelpCmd : InfoCommand
@@ -132,7 +145,7 @@ namespace klbotlib.Modules.CommandModule.Commands
             sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}");
             sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\r\n");
             sb.AppendLine("命令列表: \r\n");
-            foreach (Command cmd in bot.CommandModule.Cmds)
+            foreach (Command cmd in bot.GetModule<CommandModule>(this).Cmds)
             {
                 sb.AppendLine($"{cmd.Format}\r\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\r\n");
             }
@@ -192,23 +205,18 @@ namespace klbotlib.Modules.CommandModule.Commands
             sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}\n");
 
             sb.AppendLine("[模块状态]");
-            var bot_properties = typeof(KLBot).GetProperties();
-            foreach (var bot_property in bot_properties)
+            foreach (var module in bot.Modules)
             {
-                if (bot_property.ContainsAttribute(typeof(BotModuleAttribute)))
+                sb.AppendLine($"> {module.ModuleID}");
+                var module_properties = module.GetType().GetProperties();
+                foreach (var module_property in module_properties)
                 {
-                    object module = bot_property.GetValue(bot);
-                    sb.AppendLine($"> {module.GetType().Name}");
-                    var module_properties = bot_property.PropertyType.GetProperties();
-                    foreach (var module_property in module_properties)
+                    if (module_property.ContainsAttribute(typeof(ModuleStatusAttribute)))
                     {
-                        if (module_property.ContainsAttribute(typeof(ModuleStatusAttribute)))
-                        {
-                            sb.AppendLine($"{module_property.Name} = {module_property.GetValue(module)}");
-                        }
+                        sb.AppendLine($"{module_property.Name} = {module_property.GetValue(module)}");
                     }
-                    sb.AppendLine();
                 }
+                sb.AppendLine();
             }
             return sb.ToString();
         }
@@ -233,16 +241,10 @@ namespace klbotlib.Modules.CommandModule.Commands
         public override void Action(KLBot bot, MessagePlain cmd_msg, int parameter)
         {
             bot.ReplyMessagePlain(cmd_msg, $"[命令模块]开始休眠。时长：{parameter}秒");
-            int remain = parameter;
-            while (remain > 0)
-            {
-                Thread.Sleep(1000);
-                remain--;
-                if (remain == parameter / 2)
-                {
-                    bot.ReplyMessagePlain(cmd_msg, $"[命令模块]休眠还有一半时间（{remain}/{parameter}秒）结束");
-                }
-            }
+            float remain = parameter / 2f;
+            Thread.Sleep((int)(remain * 1000));
+            Task.Run(() => bot.ReplyMessagePlain(cmd_msg, $"[命令模块]休眠还有一半时间（{remain:f1}/{parameter}秒）结束"));
+            Thread.Sleep((int)(remain * 1000));
             bot.ReplyMessagePlain(cmd_msg, $"[命令模块]轮询休眠结束");
         }
     }
@@ -272,8 +274,8 @@ namespace klbotlib.Modules.CommandModule.Commands
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string SwitchName => "嘴臭模块-总开关";
         public override string Format => "fuckmod enabled";
-        public override bool GetBotProperty(KLBot bot) => bot.FuckModule.Enabled;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.FuckModule.Enabled = value;
+        public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).Enabled;
+        public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).Enabled = value;
     }
     [DefaultCommand]
     public class FuckModCascadeCmd : SwitchCommand
@@ -281,8 +283,8 @@ namespace klbotlib.Modules.CommandModule.Commands
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string SwitchName => "嘴臭模块-串联模式";
         public override string Format => "fuckmod cascade";
-        public override bool GetBotProperty(KLBot bot) => bot.FuckModule.IsCascadeMode;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.FuckModule.IsCascadeMode = value;
+        public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).IsCascadeMode;
+        public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).IsCascadeMode = value;
     }
     [DefaultCommand]
     public class FuckModTerminateProbCmd : AssignmentCommand<int>
@@ -291,8 +293,8 @@ namespace klbotlib.Modules.CommandModule.Commands
         public override string PropertyName => "嘴臭模块-终止概率";
         public override string CommandString => "fuckmod terminal-prob";
         public override string ParameterDescription => "整数概率(%)";
-        public override int GetBotProperty(KLBot bot) => bot.FuckModule.TerminateProbability;
-        public override void SetBotProperty(KLBot bot, int value) => bot.FuckModule.TerminateProbability = value;
+        public override int GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).TerminateProbability;
+        public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).TerminateProbability = value;
         public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
     }
     [DefaultCommand]
@@ -302,8 +304,8 @@ namespace klbotlib.Modules.CommandModule.Commands
         public override string PropertyName => "嘴臭模块-最大长度";
         public override string CommandString => "fuckmod max-length";
         public override string ParameterDescription => "长度(整数)";
-        public override int GetBotProperty(KLBot bot) => bot.FuckModule.MaximumLength;
-        public override void SetBotProperty(KLBot bot, int value) => bot.FuckModule.MaximumLength = value;
+        public override int GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).MaximumLength;
+        public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).MaximumLength = value;
         public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
     }
     //聊天模块命令
@@ -313,7 +315,7 @@ namespace klbotlib.Modules.CommandModule.Commands
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string SwitchName => "TagMe模式";
         public override string Format => "tag-me";
-        public override bool GetBotProperty(KLBot bot) => bot.FuckModule.IsTagMe;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.FuckModule.IsTagMe = value;
+        public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).IsTagMe;
+        public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).IsTagMe = value;
     }
 }

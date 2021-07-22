@@ -1,4 +1,6 @@
 ﻿using klbotlib;
+using klbotlib.Exceptions;
+using klbotlib.Modules;
 using System;
 using System.Net;
 using System.Reflection;
@@ -8,14 +10,6 @@ namespace klbot
 
     class Program
     {
-#if !DEBUG
-        const string server = "http://localhost:3356";
-#endif
-#if DEBUG
-        const string server = "http://192.168.31.42:3356";
-#endif
-        const long SELF_ID = 3205508672, DEBUG = 727414436, KLG = 670406903;
-
         static void Main(string[] args)
         {
             Console.ResetColor();
@@ -27,29 +21,45 @@ namespace klbot
             Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor}");
             Console.WriteLine($"core library version: {lib_version.Major}.{lib_version.Minor}\n");
         start:
-
             KLBot klg = null;
             try
             {
-#if DEBUG
-                klg = new(server, SELF_ID, DEBUG);
-#else
-                klg = new(server, SELF_ID, KLG, DEBUG);
-#endif
+                if (args.Length != 0)
+                    klg = new(args[0]);
+                else
+                    klg = new();
+                TimeModule time_module = new(klg);
+                klg.AddModule(time_module);
+                klg.SaveModuleSetup(time_module);
+                klg.ListModules();
                 klg.Loop(out sucess_counter);
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\nError: {ex.Message}");
-                Console.WriteLine($"StackTrace: \n{ex.StackTrace}\n");
+                Console.WriteLine($"\n错误: {ex.Message}");
+                Console.WriteLine($"调用栈: \n{ex.StackTrace}\n");
                 Console.ResetColor();
 
                 if (ex is WebException)
                 {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("A network error has been catched. Make sure the URL is correct and mcl is properly running on the target server. ");
-                    Console.WriteLine("Quiting...");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行");
+                    Console.WriteLine("退出中...");
+                    Console.ResetColor();
+                }
+                else if (ex is KLBotInitializationException)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("KLBot初始化失败。检查KLBot的配置文件和模块配置文件是否正确，以及各个模块是否恰当遵守了模块开发规范");
+                    Console.WriteLine("退出中...");
+                    Console.ResetColor();
+                }
+                else if (ex is ModuleSetupException)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine($"模块配置异常。检查模块的配置文件是否正确，以及该模块是否恰当遵守了模块开发规范");
+                    Console.WriteLine("退出中...");
                     Console.ResetColor();
                 }
                 else  //无法处理的未知情况
@@ -60,7 +70,7 @@ namespace klbot
                         fatal_failure_counter = 0;
                     if (fatal_failure_counter > 10)
                     {
-                        Console.WriteLine("10 error in a row. Something is wrong. Stop retrying and gracfully quit.");
+                        Console.WriteLine("连续10次发生致命错误。将停止重试并有序退出");
                         if (klg != null)
                             klg.OnExit();
                         return;
@@ -70,7 +80,7 @@ namespace klbot
                         query_counter_cache = sucess_counter;
                         if (klg != null)
                             klg.OnExit();
-                        Console.WriteLine($"[{DateTime.Now:G}] Trying to restart...\n");
+                        Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
                         goto start;
                     }
                 }

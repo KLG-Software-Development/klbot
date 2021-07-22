@@ -1,10 +1,10 @@
-﻿using Gleee.Consoleee;
+﻿using klbotlib.Modules.ChatQYKModuleNamespace;
 using Newtonsoft.Json;
 using System;
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace klbotlib.Modules.ChatQYKModule
+namespace klbotlib.Modules
 {
     //聊天bot模块
     public class ChatQYKModule : SingleTypeModule<MessagePlain>
@@ -13,6 +13,7 @@ namespace klbotlib.Modules.ChatQYKModule
         static readonly WebClient client = new WebClient();
 
         public override bool IsTransparent => false;
+        public override bool UseSignature => false;
         public override bool Filter(MessagePlain msg) => msg.TargetID == HostBot.Config.QQ.SelfID;
         public override string Processor(MessagePlain msg)
         {
@@ -24,6 +25,10 @@ namespace klbotlib.Modules.ChatQYKModule
         public ChatQYKModule(KLBot klbot) : base(klbot) { }
     }
 
+}
+
+namespace klbotlib.Modules.ChatQYKModuleNamespace
+{
     internal class ChatterBotReply
     {
         public int result;

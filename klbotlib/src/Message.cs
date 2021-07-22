@@ -22,7 +22,6 @@ namespace klbotlib
         }
     }
 
-    ///@分支对象-5种
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型
     internal static class MessageFactory
     {
@@ -89,6 +88,7 @@ namespace klbotlib
     {
         public MessageEmpty() : base("ignore") { }
     }
+
     //纯文本消息类型
     public class MessagePlain : Message
     {
@@ -102,7 +102,7 @@ namespace klbotlib
     }
 
     /// <summary>
-    /// 私聊、临时、群聊
+    /// 消息上下文枚举，包括私聊、临时、群聊
     /// </summary>
     public enum MessageContext
     {

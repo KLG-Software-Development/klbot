@@ -1,9 +1,5 @@
 ﻿using System;
 
-namespace klbotlib
-{
-    public class BotModuleAttribute : Attribute { }
-}
 namespace klbotlib.Modules
 {
     /// <summary>
@@ -18,8 +14,4 @@ namespace klbotlib.Modules
     /// 只有打上此标记之后，该成员的值才能被Module.ExportSetupDict()保存
     /// </summary>
     public class ModuleSetupAttribute : Attribute { }      
-}
-namespace klbotlib.Modules.CommandModule
-{
-    public class DefaultCommandAttribute : Attribute { }
 }
