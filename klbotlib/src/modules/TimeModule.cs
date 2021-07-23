@@ -4,7 +4,9 @@ namespace klbotlib.Modules
 {
     public class TimeModule : SingleTypeModule<MessagePlain>
     {
-        [ModuleSetup]
+        public override bool IsTransparent => true;
+
+        [ModuleStatus]
         private int time_zone = 8; //默认是UTC+8
 
         public override bool Filter(MessagePlain msg)

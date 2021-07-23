@@ -15,8 +15,6 @@ namespace klbotlib.Modules
         private readonly Regex cmdPat = new Regex($@"^{prefix}(.+)$");
 
         [ModuleSetup]
-        public string UsersSavePath { get; private set; } = "users";
-        [ModuleSetup]
         public Dictionary<long, AuthorType> Users { get; private set; }
 
         public List<Command> Cmds = new List<Command>();
@@ -30,17 +28,6 @@ namespace klbotlib.Modules
 
         public CommandModule(KLBot host, params Command[] cmds) : base(host)
         {
-            //if (File.Exists(UsersSavePath))
-            //{
-            //    HostBot.ModulePrint(this, $"Loading user list from '{UsersSavePath}'...");
-            //    Users = JsonConvert.DeserializeObject<Dictionary<long, AuthorType>>(File.ReadAllText(UsersSavePath));
-            //}
-            //else
-            //{
-            //    HostBot.ModulePrint(this, $"Cannot find users saved file. Loading default...");
-            //    Users = new Dictionary<long, AuthorType> { { 365802825, AuthorType.开发者 } };
-            //}
-            Users = new Dictionary<long, AuthorType> { { 365802825, AuthorType.开发者 } };
             //自动实例化并添加所有已经定义的、带有[DefaultCommand]标记的Command类
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
@@ -54,7 +41,7 @@ namespace klbotlib.Modules
             }
             int default_cmd_count = Cmds.Count;
             Cmds.AddRange(cmds);
-            HostBot.ModulePrint(this, $"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
+            ModulePrint($"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
         }
 
         public override bool IsTransparent => false;

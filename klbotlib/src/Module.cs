@@ -277,7 +277,7 @@ namespace klbotlib.Modules
                 return Processor(tmsg);
             else
             {
-                HostBot.ModulePrint(this, "意外遇到无法处理的消息类型", ConsoleMessageType.Error);
+                ModulePrint("意外遇到无法处理的消息类型", ConsoleMessageType.Error);
                 throw new Exception("意外遇到无法处理的消息类型");
             }
         }

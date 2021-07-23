@@ -10,9 +10,7 @@ using System.Threading;
 using klbotlib.Modules;
 using klbotlib.Internal;
 using klbotlib.Exceptions;
-using klbotlib.Json;
 using System.Web;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace klbotlib
@@ -36,6 +34,12 @@ namespace klbotlib
         public int PollingTimeInterval { get; set; } = 500;   //轮询时间区间
         public bool IsLoopOn = false;   //总开关，决定是否继续消息循环
         public bool IsRestoreModule { get; set; } = true;   //决定是否总是自动从存档中恢复所有模块的状态
+        //成功进行查询的次数
+        public long SuccessPackageCount { get; private set; }
+        //接收到的消息条数
+        public long ReceivedMessageCount { get; private set; }
+        //所有模块处理消息的总次数
+        public long ProcessedCount { get; private set; }
 
         //构造函数。默认配置文件路径config/config.json
         public KLBot(string config_path = "config/config.json")
@@ -244,16 +248,15 @@ namespace klbotlib
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <returns>已处理的消息数量</returns>
-        public int ProcessMessages(IList<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
+        public void ProcessMessages(IList<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
         /// <summary>
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <param name="processor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        public int ProcessMessages(IList<Message> msgs, Action<Message> processor)
+        public void ProcessMessages(IList<Message> msgs, Action<Message> processor)
         {
-            int count = 0;
             if (IsBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new Message[] { msgs.Last() };
@@ -266,32 +269,72 @@ namespace klbotlib
                 else
                 {
                     processor(msg);
-                    count++;
+                    ReceivedMessageCount++;
                 }
             }
-            return count;
         }
         /// <summary>
         /// 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
         /// </summary>
         /// <param name="success_count">已成功处理的数据包个数</param>
-        public void Loop(out long success_count)
+        public void Loop()
         {
-            success_count = 0;
-            int msg_count = 0;
+            object _sync = new object();
+            var wait_for_pause_signal = new ManualResetEvent(true);
+            SuccessPackageCount = 0;
             IsLoopOn = true;
             if (IsRestoreModule)
             {
                 foreach (var m in Modules)
                     LoadModuleStatus(m);
             }
-            while (IsLoopOn)
+            //消息循环线程
+            Task.Run(() => 
             {
-                msg_count += ProcessMessages(FetchMessages());
-                success_count++;
-                console.ClearCurrentLine();
-                console.Write($"Processed package: {success_count}  Processed message: {msg_count}", ConsoleMessageType.Info);
-                Thread.Sleep(PollingTimeInterval);
+                //console.Write("Starting message loop...");
+                //Thread.Sleep(500);  //等待主线程的命令循环把">"打印出来
+                //console.ClearCurrentLine();
+                //console.Write(">", ConsoleColor.DarkYellow);
+                while (IsLoopOn)
+                {
+                    ProcessMessages(FetchMessages());
+                    SuccessPackageCount++;
+                    //lock (console)
+                    //{
+                    //    int tmp_top = Console.CursorTop, tmp_left = Console.CursorLeft;
+                    //    Console.SetCursorPosition(0, Console.CursorTop - 1);
+                    //    Console.Write("测试".PadRight(Console.WindowWidth - 2));
+                    //    Console.SetCursorPosition(tmp_left, tmp_top);
+                    //    //console.OverwriteSecondLastLine($"成功处理{msg_count}条消息。至今已发起{SuccessCount}次查询", ConsoleMessageType.Info);
+                    //    //console.SetCursorPos(temp_left, temp_top); //还原cursor
+                    //}
+                    Thread.Sleep(PollingTimeInterval);
+                    wait_for_pause_signal.WaitOne();
+                }
+            });
+            bool exit_flag = false;
+            //命令循环线程
+            lock (console)
+            {
+                while (!exit_flag)
+                {
+                    console.Write(">", ConsoleColor.DarkYellow);
+                    string cmd = Console.ReadLine().Trim();
+                    if (cmd == "pause")
+                    {
+                        wait_for_pause_signal.Reset();
+                        console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
+                    }
+                    else if (cmd == "resume")
+                    {
+                        wait_for_pause_signal.Set();
+                        console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
+                    }
+                    else if (cmd == "quit")
+                        exit_flag = true;
+                    else if (cmd == "status")
+                        console.WriteLn($"已发起{SuccessPackageCount}次查询；共收到{ReceivedMessageCount}条消息；经过各模块处理{ProcessedCount}次", ConsoleMessageType.Info);
+                }
             }
             //从容退出
             OnExit();
@@ -319,6 +362,7 @@ namespace klbotlib
         //注意 空消息的过滤已经在上一级ProcessMessages()完成，所以此处入参的所有消息均为非空消息
         private void ModulesProcessMessage(Message msg)
         {
+            Task send_msg_task = null;
             foreach (var module in Modules)
             {
                 if (module.ShouldProcess(msg))
@@ -328,15 +372,14 @@ namespace klbotlib
                     try
                     {
                         output = module.Processor(msg);
+                        ProcessedCount++;
                     }
                     catch (Exception ex)
                     {
                         output = $"{module}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}";
                         has_error = true;
                     }
-                    //直接新建一个线程做回复，防止因为网络问题阻塞其他消息的处理
-                    //当然，这说不定会导致回复消息有乱序问题，但姑且先这么写
-                    Task.Run(() => 
+                    Action reply_output = () => 
                     {
                         if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈
                         {
@@ -350,7 +393,12 @@ namespace klbotlib
                             else
                                 ReplyMessagePlain(msg, $"[KLBot]\n{output}");
                         }
-                    });
+                    };
+                    //直接新建一个线程做回复，防止因为网络速度较慢阻塞其他消息的处理
+                    if (send_msg_task == null)
+                        send_msg_task = Task.Run(reply_output);
+                    else
+                        send_msg_task.ContinueWith(x => reply_output);  //保序
                     SaveModuleStatus(module, false);   //保存模块状态
                     if (module.IsTransparent)
                         continue;
@@ -401,6 +449,15 @@ namespace klbotlib
             }
             else
                 ModulePrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
+        }
+        //重新载入所有模块配置和状态
+        public void ReloadAllModules()
+        {
+            foreach (var module in Modules)
+            {
+                LoadModuleSetup(module);
+                LoadModuleStatus(module);
+            }
         }
 
         //有序退出

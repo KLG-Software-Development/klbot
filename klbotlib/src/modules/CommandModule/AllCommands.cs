@@ -143,13 +143,13 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             sb.AppendLine($"KLBot via mirai");
             sb.AppendLine($"Build {lib_version.ToKLGBuildString()}");
             sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}");
-            sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\r\n");
-            sb.AppendLine("命令列表: \r\n");
+            sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\n");
+            sb.AppendLine("命令列表: ");
             foreach (Command cmd in bot.GetModule<CommandModule>(this).Cmds)
             {
-                sb.AppendLine($"{cmd.Format}\r\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\r\n");
+                sb.AppendLine($"{cmd.Format}\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\n");
             }
-            return sb.AppendLine("\r\n提示：发送'##[命令]'以执行指令").ToString();
+            return sb.AppendLine("\n提示：发送'##[命令]'以执行指令").ToString();
         }
     }
     [DefaultCommand]
@@ -228,6 +228,14 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override string CommandString => "gc";
         public override string ActionDescription => "手动GC回收内存";
         public override void Action(KLBot bot, MessagePlain _) => GC.Collect();
+    }
+    [DefaultCommand]
+    public class ReloadCmd : SimpleActionCommand
+    {
+        public override AuthorType AuthorityRequirment => AuthorType.开发者;
+        public override string CommandString => "reload";
+        public override string ActionDescription => "重新载入所有模块配置文件";
+        public override void Action(KLBot bot, MessagePlain _) => bot.ReloadAllModules();
     }
     [DefaultCommand]
     public class SleepCmd : ActionCommand<int>

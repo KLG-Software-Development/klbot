@@ -15,7 +15,7 @@ namespace klbot
             Console.ResetColor();
             Version exe_version = Assembly.GetExecutingAssembly().GetName().Version;
             Version lib_version = klbotlib.Info.LibInfo.GetLibVersion();
-            long sucess_counter = 0, query_counter_cache = 0;
+            long query_counter_cache = 0;
             int fatal_failure_counter = 0;
             Console.WriteLine($"KLBot via mirai - Build {lib_version.ToKLGBuildString()}");
             Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor}");
@@ -30,9 +30,8 @@ namespace klbot
                     klg = new();
                 TimeModule time_module = new(klg);
                 klg.AddModule(time_module);
-                klg.SaveModuleSetup(time_module);
                 klg.ListModules();
-                klg.Loop(out sucess_counter);
+                klg.Loop();
             }
             catch (Exception ex)
             {
@@ -64,7 +63,7 @@ namespace klbot
                 }
                 else  //无法处理的未知情况
                 {
-                    if (query_counter_cache == sucess_counter)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                    if (query_counter_cache == klg.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                         fatal_failure_counter++;
                     else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
                         fatal_failure_counter = 0;
@@ -77,7 +76,7 @@ namespace klbot
                     }
                     else
                     {
-                        query_counter_cache = sucess_counter;
+                        query_counter_cache = klg.SuccessPackageCount;
                         if (klg != null)
                             klg.OnExit();
                         Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
