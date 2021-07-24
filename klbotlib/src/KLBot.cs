@@ -484,7 +484,6 @@ namespace klbotlib
         }
         private void PostJSON(string url, string json_string)
         {
-            File.WriteAllText("last_msg.json", json_string);
             HttpWebRequest request = WebRequest.CreateHttp(url);
             request.Method = "POST";
             request.ContentType = "application/json";
