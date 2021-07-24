@@ -34,7 +34,7 @@ namespace klbotlib.Modules
         [ModuleStatus]
         public int TerminateProbability { get; set; } = 25;
         [ModuleStatus]
-        public int MaximumLength { get; set; } = 50;
+        public int MaximumLength { get; set; } = 20;
 
         public FuckModule(KLBot bot) : base(bot) { }
 

@@ -88,7 +88,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             bool current_state = GetBotProperty(bot);
             SetBotProperty(bot, !current_state);
             string action = current_state ? "关闭" : "打开";
-            return $"[命令模块]{SwitchName}已{action}";
+            return $"{SwitchName}已{action}";
         }
         public sealed override bool IsCmd(string cmd) => cmd == Format;
     }
@@ -113,17 +113,17 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             T current_value = GetBotProperty(bot);
             string value_string = cmd.Substring(CommandString.Length + 1);
             if (value_string == "?")
-                return $"[命令模块]{PropertyName}当前的值为{current_value}";
+                return $"{PropertyName}当前的值为{current_value}";
             else
             {
                 bool result = TryParseCmdStringValue(value_string, out T val);
                 if (result)
                 {
                     SetBotProperty(bot, val);
-                    return $"[命令模块]{PropertyName}已修改：\r\n旧值：{current_value}\r\n新值：{val}";
+                    return $"{PropertyName}已修改：\r\n旧值：{current_value}\r\n新值：{val}";
                 }
                 else
-                    return $"[命令模块]修改{PropertyName}失败：无法从'{val}'中解析出合法的值";
+                    return $"修改{PropertyName}失败：无法从'{val}'中解析出合法的值";
             }
         }
     }
@@ -159,31 +159,66 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         private string GetCoreUtilization()
         {
             Process p = new Process();
-            p.StartInfo.FileName = "mpstat";
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.Start();
-            string raw = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                p.StartInfo.FileName = "mpstat";
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.Start();
+                string raw = p.StandardOutput.ReadToEnd();
+                p.WaitForExit();
 
-            string last_line = raw.Split('\n')[3];
-            string idle = multi_white.Replace(last_line, "-").Split('-').Last();
-            return (100-Convert.ToSingle(idle)).ToString("f2") + "%";
+                string last_line = raw.Split('\n')[3];
+                string idle = multi_white.Replace(last_line, "-").Split('-').Last();
+                return (100 - Convert.ToSingle(idle)).ToString("f2") + "%";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                p.StartInfo.FileName = "wmic";
+                p.StartInfo.Arguments = "CPU get LoadPercentage /Value";
+                p.StartInfo.CreateNoWindow = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.Start();
+                p.WaitForExit();
+                string output = p.StandardOutput.ReadToEnd().Trim();
+                string load = output.Split('=')[1];
+                return $"{load}%";
+            }
+            else return $"暂时不支持获取此平台下的CPU占用信息";
+
         }
         private string GetRAMUtilization()
         {
             Process p = new Process();
-            p.StartInfo.FileName = "free";
-            p.StartInfo.Arguments = "-h";
-            p.StartInfo.CreateNoWindow = true;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.Start();
-            p.WaitForExit();
-            string output = p.StandardOutput.ReadToEnd().Split('\n')[1];
-            string[] outputs = multi_white.Replace(output, "-").Split('-');
-            string total = outputs[1].Substring(0, outputs[1].Length - 1);
-            string available = outputs[6].Substring(0, outputs[6].Length - 1);
-            return $"{available}B/{total}B";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                p.StartInfo.FileName = "free";
+                p.StartInfo.Arguments = "-h";
+                p.StartInfo.CreateNoWindow = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.Start();
+                p.WaitForExit();
+                string output = p.StandardOutput.ReadToEnd().Split('\n')[1];
+                string[] outputs = multi_white.Replace(output, "-").Split('-');
+                string total = outputs[1].Substring(0, outputs[1].Length - 1);
+                string available = outputs[6].Substring(0, outputs[6].Length - 1);
+                return $"{available}B/{total}B";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                p.StartInfo.FileName = "wmic";
+                p.StartInfo.Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value";
+                p.StartInfo.CreateNoWindow = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.Start();
+                p.WaitForExit();
+                string[] outputs = p.StandardOutput.ReadToEnd().Trim().Split('\n');
+                string available = (Convert.ToInt64(outputs[0].Split('=')[1]) * 1024L).ToMemorySizeString(1);
+                string total = (Convert.ToInt64(outputs[1].Split('=')[1]) * 1024L).ToMemorySizeString(1);
+                return $"{available}/{total}";
+            }
+            else return $"暂时不支持获取此平台下的内存占用信息";
+
         }
         public override string CommandString => "status";
         public override string InfoDescription => "系统和Bot状态";
@@ -208,12 +243,20 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             foreach (var module in bot.Modules)
             {
                 sb.AppendLine($"> {module.ModuleID}");
-                var module_properties = module.GetType().GetProperties();
+                var module_properties = module.GetType().GetProperties_All().Reverse();
                 foreach (var module_property in module_properties)
                 {
                     if (module_property.ContainsAttribute(typeof(ModuleStatusAttribute)))
                     {
-                        sb.AppendLine($"{module_property.Name} = {module_property.GetValue(module)}");
+                        sb.AppendLine($"{module_property.Name}：{module_property.GetValue(module)}");
+                    }
+                }
+                var module_fields = module.GetType().GetFields_All().Reverse();
+                foreach (var module_field in module_fields)
+                {
+                    if (module_field.ContainsAttribute(typeof(ModuleStatusAttribute)))
+                    {
+                        sb.AppendLine($"{module_field.Name}：{module_field.GetValue(module)}");
                     }
                 }
                 sb.AppendLine();
@@ -248,12 +291,12 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override bool TryParseCmdStringValue(string value_string, out int value) => int.TryParse(value_string, out value);
         public override void Action(KLBot bot, MessagePlain cmd_msg, int parameter)
         {
-            bot.ReplyMessagePlain(cmd_msg, $"[命令模块]开始休眠。时长：{parameter}秒");
+            bot.ReplyMessagePlain(cmd_msg, $"开始休眠。时长：{parameter}秒");
             float remain = parameter / 2f;
             Thread.Sleep((int)(remain * 1000));
-            Task.Run(() => bot.ReplyMessagePlain(cmd_msg, $"[命令模块]休眠还有一半时间（{remain:f1}/{parameter}秒）结束"));
+            Task.Run(() => bot.ReplyMessagePlain(cmd_msg, $"休眠还有一半时间（{remain:f1}/{parameter}秒）结束"));
             Thread.Sleep((int)(remain * 1000));
-            bot.ReplyMessagePlain(cmd_msg, $"[命令模块]轮询休眠结束");
+            bot.ReplyMessagePlain(cmd_msg, $"轮询休眠结束");
         }
     }
     [DefaultCommand]

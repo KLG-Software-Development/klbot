@@ -7,7 +7,7 @@ namespace klbotlib.Modules
         public override bool IsTransparent => true;
 
         [ModuleStatus]
-        private int time_zone = 8; //默认是UTC+8
+        private int TimeZone = 8; //默认是UTC+8
 
         public override bool Filter(MessagePlain msg)
         {
@@ -18,14 +18,14 @@ namespace klbotlib.Modules
         {
             if (msg.Text == "报时")
             {
-                return DateTime.UtcNow.AddHours(time_zone).ToString();
+                return DateTime.UtcNow.AddHours(TimeZone).ToString();
             }
             else
             {
                 if (int.TryParse(msg.Text.Substring(5), out int result))
                 {
-                    time_zone = result;
-                    return $"时区已设置为UTC{time_zone:+#;-#;#}";
+                    TimeZone = result;
+                    return $"时区已设置为UTC{TimeZone:+#;-#;#}";
                 }
                 else
                     return $"错误：你输了什么狗屁东西？";

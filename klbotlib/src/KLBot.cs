@@ -1,17 +1,17 @@
-﻿using System;
+﻿using Gleee.Consoleee;
+using klbotlib.Exceptions;
+using klbotlib.Internal;
+using klbotlib.Modules;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using Newtonsoft.Json;
-using Gleee.Consoleee;
 using System.Threading;
-using klbotlib.Modules;
-using klbotlib.Internal;
-using klbotlib.Exceptions;
-using System.Web;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace klbotlib
 {
@@ -19,13 +19,8 @@ namespace klbotlib
     {
         private bool IsBooting { get; set; } = true;            //返回Bot是否刚刚启动且未处理过任何消息
         private readonly Consoleee console = new Consoleee();   //扩展控制台对象
-        // 该KLBot的模块列表. 
-        // 所有传入的消息会依次被其中的模块处理. 
-        // 如果该处理模块的Module.IsTransparent属性设定为true，则处理过的消息不会被消耗.
-        // 如果该处理模块的Module.IsTransparent属性设定为false(默认)，则被处理过的消息会从列表中移除.
         private readonly Dictionary<string, int> module_index_by_id = new Dictionary<string, int>();
         private readonly Dictionary<string, uint> module_count = new Dictionary<string, uint>();
-        //private readonly 
         //所有模块
         public List<Module> Modules { get; } = new List<Module>();
         //Bot配置
@@ -33,7 +28,6 @@ namespace klbotlib
         //Bot属性
         public int PollingTimeInterval { get; set; } = 500;   //轮询时间区间
         public bool IsLoopOn = false;   //总开关，决定是否继续消息循环
-        public bool IsRestoreModule { get; set; } = true;   //决定是否总是自动从存档中恢复所有模块的状态
         //成功进行查询的次数
         public long SuccessPackageCount { get; private set; }
         //接收到的消息条数
@@ -283,31 +277,13 @@ namespace klbotlib
             var wait_for_pause_signal = new ManualResetEvent(true);
             SuccessPackageCount = 0;
             IsLoopOn = true;
-            if (IsRestoreModule)
-            {
-                foreach (var m in Modules)
-                    LoadModuleStatus(m);
-            }
             //消息循环线程
             Task.Run(() => 
             {
-                //console.Write("Starting message loop...");
-                //Thread.Sleep(500);  //等待主线程的命令循环把">"打印出来
-                //console.ClearCurrentLine();
-                //console.Write(">", ConsoleColor.DarkYellow);
                 while (IsLoopOn)
                 {
                     ProcessMessages(FetchMessages());
                     SuccessPackageCount++;
-                    //lock (console)
-                    //{
-                    //    int tmp_top = Console.CursorTop, tmp_left = Console.CursorLeft;
-                    //    Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    //    Console.Write("测试".PadRight(Console.WindowWidth - 2));
-                    //    Console.SetCursorPosition(tmp_left, tmp_top);
-                    //    //console.OverwriteSecondLastLine($"成功处理{msg_count}条消息。至今已发起{SuccessCount}次查询", ConsoleMessageType.Info);
-                    //    //console.SetCursorPos(temp_left, temp_top); //还原cursor
-                    //}
                     Thread.Sleep(PollingTimeInterval);
                     wait_for_pause_signal.WaitOne();
                 }
@@ -334,15 +310,37 @@ namespace klbotlib
                         exit_flag = true;
                     else if (cmd == "status")
                         console.WriteLn($"已发起{SuccessPackageCount}次查询；共收到{ReceivedMessageCount}条消息；经过各模块处理{ProcessedCount}次", ConsoleMessageType.Info);
+                    else if (cmd == "save")
+                    {
+                        console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
+                        Modules.ForEach(x => 
+                        {
+                            SaveModuleSetup(x);
+                            SaveModuleStatus(x);
+                        });
+                    }
+                    else if (cmd == "reload")
+                    {
+                        console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
+                        Modules.ForEach(x =>
+                        {
+                            LoadModuleSetup(x);
+                            LoadModuleStatus(x);
+                        });
+                    }
+                    else
+                        console.WriteLn($"未知命令：\"{cmd}\"", ConsoleMessageType.Error);
                 }
             }
             //从容退出
             OnExit();
         }
 
-        //早期(v0.4及更早)的处理函数. 准备弃用
+        //早期(v0.4及更早)的处理函数. 已经弃用
         [Obsolete]
+#pragma warning disable IDE0051 // 删除未使用的私有成员
         private void PaleMutant(Message msg)
+#pragma warning restore IDE0051 // 删除未使用的私有成员
         {
             var cmdmod = GetModule<CommandModule>(this);
             var fuckmod = GetModule<FuckModule>(this);
@@ -379,7 +377,7 @@ namespace klbotlib
                         output = $"{module}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}";
                         has_error = true;
                     }
-                    Action reply_output = () => 
+                    void reply_output()
                     {
                         if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈
                         {
@@ -393,12 +391,12 @@ namespace klbotlib
                             else
                                 ReplyMessagePlain(msg, $"[KLBot]\n{output}");
                         }
-                    };
+                    }
                     //直接新建一个线程做回复，防止因为网络速度较慢阻塞其他消息的处理
                     if (send_msg_task == null)
                         send_msg_task = Task.Run(reply_output);
                     else
-                        send_msg_task.ContinueWith(x => reply_output);  //保序
+                        send_msg_task.ContinueWith(x => (Action)reply_output);  //保序
                     SaveModuleStatus(module, false);   //保存模块状态
                     if (module.IsTransparent)
                         continue;
@@ -441,7 +439,7 @@ namespace klbotlib
         private void LoadModuleSetup(Module module, bool print_info = true)
         {
             string file_path = GetModuleSetupPath(module);
-            if (File.Exists(file_path) && IsRestoreModule)
+            if (File.Exists(file_path))
             {
                 if (print_info)
                     console.WriteLn($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
@@ -518,7 +516,9 @@ namespace klbotlib
             if (!module_index_by_id.ContainsKey(id))
                 throw new ModuleMissingException($"对象\"{source}\"试图引用ID为\"{id}\"的模块，但该模块不存在");
         }
+#pragma warning disable IDE0051 // 删除未使用的私有成员
         private void CheckModuleExist<T>(object source, uint index = 0)
+#pragma warning restore IDE0051 // 删除未使用的私有成员
         {
             string id = CalcModuleID<T>(index);
             if (!module_index_by_id.ContainsKey(id))
