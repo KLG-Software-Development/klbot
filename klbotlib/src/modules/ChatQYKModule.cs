@@ -24,7 +24,6 @@ namespace klbotlib.Modules
 
         public ChatQYKModule(KLBot klbot) : base(klbot) { }
     }
-
 }
 
 namespace klbotlib.Modules.ChatQYKModuleNamespace

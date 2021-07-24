@@ -34,6 +34,8 @@ namespace klbotlib
         public long ReceivedMessageCount { get; private set; }
         //所有模块处理消息的总次数
         public long ProcessedCount { get; private set; }
+        //最后一个错误的调用栈
+        public Exception LastException { get; private set; }
 
         //构造函数。默认配置文件路径config/config.json
         public KLBot(string config_path = "config/config.json")
@@ -66,11 +68,11 @@ namespace klbotlib
             console.WriteLn($"\tUrl: {Config.Network.ServerURL}");
             console.WriteLn($"\t监听群组列表:");
             int count = 1;
-            foreach (var target_id in Config.QQ.TargetGroupIDList)
+            Config.QQ.TargetGroupIDList.ForEach( target_id => 
             {
                 console.WriteLn($"\t[{count}]  {target_id}");
                 count++;
-            }
+            });
             return;
         init_failed:
             throw new KLBotInitializationException("KLBot初始化失败");
@@ -200,20 +202,16 @@ namespace klbotlib
             //构建直接JSON对象
             JFetchMessageResponse obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
             //如果是群组 则过滤非监听的群组
-            var jgroup_msgs = obj.data.Where(x =>
+            var jmsgs = obj.data.Where(x =>
             {
                 if (x.type == "FriendMessage" || x.type == "TempMessage")
                     return true;
                 else if (x.type == "GroupMessage")   //如果是群组消息，还需要群组在监听列表里
                     return Config.QQ.TargetGroupIDList.Contains(x.sender.group.id);
                 else return false;
-            });
+            }).ToList();
             List<Message> msgs = new List<Message>();
-            foreach (var jgroup_msg in jgroup_msgs)
-            {
-                var msg = MessageFactory.BuildMessage(jgroup_msg);
-                msgs.Add(msg);
-            }
+            jmsgs.ForEach( jmsg => msgs.Add(MessageFactory.BuildMessage(jmsg)));
             return msgs;
         }
         //TODO: 把发文本消息的方法扩展成发消息链的方法，然后设计一个消息链标记语法
@@ -242,68 +240,126 @@ namespace klbotlib
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(IList<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
+        public void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
         /// <summary>
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <param name="processor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(IList<Message> msgs, Action<Message> processor)
+        public void ProcessMessages(List<Message> msgs, Action<Message> processor)
         {
             if (IsBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
-                msgs = new Message[] { msgs.Last() };
+                msgs = new List<Message> { msgs.Last() };
                 IsBooting = false;
             }
-            foreach (var msg in msgs)
+            msgs.ForEach( msg => 
             {
-                if (msg is MessageEmpty)    //过滤空消息
-                    continue;
-                else
+                if (!(msg is MessageEmpty))    //过滤空消息
                 {
                     processor(msg);
                     ReceivedMessageCount++;
                 }
-            }
+            });
         }
         /// <summary>
         /// 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
         /// </summary>
         /// <param name="success_count">已成功处理的数据包个数</param>
-        public void Loop()
+        void MsgLoop(ManualResetEvent wait_for_pause_msgLoop_signal)
         {
-            object _sync = new object();
-            var wait_for_pause_signal = new ManualResetEvent(true);
-            SuccessPackageCount = 0;
+
+            long success_counter_cache = 0, continuous_error_counter = 0;
+        start:
             IsLoopOn = true;
-            //消息循环线程
-            Task.Run(() => 
+            Thread.Sleep(500);     //延迟启动 为命令循环线程预留至少0.5s时间
+            try
             {
                 while (IsLoopOn)
                 {
                     ProcessMessages(FetchMessages());
                     SuccessPackageCount++;
                     Thread.Sleep(PollingTimeInterval);
-                    wait_for_pause_signal.WaitOne();
+                    wait_for_pause_msgLoop_signal.WaitOne();
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                LastException = ex;
+                lock (console)  //防止和命令循环线程输出混淆
+                {
+                    console.WriteLn($"消息循环线程错误: {ex.Message}", ConsoleMessageType.Error, "\n");
+                    if (ex is WebException)
+                    {
+                        console.WriteLn("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行", ConsoleMessageType.Error);
+                        goto quit;
+                    }
+                    else  //未知异常
+                    {
+                        if (success_counter_cache == SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                            continuous_error_counter++;
+                        else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
+                            continuous_error_counter = 0;
+                        if (continuous_error_counter > 3)
+                        {
+                            console.WriteLn("连续3次发生致命错误，停止重试", ConsoleColor.DarkYellow);
+                            goto quit;
+                        }
+                        else
+                        {
+                            success_counter_cache = SuccessPackageCount;    //记录此次错误的位置
+                            console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
+                            console.ClearInputBuffer();
+                            console.Write("> ", ConsoleColor.DarkYellow);
+                            goto start;
+                        }
+                    }
+                quit:
+                    console.WriteLn("[Error]消息循环线程已退出。排查问题后可使用\"start\"命令尝试重启", ConsoleColor.Red);
+                    console.ClearInputBuffer();
+                    console.Write("> ", ConsoleColor.DarkYellow);
+                }
+            }
+        }
+        /// <summary>
+        /// 总循环。包括消息循环和命令循环
+        /// </summary>
+        public void MainLoop()
+        {
+            object _sync = new object();
+            var wait_for_pause_msgLoop_signal = new ManualResetEvent(true);
+            SuccessPackageCount = 0;
+            //消息循环线程
+            var msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
             bool exit_flag = false;
             //命令循环线程
-            lock (console)
+            while (!exit_flag)
             {
-                while (!exit_flag)
+                console.Write("> ", ConsoleColor.DarkYellow);
+                string cmd = console.BufferedReadLn().Trim();
+                lock (console)
                 {
-                    console.Write(">", ConsoleColor.DarkYellow);
-                    string cmd = Console.ReadLine().Trim();
-                    if (cmd == "pause")
+                    if (cmd == "")
+                        continue;
+                    else if (cmd == "start")
                     {
-                        wait_for_pause_signal.Reset();
+                        if (!msg_loop.IsCompleted)
+                            console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
+                        else
+                        {
+                            msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
+                            console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
+                        }
+                    }
+                    else if (cmd == "pause")
+                    {
+                        wait_for_pause_msgLoop_signal.Reset();
                         console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
                     }
                     else if (cmd == "resume")
                     {
-                        wait_for_pause_signal.Set();
+                        wait_for_pause_msgLoop_signal.Set();
                         console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }
                     else if (cmd == "quit")
@@ -313,7 +369,7 @@ namespace klbotlib
                     else if (cmd == "save")
                     {
                         console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
-                        Modules.ForEach(x => 
+                        Modules.ForEach(x =>
                         {
                             SaveModuleSetup(x);
                             SaveModuleStatus(x);
@@ -328,6 +384,8 @@ namespace klbotlib
                             LoadModuleStatus(x);
                         });
                     }
+                    else if (cmd == "lasterror")
+                        console.WriteLn($"最近一次错误信息：\n{LastException}", ConsoleMessageType.Info);
                     else
                         console.WriteLn($"未知命令：\"{cmd}\"", ConsoleMessageType.Error);
                 }
@@ -338,7 +396,7 @@ namespace klbotlib
 
         //早期(v0.4及更早)的处理函数. 已经弃用
         [Obsolete]
-#pragma warning disable IDE0051 // 删除未使用的私有成员
+#pragma warning disable IDE0051
         private void PaleMutant(Message msg)
 #pragma warning restore IDE0051 // 删除未使用的私有成员
         {
@@ -515,7 +573,7 @@ namespace klbotlib
             if (!module_index_by_id.ContainsKey(id))
                 throw new ModuleMissingException($"对象\"{source}\"试图引用ID为\"{id}\"的模块，但该模块不存在");
         }
-#pragma warning disable IDE0051 // 删除未使用的私有成员
+#pragma warning disable IDE0051
         private void CheckModuleExist<T>(object source, uint index = 0)
 #pragma warning restore IDE0051 // 删除未使用的私有成员
         {

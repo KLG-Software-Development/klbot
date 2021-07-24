@@ -30,24 +30,10 @@ namespace klbot
                     klg = new();
                 TimeModule time_module = new(klg);
                 klg.AddModule(time_module);
-                klg.ListModules();
-                klg.Loop();
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n错误: {ex.Message}");
-                Console.WriteLine($"调用栈: \n{ex.StackTrace}\n");
-                Console.ResetColor();
-
-                if (ex is WebException)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行");
-                    Console.WriteLine("退出中...");
-                    Console.ResetColor();
-                }
-                else if (ex is KLBotInitializationException)
+                if (ex is KLBotInitializationException)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine("KLBot初始化失败。检查KLBot的配置文件和模块配置文件是否正确，以及各个模块是否恰当遵守了模块开发规范");
@@ -84,6 +70,8 @@ namespace klbot
                     }
                 }
             }
+            klg.ListModules();
+            klg.MainLoop();
         }
     }
 

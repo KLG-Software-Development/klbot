@@ -82,7 +82,7 @@ namespace klbotlib
     internal class PathesConfig : Config
     {
         public string ModulesCacheDir = "cache/modules";   //模块私有目录 用来存取模块自己的自定义文件
-        public string ModulesSaveDir = "internal/modules";  //模块存档目录 保存或读取模块配置和模块状态的路径
+        public string ModulesSaveDir = "saves";  //模块存档目录 保存或读取模块配置和模块状态的路径
         public PathesConfig(string modules_cache_dir, string modules_save_dir)
         {
             ModulesCacheDir = modules_cache_dir;
