@@ -27,9 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="KLBotModuleDemo">
-      <HintPath>..\..\KLBotModuleDemo\KLBotModuleDemo\bin\Release\netstandard2.0\KLBotModuleDemo.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\klbotlib\klbotlib.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_UseGlobalSettings="True" /></VisualStudio></ProjectExtensions>
