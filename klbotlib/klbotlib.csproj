@@ -8,12 +8,15 @@
     <Company>KLG Science</Company>
     <Authors>Deleeete</Authors>
     <Version>0.5.2</Version>
-    <PackageId>com.klg.klbotlib</PackageId>
+    <PackageId>KLG.KLBotCoreLib</PackageId>
     <AssemblyVersion>0.5.*</AssemblyVersion>
     <FileVersion>0.5.2</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
     <Deterministic>False</Deterministic>
+    <Description>KLBot机器人核心库。用于KLBot机器人模块开发</Description>
+    <RepositoryUrl></RepositoryUrl>
+    <NeutralLanguage>zh-Hans</NeutralLanguage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -27,7 +30,6 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.Text.Json" Version="5.0.2" />
   </ItemGroup>
 
   <ItemGroup>
