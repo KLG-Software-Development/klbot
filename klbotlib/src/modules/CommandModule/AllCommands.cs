@@ -225,20 +225,19 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override string GetInfo(KLBot bot)
         {
             Process process = Process.GetCurrentProcess();
-            StringBuilder sb = new StringBuilder($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}\r\n");
-            sb.AppendLine($"OS架构：{RuntimeInformation.OSArchitecture}");
+            StringBuilder sb = new StringBuilder($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}\n");
             sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
-            sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}\n");
-
-            sb.AppendLine($"[性能信息]\nCPU使用率：{GetCoreUtilization()}");
-            sb.AppendLine($"可用内存：{GetRAMUtilization()}\n");
-
+            sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
+            sb.AppendLine($"[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
+            sb.AppendLine($"可用内存：{ GetRAMUtilization()}");
             sb.AppendLine($"[进程信息]\n进程架构：{RuntimeInformation.ProcessArchitecture}");
             sb.AppendLine($"当前内存：{process.WorkingSet64.ToMemorySizeString(3)}");
             sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
             sb.AppendLine($"线程数量：{process.Threads.Count}");
-            sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}\n");
-
+            sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}");
+            sb.AppendLine($"[配置信息]");
+            sb.Append(bot.GetListeningGroupListString());
+            sb.Append(bot.GetModuleListString());
             sb.AppendLine("[模块状态]");
             foreach (var module in bot.Modules)
             {
@@ -261,6 +260,8 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
                 }
                 sb.AppendLine();
             }
+            sb.AppendLine("[统计信息]");
+            sb.Append(bot.DiagData.GetSummaryString());
             return sb.ToString();
         }
     }

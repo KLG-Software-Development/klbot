@@ -1,4 +1,6 @@
 ﻿using klbotlib.Internal;
+using System;
+using System.Web;
 
 namespace klbotlib
 {
@@ -20,6 +22,20 @@ namespace klbotlib
             GroupID = group_id;
             TargetID = target_id;
         }
+
+        public string BuildReplyPlainMessageBody(string text)
+        {
+            text = HttpUtility.JavaScriptStringEncode(text);
+            var context = Context;
+            if (context == MessageContext.Group || context == MessageContext.Private)
+                return $"{{\"target\":\"{GroupID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
+            else if (context == MessageContext.Private)
+                return $"{{\"target\":\"{SenderID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
+            else if (context == MessageContext.Temp)
+                return $"{{\"qq\":\"{SenderID}\",\"group\":\"{GroupID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
+            else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
+        }
+
     }
 
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型

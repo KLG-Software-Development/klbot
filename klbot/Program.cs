@@ -2,7 +2,6 @@
 using klbotlib.Exceptions;
 using klbotlib.Modules;
 using System;
-using System.Net;
 using System.Reflection;
 
 namespace klbot
@@ -30,6 +29,8 @@ namespace klbot
                     klg = new();
                 TimeModule time_module = new(klg);
                 klg.AddModule(time_module);
+                Console.WriteLine(klg.GetModuleListString());
+                klg.MainLoop();
             }
             catch (Exception ex)
             {
@@ -49,7 +50,7 @@ namespace klbot
                 }
                 else  //无法处理的未知情况
                 {
-                    if (query_counter_cache == klg.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                    if (query_counter_cache == klg.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                         fatal_failure_counter++;
                     else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
                         fatal_failure_counter = 0;
@@ -62,7 +63,7 @@ namespace klbot
                     }
                     else
                     {
-                        query_counter_cache = klg.SuccessPackageCount;
+                        query_counter_cache = klg.DiagData.SuccessPackageCount;
                         if (klg != null)
                             klg.OnExit();
                         Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
@@ -70,8 +71,6 @@ namespace klbot
                     }
                 }
             }
-            klg.ListModules();
-            klg.MainLoop();
         }
     }
 
