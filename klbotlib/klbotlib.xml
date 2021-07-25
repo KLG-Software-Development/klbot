@@ -1,0 +1,367 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>klbotlib</name>
+    </assembly>
+    <members>
+        <member name="T:klbotlib.Modules.ModuleStatusAttribute">
+            <summary>
+            模块状态Attribute，用来标记模块属性。
+            模块状态用来标记那些决定模块状态的成员，比如某个功能是否开启。
+            只有打上此标记之后，该成员的值才会被Module.ExportStatusDict()保存，且机器人启动或关闭时会自动读取或保存这些成员的值
+            </summary>
+        </member>
+        <member name="T:klbotlib.Modules.ModuleSetupAttribute">
+            <summary>
+            模块配置Attribute，用来标记模块配置。
+            此Attribute用来标记那些决定模块配置的成员，比如特定文件的存取路径。
+            只有打上此标记之后，该成员的值才能被Module.ExportSetupDict()保存
+            </summary>
+        </member>
+        <member name="T:klbotlib.Modules.Module">
+            <summary>
+            消息处理模块基类.
+            这是KLBot功能实现的基本单位
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.ModuleName">
+            <summary>
+            模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名.
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.ModuleID">
+            <summary>
+            模块ID. 是模块对象的唯一标识. 等于“模块类名[在同类模块中的排位]”
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.IsTransparent">
+            <summary>
+            决定此模块是否是透明模块(默认为否).
+            透明模块处理消息之后会继续向后传递，以使得Bot内部在它之后的模块能继续处理这条消息.
+            非透明模块处理消息之后会销毁消息.
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.UseSignature">
+            <summary>
+            决定KLBot实例发送此模块的输出时，是否在前面自动加上模块签名"[模块ID]"（默认开启）
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.Module.Filter(klbotlib.Message)">
+            <summary>
+            过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
+            当模块总开关开启时，结果为true的消息会被处理，结果为false的函数会忽略.
+            </summary>
+            <param name="msg">待判断消息</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.Processor(klbotlib.Message)">
+            <summary>
+            处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
+            </summary>
+            <param name="msg">待处理消息</param>
+            <returns>用字符串表示的处理结果. 如果你的命令不输出处理结果，返回null或空字符串</returns>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ShouldProcess(klbotlib.Message)">
+            <summary>
+            综合过滤器和开关的影响, 返回一条消息是否应被处理
+            </summary>
+            <param name="msg">待判断消息</param>
+        </member>
+        <member name="P:klbotlib.Modules.Module.HostBot">
+            <summary>
+            模块所属的Bot
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.Enabled">
+            <summary>
+            模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ImportDict(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            从字典中导入模块属性(ModuleProperty)
+            </summary>
+            <param name="status_dict">要导入的属性字典</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ExportStatusDict">
+            <summary>
+            把模块的所有模块状态(ModuleStatus)导出到字典
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ExportSetupDict">
+            <summary>
+            把模块的所有模块配置(ModuleStatus)导出到字典
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.Module.SaveFileAsString(System.String,System.String)">
+            <summary>
+            保存文本到模块私有目录
+            </summary>
+            <param name="relative_path">对模块私有目录的相对路径</param>
+            <param name="text">保存的内容</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.SaveFileAsBinary(System.String,System.Byte[])">
+            <summary>
+            保存二进制到模块私有目录
+            </summary>
+            <param name="relative_path">对模块私有目录的相对路径</param>
+            <param name="bin">保存的内容</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ReadFileAsString(System.String)">
+            <summary>
+            从模块私有目录里读取文本
+            </summary>
+            <param name="relative_path">要读取的文件对模块文件夹的相对路径</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ReadFileAsBinary(System.String)">
+            <summary>
+            从模块私有目录里读取二进制
+            </summary>
+            <param name="relative_path">要读取的文件对模块文件夹的相对路径</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.RestoreType(System.Type,System.Object)">
+            <summary>
+            NewtonSoft.JsonConvert会把一切整数变成int64，一切浮点数变成double
+            丫这么整虽然源码赋值没事(会自动转换)，但反射赋值时会出问题，所以需要手动恢复原本的类型
+            v0.5更新：加入自动用泛型反序列化进一步处理其他未知类型的功能
+            </summary>
+            <param name="original_type">原始类型</param>
+            <param name="value">待处理对象</param>
+            <returns>转换为原始类型后的对象（如果无需转换则原样返回）</returns>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ExportMemberWithAttribute(System.Type)">
+            <summary>
+            把模块中的所有含有attribute_type标记的成员导出到字典
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.Module.ToString">
+            <summary>
+            ToString()函数返回模块的ID
+            </summary>
+        </member>
+        <member name="T:klbotlib.Modules.SingleTypeModule`1">
+            <summary>
+            方便实现只处理单个种类的Message的模块的基类
+            如果你的模块只处理单种消息（例如只处理文本消息），继承这玩意可以少写很多类型匹配的废话
+            </summary>
+            <typeparam name="T">模块所处理的特定消息类型</typeparam>
+        </member>
+        <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(`0)">
+            <summary>
+            过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
+            </summary>
+            <param name="msg">待判断消息</param>
+        </member>
+        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(`0)">
+            <summary>
+            处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
+            </summary>
+            <param name="msg">待处理消息</param>
+            <returns>用字符串表示的处理结果</returns>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.SimpleActionCommand">
+            <summary>
+            执行型通用任务的命令基类-无参数
+            </summary>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.ActionCommand`1">
+            <summary>
+            执行通用任务的命令基类-有参数
+            </summary>
+            <typeparam name="T">参数的类型</typeparam>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.InfoCommand">
+            <summary>
+            返回信息的命令 的基类
+            </summary>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.SwitchCommand">
+            <summary>
+            开关型命令的基类. 统一调用方法：^[命令字符串]$
+            </summary>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.AssignmentCommand`1">
+            <summary>
+            赋值型命令的基类. 统一调用方法：^[命令字符串] 参数$
+            </summary>
+            <typeparam name="T">参数的类型</typeparam>
+        </member>
+        <member name="M:klbotlib.Modules.CommandModuleNamespace.Command.IsCmd(System.String)">
+            <summary>
+            判断特定字符串是否在调用此命令
+            </summary>
+            <param name="cmd">待判断字符串</param>
+            <returns></returns>
+        </member>
+        <member name="P:klbotlib.Modules.CommandModuleNamespace.Command.Format">
+            <summary>
+            命令的使用格式, 类似'pti [time]'
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.CommandModuleNamespace.Command.Usage">
+            <summary>
+            命令的作用
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.CommandModuleNamespace.Command.CommandTask(klbotlib.KLBot,klbotlib.MessagePlain,System.String)">
+            <summary>
+            执行命令的操作
+            </summary>
+            <param name="bot">需要执行的机器人</param>
+            <param name="cmd_msg">命令的原始文本消息对象</param>
+            <param name="cmd_str">命令的文本(不含前缀)</param>
+            <returns></returns>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Command`1">
+            <summary>
+            Command类型的泛型版本. 用于命令的使能对象不是/不限于KLBot的情况(因为没用用到，这个类暂时处于零维护零测试状态)
+            </summary>
+            <typeparam name="T">执行指令的对象类型</typeparam>
+        </member>
+        <member name="M:klbotlib.Modules.CommandModuleNamespace.Command`1.IsCmd(System.String)">
+            <summary>
+            判断特定字符串是否在调用此命令
+            </summary>
+            <param name="cmd">待判断字符串</param>
+            <returns></returns>
+        </member>
+        <member name="P:klbotlib.Modules.CommandModuleNamespace.Command`1.Format">
+            <summary>
+            命令的使用格式, 类似'pti [time]'
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.CommandModuleNamespace.Command`1.Usage">
+            <summary>
+            命令的作用
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.CommandModuleNamespace.Command`1.Task(klbotlib.KLBot,`0,klbotlib.MessagePlain,System.String)">
+            <summary>
+            执行命令的操作
+            </summary>
+            <param name="host">命令执行的对象</param>
+            <param name="cmd_msg">命令的原始文本消息对象</param>
+            <param name="cmd_str">命令的文本(不含前缀)</param>
+            <returns></returns>
+        </member>
+        <member name="T:klbotlib.Modules.FuckModule">
+            <summary>
+            嘴臭模块
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.FuckModule.IsTagMe">
+            <summary>
+            TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.FuckModule.IsCascadeMode">
+            <summary>
+            串联模式 开启时嘴臭模块会输出一系列长嘴臭句子. 否则将输出单句.
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.FuckModule.TerminateProbability">
+            <summary>
+            生成连续嘴臭句子时的终止概率
+            </summary>
+        </member>
+        <member name="T:klbotlib.Internal.JMessage">
+            <summary>
+            直接从JSON解析的消息对象
+            </summary>
+        </member>
+        <member name="T:klbotlib.Internal.JMessagePackage">
+            <summary>
+            直接从JSON解析出的消息包对象
+            </summary>
+        </member>
+        <member name="M:klbotlib.Internal.NetworkHelper.PostJSON(System.String,System.String)">
+            <summary>
+            POST一条JSON字符串到给定URL
+            </summary>
+            <param name="url">目标url</param>
+            <param name="json_string">JSON字符串</param>
+        </member>
+        <member name="M:klbotlib.KLBot.AddTarget(System.Int64)">
+            <summary>
+            把给定群号添加到监听列表
+            </summary>
+            <param name="target">需要添加的群号</param>
+        </member>
+        <member name="M:klbotlib.KLBot.AddTarget(System.Collections.Generic.IEnumerable{System.Int64})">
+            <summary>
+            把一组群号批量添加到监听列表
+            </summary>
+            <param name="targets">需要添加的群号集合</param>
+        </member>
+        <member name="M:klbotlib.KLBot.ModulePrint(System.Object,System.String,Gleee.Consoleee.ConsoleMessageType,System.String)">
+            <summary>
+            向控制台打印字符串。打印内容会自动包含消息源头的对象的名称
+            </summary>
+            <param name="source">消息来源. 此处应传入模块自身</param>
+            <param name="message">需要向控制台打印的消息</param>
+            <param name="msg_type">错误级别. 分为无、信息、警告、错误四种. 默认为信息. </param>
+        </member>
+        <member name="M:klbotlib.KLBot.GetModuleCacheDir(klbotlib.Modules.Module)">
+            <summary>
+            获取模块的私有文件夹路径.
+            按照规范，模块存取自己的文件都应使用这个目录
+            </summary>
+            <param name="module">模块对象</param>
+        </member>
+        <member name="M:klbotlib.KLBot.GetModuleStatusPath(klbotlib.Modules.Module)">
+            <summary>
+            获取模块的ModuleStatus存档文件路径
+            </summary>
+            <param name="module">模块</param>
+        </member>
+        <member name="M:klbotlib.KLBot.GetModuleSetupPath(klbotlib.Modules.Module)">
+            <summary>
+            获取模块的ModuleSetup配置文件路径
+            </summary>
+            <param name="module">模块</param>
+        </member>
+        <member name="M:klbotlib.KLBot.ReplyMessagePlain(klbotlib.Message,System.String)">
+            <summary>
+            回复给定消息.
+            群组消息(MessageContext.Group)将回复至群组内，临时消息(MessageContext.Temp)和私聊(MessageContext.Private)会回复给发送者.
+            </summary>
+            <param name="origin_msg">待回复的原始消息</param>
+            <param name="text">回复的内容. 暂时只实现了回复文本</param>
+        </member>
+        <member name="M:klbotlib.KLBot.FetchMessages">
+            <summary>
+            从服务器获取新消息并进行初步过滤
+            </summary>
+        </member>
+        <member name="M:klbotlib.KLBot.ProcessMessages(System.Collections.Generic.List{klbotlib.Message})">
+            <summary>
+            用默认消息处理函数依次处理消息列表
+            </summary>
+            <param name="msgs">待处理消息列表</param>
+            <returns>已处理的消息数量</returns>
+        </member>
+        <member name="M:klbotlib.KLBot.ProcessMessages(System.Collections.Generic.List{klbotlib.Message},System.Action{klbotlib.Message})">
+            <summary>
+            用processor依次处理消息列表。返回非空消息的个数
+            </summary>
+            <param name="msgs">待处理消息列表</param>
+            <param name="processor">消息处理函数</param>
+            <returns>已处理的消息数量</returns>
+        </member>
+        <member name="M:klbotlib.KLBot.MsgLoop(System.Threading.ManualResetEvent)">
+            <summary>
+            消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
+            </summary>
+            <param name="success_count">已成功处理的数据包个数</param>
+        </member>
+        <member name="M:klbotlib.KLBot.MainLoop">
+            <summary>
+            总循环。包括消息循环和命令循环
+            </summary>
+        </member>
+        <member name="T:klbotlib.MessageContext">
+            <summary>
+            消息上下文枚举，包括私聊、临时、群聊
+            </summary>
+        </member>
+    </members>
+</doc>
