@@ -29,6 +29,8 @@ namespace klbot
                     klg = new();
                 TimeModule time_module = new(klg);
                 klg.AddModule(time_module);
+                HelloWorldModule hello_module = new(klg);
+                klg.AddModule(hello_module);
                 Console.WriteLine(klg.GetModuleListString());
                 klg.MainLoop();
             }
