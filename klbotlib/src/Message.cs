@@ -72,9 +72,9 @@ namespace klbotlib
                     case "Plain":
                         if (ret == null)    //运行至今未确定主类型，意味着这是第一个，所以构建相应的对象。其他情况逻辑相同。
                             ret = new MessagePlain(msg_package.sender.id, -1, msg.text.Trim());
-                        else if (is_after_at)           //专门处理@后面无缘无故冒出来的傻逼空格
+                        else if (is_after_at)           //意味着之前还有别的Plain消息，而且上一条子消息是At消息。用Substring()处理@后面无缘无故冒出来的傻逼空格
                             ((MessagePlain)ret).AppendText(msg.text.Substring(1));
-                        else                //意味着之前还有别的Plain消息，则简单将文本追加到已有对象的文本中
+                        else                            //意味着之前还有别的Plain消息。则简单将文本追加到已有对象的文本中
                             ((MessagePlain)ret).AppendText(msg.text);
                         break;
                     //TODO:暂时还没处理文本以外的其他类型

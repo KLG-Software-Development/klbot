@@ -137,13 +137,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override string InfoDescription => "可用命令和帮助";
         public override string GetInfo(KLBot bot)
         {
-            Version exe_version = Assembly.GetEntryAssembly().GetName().Version;
-            Version lib_version = Info.LibInfo.GetLibVersion();
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"KLBot via mirai");
-            sb.AppendLine($"Build {lib_version.ToKLGBuildString()}");
-            sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}");
-            sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\n");
             sb.AppendLine("命令列表: ");
             foreach (Command cmd in bot.GetModule<CommandModule>(this).Cmds)
             {
@@ -222,12 +216,20 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
                 return $"暂时不支持获取此平台下的内存占用信息";
         }
 
-        public override string CommandString => "performance";
+        public override string CommandString => "info";
         public override string InfoDescription => "硬件和软件信息";
         public override string GetInfo(KLBot bot)
         {
             Process process = Process.GetCurrentProcess();
-            StringBuilder sb = new StringBuilder($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}\n");
+            Version exe_version = Assembly.GetEntryAssembly().GetName().Version;
+            Version lib_version = Info.LibInfo.GetLibVersion();
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"KLBot via mirai");
+            sb.AppendLine($"Build {lib_version.ToKLGBuildString()}");
+            sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}");
+            sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\n");
+
+            sb.AppendLine($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
             sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
             sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
             sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
@@ -251,7 +253,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             StringBuilder sb = new StringBuilder($"[配置信息]\n");
             sb.Append(bot.GetListeningGroupListString());
             sb.AppendLine("\n[模块信息]");
-            sb.Append(bot.GetModuleChainString());
+            sb.Append(bot.GetModuleChainString() + "\n");
             sb.AppendLine(bot.GetModuleStatusString());
             sb.AppendLine("\n[统计信息]");
             sb.Append(bot.DiagData.GetSummaryString());
