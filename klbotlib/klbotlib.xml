@@ -207,10 +207,10 @@
             <returns>用字符串表示的处理结果</returns>
         </member>
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(klbotlib.Message)">
-            <inheritdoc/>
+            <Inheritdoc/>
         </member>
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(klbotlib.Message)">
-            <inheritdoc/>
+            <Inheritdoc/>
         </member>
         <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.SimpleActionCommand">
             <summary>
