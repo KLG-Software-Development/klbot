@@ -70,7 +70,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
 
         public sealed override AuthorType AuthorityRequirment => AuthorType.野人;
         public sealed override string Format => CommandString;
-        public sealed override string Usage => $"获取{InfoDescription}信息";
+        public sealed override string Usage => $"获取{InfoDescription}";
         public sealed override bool IsCmd(string cmd) => cmd == CommandString;
         public sealed override string CommandTask(KLBot bot, MessagePlain _, string __) => GetInfo(bot);
     }
@@ -137,13 +137,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override string InfoDescription => "可用命令和帮助";
         public override string GetInfo(KLBot bot)
         {
-            Version exe_version = Assembly.GetEntryAssembly().GetName().Version;
-            Version lib_version = Info.LibInfo.GetLibVersion();
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"KLBot via mirai");
-            sb.AppendLine($"Build {lib_version.ToKLGBuildString()}");
-            sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}");
-            sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\n");
             sb.AppendLine("命令列表: ");
             foreach (Command cmd in bot.GetModule<CommandModule>(this).Cmds)
             {
@@ -153,7 +147,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         }
     }
     [DefaultCommand]
-    internal class StatusCmd : InfoCommand
+    internal class InfoCmd : InfoCommand
     {
         private readonly Regex multi_white = new Regex(@"\s+");
         private string GetCoreUtilization()
@@ -184,7 +178,8 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
                 string load = output.Split('=')[1];
                 return $"{load}%";
             }
-            else return $"暂时不支持获取此平台下的CPU占用信息";
+            else 
+                return $"暂时不支持获取此平台下的CPU占用信息";
 
         }
         private string GetRAMUtilization()
@@ -217,15 +212,24 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
                 string total = (Convert.ToInt64(outputs[1].Split('=')[1]) * 1024L).ToMemorySizeString(1);
                 return $"{available}/{total}";
             }
-            else return $"暂时不支持获取此平台下的内存占用信息";
-
+            else 
+                return $"暂时不支持获取此平台下的内存占用信息";
         }
-        public override string CommandString => "status";
-        public override string InfoDescription => "系统和Bot状态";
+
+        public override string CommandString => "info";
+        public override string InfoDescription => "硬件和软件信息";
         public override string GetInfo(KLBot bot)
         {
             Process process = Process.GetCurrentProcess();
-            StringBuilder sb = new StringBuilder($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}\n");
+            Version exe_version = Assembly.GetEntryAssembly().GetName().Version;
+            Version lib_version = Info.LibInfo.GetLibVersion();
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"KLBot via mirai");
+            sb.AppendLine($"Build {lib_version.ToKLGBuildString()}");
+            sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}");
+            sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}\n");
+
+            sb.AppendLine($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
             sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
             sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
             sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
@@ -235,23 +239,26 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
             sb.AppendLine($"线程数量：{process.Threads.Count}");
             sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}");
-            sb.AppendLine($"\n[配置信息]");
+            return sb.ToString();
+        }
+    }
+    [DefaultCommand]
+    internal class StatusCmd : InfoCommand
+    {
+        public override string CommandString => "status";
+        public override string InfoDescription => "KLBot详细状态";
+        public override string GetInfo(KLBot bot)
+        {
+            Process process = Process.GetCurrentProcess();
+            StringBuilder sb = new StringBuilder($"[配置信息]\n");
             sb.Append(bot.GetListeningGroupListString());
-            sb.Append(bot.GetModuleChainString());
-            sb.AppendLine("\n[模块状态]");
+            sb.AppendLine("\n[模块信息]");
+            sb.Append(bot.GetModuleChainString() + "\n");
             sb.AppendLine(bot.GetModuleStatusString());
             sb.AppendLine("\n[统计信息]");
             sb.Append(bot.DiagData.GetSummaryString());
             return sb.ToString();
         }
-    }
-    [DefaultCommand]
-    internal class GCCmd : SimpleActionCommand
-    {
-        public override AuthorType AuthorityRequirment => AuthorType.开发者;
-        public override string CommandString => "gc";
-        public override string ActionDescription => "手动GC回收内存";
-        public override void Action(KLBot bot, MessagePlain _) => GC.Collect();
     }
     [DefaultCommand]
     internal class ReloadCmd : SimpleActionCommand
@@ -290,14 +297,6 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override int GetBotProperty(KLBot bot) => bot.PollingTimeInterval;
         public override void SetBotProperty(KLBot bot, int value) => bot.PollingTimeInterval = value;
         public override bool TryParseCmdStringValue(string value_string, out int value) => int.TryParse(value_string, out value);
-    }
-    [DefaultCommand]
-    internal class ShutdownCmd : SwitchCommand
-    {
-        public override string SwitchName => "KLBot总开关";
-        public override string Format => "shutdown";
-        public override bool GetBotProperty(KLBot bot) => bot.IsLoopOn;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.IsLoopOn = value;
     }
     //嘴臭模块命令
     [DefaultCommand]

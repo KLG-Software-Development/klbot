@@ -425,7 +425,7 @@ namespace klbotlib
                     ReplyMessagePlain(msg_plain, cmdmod.Processor(msg_plain));
                 else if (fuckmod.ShouldProcess(msg_plain))
                     ReplyMessagePlain(msg_plain, fuckmod.Processor(msg_plain));
-                else if (msg.Context != MessageContext.Group || msg.TargetID == Config.QQ.SelfID)
+                else if (msg.Context != MessageContext.Group || msg.TargetID.Contains(Config.QQ.SelfID))
                     ReplyMessagePlain(msg_plain, chatmod.Processor(msg_plain));
             }
         }
@@ -582,7 +582,7 @@ namespace klbotlib
                 {
                     if (module_property.ContainsAttribute(typeof(ModuleStatusAttribute)))
                     {
-                        sb.AppendLine($"{module_property.Name}：{module_property.GetValue(module)}");
+                        sb.AppendLine($" {module_property.Name}={module_property.GetValue(module)}");
                     }
                 }
                 var module_fields = module.GetType().GetFields_All().Reverse();
@@ -590,7 +590,7 @@ namespace klbotlib
                 {
                     if (module_field.ContainsAttribute(typeof(ModuleStatusAttribute)))
                     {
-                        sb.AppendLine($"{module_field.Name}：{module_field.GetValue(module)}");
+                        sb.AppendLine($" {module_field.Name}={module_field.GetValue(module)}");
                     }
                 }
             }
