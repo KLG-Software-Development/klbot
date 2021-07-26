@@ -34,8 +34,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Ref_Only|AnyCPU'">
     <DocumentationFile>C:\A\Programming\Projects\klbot\klbotlib\klbotlib.xml</DocumentationFile>
     <PackageId>KLG.KLBotCoreLib-Ref-Only</PackageId>
+    <Optimize>true</Optimize>
     <Description>KLBot机器人核心库。此程序集为reference only，不包含可执行代码，仅用于KLBot机器人模块开发，无法用于编写可执行程序。</Description>
     <ProduceOnlyReferenceAssembly>true</ProduceOnlyReferenceAssembly>
+    <OutputPath>bin\Release Ref_Only\</OutputPath>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,7 +53,4 @@
       <Private>true</Private>
     </Reference>
   </ItemGroup>
-
-  <ProjectExtensions><VisualStudio><UserProperties BuildVersion_StartDate="" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_UseGlobalSettings="True" /></VisualStudio></ProjectExtensions>
-
 </Project>

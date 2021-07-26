@@ -7,7 +7,7 @@ namespace klbotlib.Modules
     /// <summary>
     /// 嘴臭模块
     /// </summary>
-    public class FuckModule : SingleTypeModule<MessagePlain>
+    internal class FuckModule : SingleTypeModule<MessagePlain>
     {
         private readonly RNGCryptoServiceProvider ro = new RNGCryptoServiceProvider();
         [ModuleSetup]

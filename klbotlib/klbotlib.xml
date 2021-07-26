@@ -136,29 +136,29 @@
         </member>
         <member name="M:klbotlib.Modules.Module.SaveFileAsString(System.String,System.String)">
             <summary>
-            保存文本到模块私有目录
+            保存文本到模块缓存目录
             </summary>
-            <param name="relative_path">对模块私有目录的相对路径</param>
+            <param name="relative_path">对模块缓存目录的相对路径</param>
             <param name="text">保存的内容</param>
         </member>
         <member name="M:klbotlib.Modules.Module.SaveFileAsBinary(System.String,System.Byte[])">
             <summary>
-            保存二进制到模块私有目录
+            保存二进制到模块缓存目录
             </summary>
-            <param name="relative_path">对模块私有目录的相对路径</param>
+            <param name="relative_path">对模块缓存目录的相对路径</param>
             <param name="bin">保存的内容</param>
         </member>
         <member name="M:klbotlib.Modules.Module.ReadFileAsString(System.String)">
             <summary>
-            从模块私有目录里读取文本
+            从模块缓存目录里读取文本
             </summary>
-            <param name="relative_path">要读取的文件对模块文件夹的相对路径</param>
+            <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
         </member>
         <member name="M:klbotlib.Modules.Module.ReadFileAsBinary(System.String)">
             <summary>
-            从模块私有目录里读取二进制
+            从模块缓存目录里读取二进制
             </summary>
-            <param name="relative_path">要读取的文件对模块文件夹的相对路径</param>
+            <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
         </member>
         <member name="M:klbotlib.Modules.Module.RestoreType(System.Type,System.Object)">
             <summary>
@@ -270,32 +270,6 @@
             Command类型的泛型版本. 用于命令的使能对象不是/不限于KLBot的情况(因为没用用到，这个类暂时处于零维护零测试状态)
             </summary>
             <typeparam name="T">执行指令的对象类型</typeparam>
-        </member>
-        <member name="M:klbotlib.Modules.CommandModuleNamespace.Command`1.IsCmd(System.String)">
-            <summary>
-            判断特定字符串是否在调用此命令
-            </summary>
-            <param name="cmd">待判断字符串</param>
-            <returns></returns>
-        </member>
-        <member name="P:klbotlib.Modules.CommandModuleNamespace.Command`1.Format">
-            <summary>
-            命令的使用格式, 类似'pti [time]'
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.CommandModuleNamespace.Command`1.Usage">
-            <summary>
-            命令的作用
-            </summary>
-        </member>
-        <member name="M:klbotlib.Modules.CommandModuleNamespace.Command`1.Task(klbotlib.KLBot,`0,klbotlib.MessagePlain,System.String)">
-            <summary>
-            执行命令的操作
-            </summary>
-            <param name="host">命令执行的对象</param>
-            <param name="cmd_msg">命令的原始文本消息对象</param>
-            <param name="cmd_str">命令的文本(不含前缀)</param>
-            <returns></returns>
         </member>
         <member name="T:klbotlib.Modules.FuckModule">
             <summary>

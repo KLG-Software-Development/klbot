@@ -139,7 +139,7 @@ namespace klbotlib.Modules
         /// 从字典中导入模块属性(ModuleProperty)
         /// </summary>
         /// <param name="status_dict">要导入的属性字典</param>
-        public void ImportDict(Dictionary<string, object> status_dict)
+        internal void ImportDict(Dictionary<string, object> status_dict)
         {
             Type type = GetType();
             foreach (var kvp in status_dict)
@@ -178,18 +178,18 @@ namespace klbotlib.Modules
         /// <summary>
         /// 把模块的所有模块状态(ModuleStatus)导出到字典
         /// </summary>
-        public Dictionary<string, object> ExportStatusDict() => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
+        internal Dictionary<string, object> ExportStatusDict() => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
         /// <summary>
         /// 把模块的所有模块配置(ModuleStatus)导出到字典
         /// </summary>
-        public Dictionary<string, object> ExportSetupDict() => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
+        internal Dictionary<string, object> ExportSetupDict() => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
 
 
-        //存读模块自定义文件
+        //存读模块自定义文件的标准方法
         /// <summary>
-        /// 保存文本到模块私有目录
+        /// 保存文本到模块缓存目录
         /// </summary>
-        /// <param name="relative_path">对模块私有目录的相对路径</param>
+        /// <param name="relative_path">对模块缓存目录的相对路径</param>
         /// <param name="text">保存的内容</param>
         public void SaveFileAsString(string relative_path, string text)
         {
@@ -200,9 +200,9 @@ namespace klbotlib.Modules
             File.WriteAllText(path, text);
         }
         /// <summary>
-        /// 保存二进制到模块私有目录
+        /// 保存二进制到模块缓存目录
         /// </summary>
-        /// <param name="relative_path">对模块私有目录的相对路径</param>
+        /// <param name="relative_path">对模块缓存目录的相对路径</param>
         /// <param name="bin">保存的内容</param>
         public void SaveFileAsBinary(string relative_path, byte[] bin)
         {
@@ -213,9 +213,9 @@ namespace klbotlib.Modules
             File.WriteAllBytes(path, bin);
         }
         /// <summary>
-        /// 从模块私有目录里读取文本
+        /// 从模块缓存目录里读取文本
         /// </summary>
-        /// <param name="relative_path">要读取的文件对模块文件夹的相对路径</param>
+        /// <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
         public string ReadFileAsString(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
@@ -228,9 +228,9 @@ namespace klbotlib.Modules
             return File.ReadAllText(path);
         }
         /// <summary>
-        /// 从模块私有目录里读取二进制
+        /// 从模块缓存目录里读取二进制
         /// </summary>
-        /// <param name="relative_path">要读取的文件对模块文件夹的相对路径</param>
+        /// <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
         public byte[] ReadFileAsBinary(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
@@ -303,7 +303,7 @@ namespace klbotlib.Modules
         /// 检查此模块的附加情况是否与预期相同。如果没有将抛出异常
         /// </summary>
         /// <param name="expected">预期附加情况</param>
-        public void AssertAttachedStatus(bool expected)
+        private void AssertAttachedStatus(bool expected)
         {
             if (expected && !IsAttached)   //期望已经附加但未附加
             {
