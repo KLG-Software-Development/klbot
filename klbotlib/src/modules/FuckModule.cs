@@ -33,8 +33,6 @@ namespace klbotlib.Modules
         [ModuleStatus]
         public int MaximumLength { get; set; } = 20;
 
-        public FuckModule(KLBot bot) : base(bot) { }
-
         private string Pick(string[] a) => a[ro.Next(a.Length)];
         private string SingleSentence()
         {

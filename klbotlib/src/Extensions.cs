@@ -7,7 +7,23 @@ using System.Security.Cryptography;
 
 namespace klbotlib
 {
-    public static class CryptoExtension
+    /// <summary>
+    /// Version扩展
+    /// </summary>
+    public static class VersionExtension
+    {
+        /// <summary>
+        /// 从版本号计算KLG标准的Build编号
+        /// </summary>
+        /// <param name="version">版本号</param>
+        /// <returns>KLG标准的Build编号</returns>
+        public static string ToKLGBuildString(this Version version)
+        {
+            TimeSpan seconds = new TimeSpan(0, 0, version.Revision * 2);
+            return version.Build + "_" + seconds.ToString("hhmm");
+        }
+    }
+    internal static class CryptoExtension
     {
         public static int Next(this RNGCryptoServiceProvider ro)
         {
@@ -29,7 +45,7 @@ namespace klbotlib
             return BitConverter.ToInt32(buffer, 0) % max + min;
         }
     }
-    public static class DictionaryExtension
+    internal static class DictionaryExtension
     {
         public static byte[] Serialize(this Dictionary<string, object> dict)
         {
@@ -49,15 +65,7 @@ namespace klbotlib
             }
         }
     }
-    public static class VersionExtension
-    {
-        public static string ToKLGBuildString(this Version version)
-        {
-            TimeSpan seconds = new TimeSpan(0, 0, version.Revision * 2);
-            return version.Build + "_" +seconds.ToString("hhmm");
-        }
-    }
-    public static class UnitStringExtension
+    internal static class UnitStringExtension
     {
         //Long bytes -> memory unit
         private static readonly string[] mem_units = new string[] { "B", "KB", "MB", "GB" }; 
@@ -99,7 +107,7 @@ namespace klbotlib
             return value.ToString($"f{decimals}") + time_units[unit_index];
         }
     }
-    public static class TypeExtension
+    internal static class TypeExtension
     {
         public static Type GetRootBaseType(this Type type)
         {
@@ -119,7 +127,7 @@ namespace klbotlib
         public static FieldInfo[] GetFields_All(this Type type)
             => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
     }
-    public static class MemberInfoExtension
+    internal static class MemberInfoExtension
     {
         public static bool ContainsAttribute(this MemberInfo info, Type attribute_type) => Attribute.GetCustomAttribute(info, attribute_type) != null;
     }

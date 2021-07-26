@@ -16,14 +16,35 @@ namespace klbotlib.Modules
     /// </summary>
     public abstract class Module
     {
+        //后台变量
+        private KLBot host_bot;
+        private string module_id;
+        private int module_index = -1;
+
         /// <summary>
-        /// 模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名.
+        /// 模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名。
         /// </summary>
-        public string ModuleName { get => GetType().Name; }
+        public string ModuleName { get; }
+        /// <summary>
+        /// 模块索引。等于模块在宿主KLBot链条中的索引
+        /// </summary>
+        public int ModuleIndex
+        {
+            get { AssertAttachedStatus(true); return module_index; }
+            private set => module_index = value;
+        }
         /// <summary>
         /// 模块ID. 是模块对象的唯一标识. 等于“模块类名[在同类模块中的排位]”
         /// </summary>
-        public string ModuleID { get; set; }
+        public string ModuleID 
+        {
+            get { AssertAttachedStatus(true); return module_id; }
+            private set => module_id = value; 
+        }
+        /// <summary>
+        /// 返回此模块是否已经被附加到宿主KLBot上
+        /// </summary>
+        public bool IsAttached { get; private set; } = false;
         /// <summary>
         /// 决定此模块是否是透明模块(默认为否).
         /// 透明模块处理消息之后会继续向后传递，以使得Bot内部在它之后的模块能继续处理这条消息.
@@ -52,24 +73,66 @@ namespace klbotlib.Modules
         /// <param name="msg">待判断消息</param>
         public bool ShouldProcess(Message msg) => Enabled && Filter(msg);
         /// <summary>
-        /// 模块所属的Bot
+        /// 模块所附加到的宿主KLBot
         /// </summary>
-        public KLBot HostBot { get; }
+        public KLBot HostBot 
+        { 
+            get { AssertAttachedStatus(true); return host_bot; }
+            private set => host_bot = value;
+        }
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
         /// </summary>
-        [ModuleStatus]    //模块属性Attribute. 只有打上这个标记的属性能被Module.ImportPropertiesDict()和Module.ExportPropertiesDict()读取或保存.
+        [ModuleStatus]
         public bool Enabled { get; set; } = true;
 
-        public Module(KLBot host_bot)
+        /// <summary>
+        /// 构造一个模块实例。这个实例不会附加到任何宿主KLBot中
+        /// </summary>
+        public Module() => ModuleName = GetType().Name;
+
+        /// <summary>
+        /// 模块打印消息到控制台的标准方法
+        /// </summary>
+        /// <param name="message">模块要打印消息的内容</param>
+        /// <param name="msg_type">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
+        /// <param name="prefix">要在消息类型标识前附上的内容</param>
+        public void ModulePrint(string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "") 
+            => HostBot.ObjectPrint(this, message, msg_type, prefix);
+        /// <summary>
+        /// 获取宿主KLBot上其他模块的标准方法。根据模块类型和索引，从宿主KLBot处获取模块实例
+        /// </summary>
+        /// <typeparam name="T">目标模块的类型</typeparam>
+        /// <param name="index">目标模块在同类型模块中的索引。默认为0</param>
+        /// <returns>获取到的模块实例</returns>
+        public T GetModule<T>(int index = 0) where T : Module => HostBot.GetModule<T>(this, index);
+        /// <summary>
+        /// 将模块附加到指定的KLBot实例上
+        /// </summary>
+        /// <param name="host_bot">目标宿主KLBot。此参数不能是null</param>
+        public void AttachTo(KLBot host_bot)
         {
-            HostBot = host_bot;
+            AssertAttachedStatus(false);
+            HostBot = host_bot ?? throw new ArgumentNullException("附加的目标宿主KLBot为null，因此无法初始化模块");
+            IsAttached = true;
+            ModuleIndex = host_bot.GetModuleCountByName(ModuleName);     //模块索引 = 在同类模块中的索引
+            ModuleID = host_bot.CalcModuleID(ModuleName, ModuleIndex);   //通过调用HostBot中的模块ID计算算法，确保只需要更新CalcModuleID()函数能够保证一致性
+            host_bot.AddModule(this);
+        }
+        /// <summary>
+        /// 将模块从当前宿主KLBot上分离
+        /// </summary>
+        public void Detach()
+        {
+            AssertAttachedStatus(true);
+            host_bot.RemoveModule(ModuleID);
+            HostBot = null;
+            ModuleIndex = -1;
+            ModuleID = null;
+            IsAttached = false;
         }
 
-        //打印消息到控制台的标准方法
-        public void ModulePrint(string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "") 
-            => HostBot.ModulePrint(this, message, msg_type, prefix);
 
         //配置和状态的存读档
         /// <summary>
@@ -131,9 +194,9 @@ namespace klbotlib.Modules
         public void SaveFileAsString(string relative_path, string text)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
-            HostBot.ModulePrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
             if (File.Exists(path))
-                HostBot.ModulePrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
+                HostBot.ObjectPrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
             File.WriteAllText(path, text);
         }
         /// <summary>
@@ -144,9 +207,9 @@ namespace klbotlib.Modules
         public void SaveFileAsBinary(string relative_path, byte[] bin)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
-            HostBot.ModulePrint(this, $"Saving \"{Path.GetFileName(path)}\" to \"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"Saving \"{Path.GetFileName(path)}\" to \"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
             if (File.Exists(path))
-                HostBot.ModulePrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
+                HostBot.ObjectPrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
             File.WriteAllBytes(path, bin);
         }
         /// <summary>
@@ -156,10 +219,10 @@ namespace klbotlib.Modules
         public string ReadFileAsString(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
-            HostBot.ModulePrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
-                HostBot.ModulePrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
                 throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
             }
             return File.ReadAllText(path);
@@ -171,10 +234,10 @@ namespace klbotlib.Modules
         public byte[] ReadFileAsBinary(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
-            HostBot.ModulePrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
-                HostBot.ModulePrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
                 throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
             }
             return File.ReadAllBytes(path);
@@ -237,9 +300,22 @@ namespace klbotlib.Modules
             return properties_dict;
         }
         /// <summary>
-        /// ToString()函数返回模块的ID
+        /// 检查此模块的附加情况是否与预期相同。如果没有将抛出异常
         /// </summary>
-        public override string ToString() => ModuleID;
+        /// <param name="expected">预期附加情况</param>
+        public void AssertAttachedStatus(bool expected)
+        {
+            if (expected && !IsAttached)   //期望已经附加但未附加
+            {
+                throw new Exception("此模块尚未附加到宿主KLBot上，无法完成指定操作");
+            }
+            else if (!expected && IsAttached)    //期望未附加但已经附加
+                throw new Exception("此模块已经附加到宿主KLBot上，无法完成指定操作");
+        }
+        /// <summary>
+        /// ToString()函数：未附加时返回模块类型；已附加时返回模块ID
+        /// </summary>
+        public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
     }
 
     /// <summary>
@@ -261,6 +337,7 @@ namespace klbotlib.Modules
         /// <returns>用字符串表示的处理结果</returns>
         public abstract string Processor(T msg);
 
+        ///<inheritdoc/>
         public sealed override bool Filter(Message msg)
         {
             if (msg is T tmsg)
@@ -268,6 +345,7 @@ namespace klbotlib.Modules
             else
                 return false;
         }
+        ///<inheritdoc/>
         public sealed override string Processor(Message msg)
         {
             if (msg is T tmsg)
@@ -278,7 +356,5 @@ namespace klbotlib.Modules
                 throw new Exception("意外遇到无法处理的消息类型");
             }
         }
-
-        public SingleTypeModule(KLBot host_bot) : base(host_bot) { }
     }
 }

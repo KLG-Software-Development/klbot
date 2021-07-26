@@ -1,4 +1,5 @@
-﻿using klbotlib.Modules.CommandModuleNamespace;
+﻿using Gleee.Consoleee;
+using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -7,7 +8,7 @@ using System.Text.RegularExpressions;
 namespace klbotlib.Modules
 {
     //命令模块
-    public class CommandModule : SingleTypeModule<MessagePlain>
+    internal class CommandModule : SingleTypeModule<MessagePlain>
     {
         const string prefix = "##";
         private readonly Regex cmdPat = new Regex($@"^{prefix}(.+)$");
@@ -24,8 +25,9 @@ namespace klbotlib.Modules
                 return Users[id];
         }
 
-        public CommandModule(KLBot host, params Command[] cmds) : base(host)
+        public CommandModule(KLBot host_bot, params Command[] cmds)
         {
+            host_bot.ObjectPrint(this, "正在加载命令...", ConsoleMessageType.Task);
             //自动实例化并添加所有已经定义的、带有[DefaultCommand]标记的Command类
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
@@ -39,7 +41,7 @@ namespace klbotlib.Modules
             }
             int default_cmd_count = Cmds.Count;
             Cmds.AddRange(cmds);
-            ModulePrint($"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
+            host_bot.ObjectPrint(this, $"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
         }
 
         public override bool IsTransparent => false;

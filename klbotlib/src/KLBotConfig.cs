@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace klbotlib
 {
-    public class Config
+    internal class Config
     {
         public virtual bool HasNull(out string null_field_name)
         {
@@ -23,21 +23,31 @@ namespace klbotlib
         }
     }
 
-    //Bot配置
+    /// <summary>
+    /// KLBot启动配置类
+    /// </summary>
     [JsonObject(MemberSerialization.Fields)]
-    public class BotConfig
+    public class KLBotConfig
     {
         internal QQConfig QQ;
         internal NetworkConfig Network;
         internal PathesConfig Pathes;
 
-        public BotConfig(string url, long self_id, IEnumerable<long> targets, string modules_cache_dir, string modules_save_dir)
+        /// <summary>
+        /// 创建一个KLBot配置
+        /// </summary>
+        /// <param name="url">mirai服务器所在URL</param>
+        /// <param name="self_id">KLBot自身ID (QQ号)</param>
+        /// <param name="targets">监听群组列表</param>
+        /// <param name="modules_cache_dir">模块缓存目录（相对）。所有模块的缓存目录集中在该目录下</param>
+        /// <param name="modules_save_dir">模块状态和模块配置的存档目录（相对）。所有模块的状态存档和配置存档文件集中在该目录下</param>
+        public KLBotConfig(string url, long self_id, IEnumerable<long> targets, string modules_cache_dir, string modules_save_dir)
         {
             QQ = new QQConfig(self_id, targets);
             Network = new NetworkConfig(url);
             Pathes = new PathesConfig(modules_cache_dir, modules_save_dir);
         }
-        public bool HasNull(out string null_field_name)
+        internal bool HasNull(out string null_field_name)
         {
             var fields = GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (var field in fields)

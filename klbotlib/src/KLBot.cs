@@ -14,57 +14,81 @@ using System.Threading.Tasks;
 
 namespace klbotlib
 {
+    /// <summary>
+    /// KLBot类。机器人本体
+    /// </summary>
     public class KLBot
     {
-        private bool IsBooting { get; set; } = true;                //返回Bot是否刚刚启动且未处理过任何消息
+        private bool IsBooting = true;                //返回Bot是否刚刚启动且未处理过任何消息
         private readonly Consoleee console = new Consoleee();       //扩展控制台对象
         private readonly Dictionary<string, int> module_index_by_id = new Dictionary<string, int>();
-        private readonly Dictionary<string, uint> module_count = new Dictionary<string, uint>();
+        private readonly Dictionary<string, int> module_count_by_name = new Dictionary<string, int>();
+        private readonly List<Module> Modules = new List<Module>(); // 此KLBot的模块链条
 
-        //保存有一些性能和诊断信息
-        public BotDiagnosticData DiagData = new BotDiagnosticData();  
-        //所有模块
-        public List<Module> Modules { get; } = new List<Module>();
-        //Bot配置
-        public BotConfig Config { get; }
-        //Bot属性
-        public int PollingTimeInterval { get; set; } = 500;   //轮询时间区间
-        public bool IsLoopOn = false;   //总开关，决定是否继续消息循环
+        /// <summary>
+        /// 当前模块总数，即模块链条的长度
+        /// </summary>
+        public int ModuleCount { get => Modules.Count; }
+        /// <summary>
+        /// 此KLBot的统计和诊断信息
+        /// </summary>
+        public KLBotDiagnosticData DiagData = new KLBotDiagnosticData();  
+        /// <summary>
+        /// 此KLBot的运行配置
+        /// </summary>
+        public KLBotConfig Config { get; }
+        /// <summary>
+        /// 此KLBot的轮询时间间隔（ms）。默认为500ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
+        /// </summary>
+        public int PollingTimeInterval { get; set; } = 500;
+        /// <summary>
+        /// 此KLBot的消息循环Flag。设为false时会停止消息循环。
+        /// </summary>
+        public bool IsLoopOn = false;
 
-        //构造函数。默认配置文件路径config/config.json
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="config_path">配置文件路径。默认为"config/config.json"</param>
         public KLBot(string config_path = "config/config.json")
         {
-            console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
-            //Config = new BotConfig("http://192.168.31.42", 3205508672, new long[] { 727414436 }, "cache/modules", "internal/modules");  //平滑升级用
-            //File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, JsonHelper.FileSetup));
-            console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
-            if (!File.Exists(config_path))
+            try
             {
-                console.WriteLn($"配置文件{config_path}不存在", ConsoleMessageType.Error);
-                goto init_failed;
+                console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
+                //Config = new BotConfig("http://192.168.31.42", 3205508672, new long[] { 727414436 }, "cache/modules", "internal/modules");  //平滑升级用
+                //File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, JsonHelper.FileSetup));
+                console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
+                if (!File.Exists(config_path))
+                {
+                    console.WriteLn($"KLBot配置文件{config_path}不存在", ConsoleMessageType.Error);
+                    throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件不存在");
+                }
+                Config = JsonConvert.DeserializeObject<KLBotConfig>(File.ReadAllText(config_path));
+                File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, Json.JsonHelper.FileSetup));
+                if (Config.HasNull(out string field_name))
+                {
+                    console.WriteLn($"KLBot配置文件解析结果中的{field_name}字段为null。请检查配置文件", ConsoleMessageType.Error);
+                    throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件中含有null");
+                }
+                //创建模块存档目录（如果不存在）
+                CreateDirectoryIfNotExist(Config.Pathes.ModulesSaveDir, "模块存档目录");
+                //加载模块
+                console.WriteLn("加载自带模块...", ConsoleMessageType.Info);
+                new CommandModule(this).AttachTo(this);
+                new FuckModule().AttachTo(this);
+                new ChatQYKModule().AttachTo(this);
+                GetModuleChainString();
+                //SaveAllModuleSetup();   //平滑升级用
+                console.WriteLn($"载入模块配置", ConsoleMessageType.Info);
+                console.WriteLn($"成功初始化KLBot: ");
+                console.WriteLn($"Url: {Config.Network.ServerURL}");
+                console.WriteLn(GetListeningGroupListString());
+                console.WriteLn(GetModuleChainString());
             }
-            Config = JsonConvert.DeserializeObject<BotConfig>(File.ReadAllText(config_path));
-            File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, Json.JsonHelper.FileSetup));
-            if (Config.HasNull(out string field_name))
+            catch (Exception ex)
             {
-                console.WriteLn($"解析结果中的{field_name}字段为null。请检查配置文件以确保这是预期行为", ConsoleMessageType.Error);
-                goto init_failed;
+                throw new KLBotInitializationException($"意外异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
             }
-            //创建模块存档目录（如果不存在）
-            CreateDirectoryIfNotExist(Config.Pathes.ModulesSaveDir, "模块存档目录");
-            //加载模块
-            console.WriteLn("加载自带模块...", ConsoleMessageType.Info);
-            AddModule(new CommandModule(this), new FuckModule(this), new ChatQYKModule(this));
-            GetModuleListString();
-            //SaveAllModuleSetup();   //平滑升级用
-            console.WriteLn($"载入模块配置", ConsoleMessageType.Info);
-            console.WriteLn($"成功初始化KLBot: ");
-            console.WriteLn($"Url: {Config.Network.ServerURL}");
-            console.WriteLn(GetListeningGroupListString());
-            console.WriteLn(GetModuleListString());
-            return;
-        init_failed:
-            throw new KLBotInitializationException("KLBot初始化失败");
         }
 
         /// <summary>
@@ -79,53 +103,69 @@ namespace klbotlib
         public void AddTarget(IEnumerable<long> targets) => Config.QQ.TargetGroupIDList.AddRange(targets);
 
         // 模块的增加/删除/查询
-        //列出并打印所有模块
-        public void ListModules() => console.WriteLn(GetModuleListString(), ConsoleMessageType.Info);
-        //在当前模块列表末尾添加模块
-        public void AddModule(params Module[] modules)
+        /// <summary>
+        /// 在控制台列出并打印模块链条
+        /// </summary>
+        public void ListModules() => console.WriteLn(GetModuleChainString(), ConsoleMessageType.Info);
+        /// <summary>
+        /// 已知模块ID，返回该模块是否存在于模块链条中
+        /// </summary>
+        /// <param name="module_id">模块ID</param>
+        public bool IsModuleExist(string module_id) => module_index_by_id.ContainsKey(module_id);
+        // 在当前模块链条的末尾手动添加一个或多个新模块
+        internal void AddModule(params Module[] modules)
         {
             foreach (var m in modules)
             {
-                string id;
-                if (!module_index_by_id.ContainsKey(m.ModuleName))     //该模块类型的首个模块实例
-                {
-                    id = m.ModuleName;      //首个实例省略索引[0]
-                    module_count.Add(m.ModuleName, 1);
-                }
-                else    //非首个实例
-                {
-                    //用module_count当前的值计算id
-                    id = CalcModuleID(m.ModuleName, module_count[m.ModuleName]);
-                    module_count[m.ModuleName]++;
-                }
-                m.ModuleID = id;
-                module_index_by_id.Add(id, Modules.Count);
+                module_index_by_id.Add(m.ModuleID, Modules.Count);      //添加ID到ID-索引字典
+                if (!module_count_by_name.ContainsKey(m.ModuleName))    //递增模块类型-数量字典
+                    module_count_by_name.Add(m.ModuleName, 1);
+                else
+                    module_count_by_name[m.ModuleName]++;
                 Modules.Add(m);
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
                 CreateDirectoryIfNotExist(Config.Pathes.ModulesCacheDir, $"模块{m}的缓存目录");
                 //载入模块配置
                 LoadModuleSetup(m);
                 LoadModuleStatus(m);
-                console.WriteLn($"已添加模块{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
+                console.WriteLn($"已添加{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
             }
         }
-        //根据模块类型获取模块
-        public T GetModule<T>(object source, uint index = 0) where T : Module
+        /// <summary>
+        /// 根据模块类型获取模块
+        /// </summary>
+        /// <typeparam name="T">目标模块类型</typeparam>
+        /// <param name="source">来源对象</param>
+        /// <param name="index">目标模块的索引</param>
+        /// <returns>目标模块实例</returns>
+        public T GetModule<T>(object source, int index = 0) where T : Module
         {
-            string id = CalcModuleID<T>(index);
+            string id = CalcModuleID(typeof(T).Name, index);
             CheckModuleExist(source, id);
-            object module = Modules[module_index_by_id[id]];
-            if (module is T tmodule)
-                return tmodule;
-            else
-                throw new Exception("出大问题。利用自动生成的模块ID查找索引，然后获取的模块对象，其类型竟然和期望类型不符");
-        } 
-        //根据模块ID移除模块(不建议用，完全可以只关闭模块的总开关)
-        public void RemoveModule<T>(object source, uint index = 0)
+            return this[id] as T;
+        }
+        /// <summary>
+        /// 已知模块ID，返回模块对象
+        /// </summary>
+        /// <param name="module_id"></param>
+        /// <returns></returns>
+        public Module this[string module_id]
         {
-            string id = CalcModuleID<T>(index);
-            CheckModuleExist(source, id);
-            int module_index = module_index_by_id[id];
+            get 
+            {
+                if (!module_index_by_id.ContainsKey(module_id))
+                    throw new ModuleMissingException($"模块链条中找不到ID为\"{module_id}\"的模块");
+                return Modules[module_index_by_id[module_id]];
+            } 
+        }
+        /// <summary>
+        /// 根据模块ID移除模块。不建议使用，因为完全可以只关闭模块的总开关
+        /// </summary>
+        /// <param name="module_id">要删除的模块ID</param>
+        public void RemoveModule(string module_id)
+        {
+            CheckModuleExist(this, module_id);
+            int module_index = module_index_by_id[module_id];
             Modules.RemoveAt(module_index);
             //更新索引字典
             foreach (var kvp in module_index_by_id)
@@ -135,38 +175,40 @@ namespace klbotlib
                 else if (kvp.Value > module_index)
                     module_index_by_id[kvp.Key]--;
             }
+            console.WriteLn($"已移除ID为\"{module_id}\"的模块", ConsoleMessageType.Info);
         }
+
 
         //暴露给模块的一些方法
         /// <summary>
         /// 向控制台打印字符串。打印内容会自动包含消息源头的对象的名称
         /// </summary>
-        /// <param name="source">消息来源. 此处应传入模块自身</param>
+        /// <param name="source">消息来源的对象</param>
         /// <param name="message">需要向控制台打印的消息</param>
-        /// <param name="msg_type">错误级别. 分为无、信息、警告、错误四种. 默认为信息. </param>
-        internal void ModulePrint(object source, string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "")
+        /// <param name="msg_type">消息类别 分为无、信息、警告、错误、任务. 默认为信息. </param>
+        /// <param name="prefix">要在消息类别标识前附加的内容</param>
+        public void ObjectPrint(object source, string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "")
         {
             if (source is Module && !string.IsNullOrEmpty(source.ToString()))
                 console.WriteLn($"[{source}] {message}", msg_type, prefix);
             else
                 console.WriteLn($"[{source.GetType().Name}] {message}", msg_type, prefix);
         }
-        /// <summary>
-        /// 获取模块的私有文件夹路径.
-        /// 按照规范，模块存取自己的文件都应使用这个目录
-        /// </summary>
-        /// <param name="module">模块对象</param>
+        // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(Config.Pathes.ModulesCacheDir, module.ModuleID);
-        /// <summary>
-        /// 获取模块的ModuleStatus存档文件路径
-        /// </summary>
-        /// <param name="module">模块</param>
+        // 获取模块的ModuleStatus存档文件路径
         internal string GetModuleStatusPath(Module module) => Path.Combine(Config.Pathes.ModulesSaveDir, module.ModuleID + "_status.json");
-        /// <summary>
-        /// 获取模块的ModuleSetup配置文件路径
-        /// </summary>
-        /// <param name="module">模块</param>
+        // 获取模块的ModuleSetup配置文件路径
         internal string GetModuleSetupPath(Module module) => Path.Combine(Config.Pathes.ModulesSaveDir, module.ModuleID + "_setup.json");
+        // 返回KLBot中给定模块类型的模块数量
+        internal int GetModuleCountByName(string module_name)
+        {
+            if (module_count_by_name.ContainsKey(module_name))
+                return module_count_by_name[module_name];
+            else
+                return 0;
+        }
+
 
 
         //TODO: 把发文本消息的方法扩展成发消息链的方法，然后设计一个消息链标记语法
@@ -238,11 +280,8 @@ namespace klbotlib
                 }
             });
         }
-        /// <summary>
-        /// 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
-        /// </summary>
-        /// <param name="success_count">已成功处理的数据包个数</param>
-        void MsgLoop(ManualResetEvent wait_for_pause_msgLoop_signal)
+        // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
+        private void MsgLoop(ManualResetEvent wait_for_pause_msgLoop_signal)
         {
 
             long success_counter_cache = 0, continuous_error_counter = 0;
@@ -429,6 +468,30 @@ namespace klbotlib
             }
         }
 
+        /// <summary>
+        /// 重新载入所有模块配置和状态
+        /// </summary>
+        public void ReloadAllModules()
+        {
+            foreach (var module in Modules)
+            {
+                LoadModuleSetup(module);
+                LoadModuleStatus(module);
+            }
+        }
+        /// <summary>
+        /// 保存该模块的配置
+        /// </summary>
+        /// <param name="module">模块实例</param>
+        /// <param name="print_info">是否打印保存过程中信息</param>
+        public void SaveModuleSetup(Module module, bool print_info = true)
+        {
+            string json = JsonConvert.SerializeObject(module.ExportSetupDict(), Json.JsonHelper.FileSetup);
+            string file_path = GetModuleSetupPath(module);
+            if (print_info)
+                console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
+            File.WriteAllText(file_path, json);
+        }
         //保存模块的状态
         private void SaveModuleStatus(Module module, bool print_info = true)
         {
@@ -436,15 +499,6 @@ namespace klbotlib
             string file_path = GetModuleStatusPath(module);
             if (print_info)
                 console.WriteLn($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
-            File.WriteAllText(file_path, json);
-        }
-        //保存模块的配置（只是平滑转移用到了，一般通常不用。即使调用也应该由KLBot实例管理者调用）
-        public void SaveModuleSetup(Module module, bool print_info = true)
-        {
-            string json = JsonConvert.SerializeObject(module.ExportSetupDict(), Json.JsonHelper.FileSetup);
-            string file_path = GetModuleSetupPath(module);
-            if (print_info)
-                console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
             File.WriteAllText(file_path, json);
         }
         //载入模块的状态
@@ -469,19 +523,12 @@ namespace klbotlib
                 module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), Json.JsonHelper.FileSetup));
             }
             else
-                ModulePrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
-        }
-        //重新载入所有模块配置和状态
-        public void ReloadAllModules()
-        {
-            foreach (var module in Modules)
-            {
-                LoadModuleSetup(module);
-                LoadModuleStatus(module);
-            }
+                ObjectPrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
         }
 
-        //有序退出
+        /// <summary>
+        /// 有序退出函数
+        /// </summary>
         public void OnExit()
         {
             foreach (var m in Modules)
@@ -489,11 +536,14 @@ namespace klbotlib
                 SaveModuleStatus(m);
                 SaveModuleSetup(m);
             }
-            console.WriteLn("OnExit work done.", ConsoleMessageType.Info);
+            console.WriteLn("有序退出完成", ConsoleMessageType.Info);
         }
 
         //信息输出相关
-        public string GetModuleListString()
+        /// <summary>
+        /// 返回字符串，其中列出当前模块链条
+        /// </summary>
+        public string GetModuleChainString()
         {
             StringBuilder sb = new StringBuilder("模块链条：\n");
             int index = 0;
@@ -504,15 +554,46 @@ namespace klbotlib
             });
             return sb.ToString();
         }
+        /// <summary>
+        /// 返回字符串，其中列出当前监听群组的列表
+        /// </summary>
         public string GetListeningGroupListString()
         {
-            StringBuilder sb = new StringBuilder($"监听群组列表:\n");
+            StringBuilder sb = new StringBuilder("监听群组列表:\n");
             int index = 0;
             Config.QQ.TargetGroupIDList.ForEach(target_id =>
             {
                 sb.AppendLine($"  [{index}]  {target_id}");
                 index++;
             });
+            return sb.ToString();
+        }
+        /// <summary>
+        /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值
+        /// </summary>
+        public string GetModuleStatusString()
+        {
+            StringBuilder sb = new StringBuilder("模块状态：\n");
+            foreach (var module in Modules)
+            {
+                sb.AppendLine($"> {module.ModuleID}");
+                var module_properties = module.GetType().GetProperties_All().Reverse();
+                foreach (var module_property in module_properties)
+                {
+                    if (module_property.ContainsAttribute(typeof(ModuleStatusAttribute)))
+                    {
+                        sb.AppendLine($"{module_property.Name}：{module_property.GetValue(module)}");
+                    }
+                }
+                var module_fields = module.GetType().GetFields_All().Reverse();
+                foreach (var module_field in module_fields)
+                {
+                    if (module_field.ContainsAttribute(typeof(ModuleStatusAttribute)))
+                    {
+                        sb.AppendLine($"{module_field.Name}：{module_field.GetValue(module)}");
+                    }
+                }
+            }
             return sb.ToString();
         }
 
@@ -542,18 +623,22 @@ namespace klbotlib
                 Directory.CreateDirectory(path);
             }
         }
-        private string CalcModuleID(string module_name, uint index) => index == 0 ? module_name : $"{module_name}[{index}]";  //计算模块的唯一ID，格式为"模块类型[模块索引]"。其中模块索引为该模块在所有同类模块中的排位
-        private string CalcModuleID<T>(uint index) => index == 0 ? typeof(T).Name : $"{typeof(T).Name}[{index}]";  
+        //计算模块ID的函数
+        internal string CalcModuleID(string module_name, int module_index)
+        {
+            if (module_index == 0)
+                return $"{module_name}";
+            else
+                return $"{module_name}#{module_index}";
+        }
         private void CheckModuleExist(object source, string id)
         {
             if (!module_index_by_id.ContainsKey(id))
                 throw new ModuleMissingException($"对象\"{source}\"试图引用ID为\"{id}\"的模块，但该模块不存在");
         }
-#pragma warning disable IDE0051
-        private void CheckModuleExist<T>(object source, uint index = 0)
-#pragma warning restore IDE0051 // 删除未使用的私有成员
+        private void CheckModuleExist<T>(object source, int module_index = 0) where T : Module
         {
-            string id = CalcModuleID<T>(index);
+            string id = CalcModuleID(typeof(T).Name, module_index);
             if (!module_index_by_id.ContainsKey(id))
                 throw new ModuleMissingException($"对象\"{source}\"试图引用ID为\"{id}\"的模块，但该模块不存在");
         }

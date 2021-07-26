@@ -4,18 +4,35 @@ using System.Web;
 
 namespace klbotlib
 {
-    //klbot内部使用的消息抽象类
+    /// <summary>
+    /// klbot内部使用的消息抽象类。所有QQ消息都继承此类
+    /// </summary>
     public abstract class Message
     {
+        /// <summary>
+        /// 消息类型。文本消息="Plain"；空消息="Ignore"；其他类型的QQ消息暂时没有实现。
+        /// </summary>
         public string Type { get; } = "Ignore";
+        /// <summary>
+        /// 发送者的ID（QQ号）。如果没有则为-1
+        /// </summary>
         public long SenderID { get; set; } = -1;
-        public long TargetID { get; set; } //消息At的对象 如果没有则为-1
+        /// <summary>
+        /// 此消息第一个@的目标的ID（QQ号）。如果没有则为-1。
+        /// 这个字段未来会改成ID列表，不然没法支持处理同时@多个人的信息。
+        /// </summary>
+        public long TargetID { get; set; }
+        /// <summary>
+        /// 此消息来源的群组的ID（群号）。如果消息来源是私聊则为-1；如果消息来源是群组则为群号；如果消息来源是临时会话则为“临时会话所通过的群”的群号。
+        /// </summary>
         public long GroupID { get; set;  } = -1;
-        public MessageContext Context { get; set; } //是否是临时消息
-        public static MessageEmpty Empty = new MessageEmpty();
+        /// <summary>
+        /// 此消息的上下文。私聊=Private；临时会话=Temp；群聊=Group
+        /// </summary>
+        public MessageContext Context { get; set; }
+        internal static MessageEmpty Empty = new MessageEmpty();
 
-
-        public Message(string type, long sender_id = -1, long group_id = -1, long target_id = -1)
+        internal Message(string type, long sender_id = -1, long group_id = -1, long target_id = -1)
         {
             Type = type;
             SenderID = sender_id;
@@ -23,7 +40,7 @@ namespace klbotlib
             TargetID = target_id;
         }
 
-        public string BuildReplyPlainMessageBody(string text)
+        internal string BuildReplyPlainMessageBody(string text)
         {
             text = HttpUtility.JavaScriptStringEncode(text);
             var context = Context;
@@ -61,7 +78,7 @@ namespace klbotlib
                         else                //意味着之前还有别的Plain消息，则简单将文本追加到已有对象的文本中
                             ((MessagePlain)ret).AppendText(msg.text);
                         break;
-                    ///TODO:暂时还没处理文本以外的其他类型
+                    //TODO:暂时还没处理文本以外的其他类型
                     default:
                         continue;
                 }
@@ -100,21 +117,26 @@ namespace klbotlib
     }
 
     //忽略的Message类。显然其内部所有不需要处理的JMessage直接对象都会被构建成这个类型。bot在后续处理中会把这种类型的消息全部忽略
-    public class MessageEmpty : Message
+    internal class MessageEmpty : Message
     {
         public MessageEmpty() : base("ignore") { }
     }
 
-    //纯文本消息类型
+    /// <summary>
+    /// 纯文本消息类
+    /// </summary>
     public class MessagePlain : Message
     {
+        /// <summary>
+        /// 此消息的文本内容
+        /// </summary>
         public string Text { get; private set; }
-        public MessagePlain(long sender_id, long group_id, string text) : base("Plain", sender_id, group_id)
+        internal MessagePlain(long sender_id, long group_id, string text) : base("Plain", sender_id, group_id)
         {
             Text = text;
         }
 
-        public void AppendText(string text) => Text += text;
+        internal void AppendText(string text) => Text += text;
     }
 
     /// <summary>
@@ -122,7 +144,18 @@ namespace klbotlib
     /// </summary>
     public enum MessageContext
     {
-        Private,  Temp, Group
+        /// <summary>
+        /// 私聊
+        /// </summary>
+        Private,  
+        /// <summary>
+        /// 临时会话
+        /// </summary>
+        Temp, 
+        /// <summary>
+        /// 群组
+        /// </summary>
+        Group
     }
 
 }

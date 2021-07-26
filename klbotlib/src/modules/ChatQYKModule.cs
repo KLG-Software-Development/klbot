@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 namespace klbotlib.Modules
 {
     //聊天bot模块
-    public class ChatQYKModule : SingleTypeModule<MessagePlain>
+    internal class ChatQYKModule : SingleTypeModule<MessagePlain>
     {
         const string url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
         static readonly WebClient client = new WebClient();
@@ -21,8 +21,6 @@ namespace klbotlib.Modules
             string jreply = client.DownloadString(host);
             return JsonConvert.DeserializeObject<ChatterBotReply>(jreply).FormattedContent();
         }
-
-        public ChatQYKModule(KLBot klbot) : base(klbot) { }
     }
 }
 

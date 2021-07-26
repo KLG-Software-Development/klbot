@@ -12,6 +12,7 @@
     <Company>KLG Science</Company>
     <Version>1.2</Version>
     <Platforms>AnyCPU;ARM32</Platforms>
+    <Configurations>Debug;Release;Release Ref_Only</Configurations>
   </PropertyGroup>
   <PropertyGroup>
     <Deterministic>False</Deterministic>

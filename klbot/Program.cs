@@ -27,9 +27,9 @@ namespace klbot
                     klg = new(args[0]);
                 else
                     klg = new();
-                TimeModule time_module = new(klg);
-                klg.AddModule(time_module);
-                Console.WriteLine(klg.GetModuleListString());
+                TimeModule time_module = new();
+                time_module.AttachTo(klg);
+                Console.WriteLine(klg.GetModuleChainString());
                 klg.MainLoop();
             }
             catch (Exception ex)
@@ -37,8 +37,8 @@ namespace klbot
                 if (ex is KLBotInitializationException)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine("KLBot初始化失败。检查KLBot的配置文件和模块配置文件是否正确，以及各个模块是否恰当遵守了模块开发规范");
-                    Console.WriteLine("退出中...");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine("初始化失败。退出中...");
                     Console.ResetColor();
                 }
                 else if (ex is ModuleSetupException)
