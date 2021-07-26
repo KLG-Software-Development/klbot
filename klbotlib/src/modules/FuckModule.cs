@@ -85,7 +85,7 @@ namespace klbotlib.Modules
         {
             if (pattern.IsMatch(msg.Text))
             {
-                return !IsTagMe || msg.TargetID == HostBot.Config.QQ.SelfID;
+                return !IsTagMe || msg.TargetID.Contains(HostBot.Config.QQ.SelfID);
             }
             else return false;
         } 

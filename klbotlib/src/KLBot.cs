@@ -425,7 +425,7 @@ namespace klbotlib
                     ReplyMessagePlain(msg_plain, cmdmod.Processor(msg_plain));
                 else if (fuckmod.ShouldProcess(msg_plain))
                     ReplyMessagePlain(msg_plain, fuckmod.Processor(msg_plain));
-                else if (msg.Context != MessageContext.Group || msg.TargetID == Config.QQ.SelfID)
+                else if (msg.Context != MessageContext.Group || msg.TargetID.Contains(Config.QQ.SelfID))
                     ReplyMessagePlain(msg_plain, chatmod.Processor(msg_plain));
             }
         }

@@ -1,6 +1,7 @@
 ﻿using klbotlib.Modules.ChatQYKModuleNamespace;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -14,7 +15,7 @@ namespace klbotlib.Modules
 
         public override bool IsTransparent => false;
         public override bool UseSignature => false;
-        public override bool Filter(MessagePlain msg) => msg.TargetID == HostBot.Config.QQ.SelfID;
+        public override bool Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.Config.QQ.SelfID);
         public override string Processor(MessagePlain msg)
         {
             Uri host = new Uri(url + msg.Text);
