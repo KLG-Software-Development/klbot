@@ -337,7 +337,7 @@ namespace klbotlib.Modules
         /// <returns>用字符串表示的处理结果</returns>
         public abstract string Processor(T msg);
 
-        ///<inheritdoc/>
+        ///<Inheritdoc/>
         public sealed override bool Filter(Message msg)
         {
             if (msg is T tmsg)
@@ -345,7 +345,7 @@ namespace klbotlib.Modules
             else
                 return false;
         }
-        ///<inheritdoc/>
+        ///<Inheritdoc/>
         public sealed override string Processor(Message msg)
         {
             if (msg is T tmsg)

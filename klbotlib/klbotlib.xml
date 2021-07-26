@@ -587,8 +587,7 @@
         </member>
         <member name="P:klbotlib.Message.TargetID">
             <summary>
-            此消息第一个@的目标的ID（QQ号）。如果没有则为-1。
-            这个字段未来会改成ID列表，不然没法支持处理同时@多个人的信息。
+            此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
             </summary>
         </member>
         <member name="P:klbotlib.Message.GroupID">

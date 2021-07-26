@@ -1,5 +1,7 @@
 ﻿using klbotlib.Internal;
 using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Web;
 
 namespace klbotlib
@@ -16,28 +18,26 @@ namespace klbotlib
         /// <summary>
         /// 发送者的ID（QQ号）。如果没有则为-1
         /// </summary>
-        public long SenderID { get; set; } = -1;
+        public long SenderID { get; internal set; } = -1;
         /// <summary>
-        /// 此消息第一个@的目标的ID（QQ号）。如果没有则为-1。
-        /// 这个字段未来会改成ID列表，不然没法支持处理同时@多个人的信息。
+        /// 此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
         /// </summary>
-        public long TargetID { get; set; }
+        public List<long> TargetID { get; } = new List<long>();
         /// <summary>
         /// 此消息来源的群组的ID（群号）。如果消息来源是私聊则为-1；如果消息来源是群组则为群号；如果消息来源是临时会话则为“临时会话所通过的群”的群号。
         /// </summary>
-        public long GroupID { get; set;  } = -1;
+        public long GroupID { get; internal set;  } = -1;
         /// <summary>
         /// 此消息的上下文。私聊=Private；临时会话=Temp；群聊=Group
         /// </summary>
-        public MessageContext Context { get; set; }
+        public MessageContext Context { get; internal set; }
         internal static MessageEmpty Empty = new MessageEmpty();
 
-        internal Message(string type, long sender_id = -1, long group_id = -1, long target_id = -1)
+        internal Message(string type, long sender_id = -1, long group_id = -1)
         {
             Type = type;
             SenderID = sender_id;
             GroupID = group_id;
-            TargetID = target_id;
         }
 
         internal string BuildReplyPlainMessageBody(string text)
@@ -52,7 +52,6 @@ namespace klbotlib
                 return $"{{\"qq\":\"{SenderID}\",\"group\":\"{GroupID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
             else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
         }
-
     }
 
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型
@@ -60,7 +59,7 @@ namespace klbotlib
     {
         internal static Message BuildMessage(JMessagePackage msg_package)
         {
-            bool is_after_at = false;
+            bool is_after_at = false;   //flag，指示该子消息是否在@后面。如果在，需要特殊处理它带来的空格
             Message ret = null;
             //第一轮：判断主类型（文本、图片、文件...），从而生成对应的文本对象
             foreach (var msg in msg_package.messageChain)
@@ -73,9 +72,9 @@ namespace klbotlib
                     case "Plain":
                         if (ret == null)    //运行至今未确定主类型，意味着这是第一个，所以构建相应的对象。其他情况逻辑相同。
                             ret = new MessagePlain(msg_package.sender.id, -1, msg.text.Trim());
-                        else if (is_after_at)           //专门处理@后面无缘无故冒出来的傻逼空格
+                        else if (is_after_at)           //意味着之前还有别的Plain消息，而且上一条子消息是At消息。用Substring()处理@后面无缘无故冒出来的傻逼空格
                             ((MessagePlain)ret).AppendText(msg.text.Substring(1));
-                        else                //意味着之前还有别的Plain消息，则简单将文本追加到已有对象的文本中
+                        else                            //意味着之前还有别的Plain消息。则简单将文本追加到已有对象的文本中
                             ((MessagePlain)ret).AppendText(msg.text);
                         break;
                     //TODO:暂时还没处理文本以外的其他类型
@@ -85,13 +84,13 @@ namespace klbotlib
             }
             if (ret == null)    //全程无法确定主类型，意味着本身为非关心的消息类型，所以直接返回忽略类型
                 return Message.Empty;
-            //第二轮：判断附加类型（At、AtAll、Quote...），并据此修改已有ret对象的属性
+            //第二轮：判断附加类型（At、AtAll、Quote...），并据此修改待返回对象的属性
             foreach (var msg in msg_package.messageChain)
             {
                 switch (msg.type)
                 {
                     case "At":
-                        ret.TargetID = msg.target;
+                        ret.TargetID.Add(msg.target);
                         break;
                     default:
                         continue;
