@@ -5,7 +5,7 @@
     /// </summary>
     public class 上号Module : SingleTypeModule<MessagePlain>
     {
-        [ModuleStatus]
+        [ModuleStatus(IsHidden = true)]
         private string LastMsg = "";
         private bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");
         /// <summary>

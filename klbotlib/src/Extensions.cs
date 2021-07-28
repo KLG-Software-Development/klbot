@@ -1,4 +1,5 @@
-﻿using System;
+﻿using klbotlib.Modules;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -130,5 +131,10 @@ namespace klbotlib
     internal static class MemberInfoExtension
     {
         public static bool ContainsAttribute(this MemberInfo info, Type attribute_type) => Attribute.GetCustomAttribute(info, attribute_type) != null;
+        public static bool IsNonHiddenModuleStatus(this MemberInfo info)
+        {
+            var status_attribute = Attribute.GetCustomAttribute(info, typeof(ModuleStatusAttribute)) as ModuleStatusAttribute;
+            return status_attribute != null && !status_attribute.IsHidden;
+        }
     }
 }

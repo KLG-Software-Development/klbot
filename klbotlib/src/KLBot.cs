@@ -380,7 +380,10 @@ namespace klbotlib
                     else if (cmd == "quit")
                         exit_flag = true;
                     else if (cmd == "status")
+                    {
+                        console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
                         console.WriteLn(DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                    }
                     else if (cmd == "save")
                     {
                         console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
@@ -569,7 +572,7 @@ namespace klbotlib
             return sb.ToString();
         }
         /// <summary>
-        /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值
+        /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
         /// </summary>
         public string GetModuleStatusString()
         {
@@ -580,7 +583,7 @@ namespace klbotlib
                 var module_properties = module.GetType().GetProperties_All().Reverse();
                 foreach (var module_property in module_properties)
                 {
-                    if (module_property.ContainsAttribute(typeof(ModuleStatusAttribute)))
+                    if (module_property.IsNonHiddenModuleStatus())
                     {
                         sb.AppendLine($" {module_property.Name}={module_property.GetValue(module)}");
                     }
@@ -588,7 +591,7 @@ namespace klbotlib
                 var module_fields = module.GetType().GetFields_All().Reverse();
                 foreach (var module_field in module_fields)
                 {
-                    if (module_field.ContainsAttribute(typeof(ModuleStatusAttribute)))
+                    if (module_field.IsNonHiddenModuleStatus())
                     {
                         sb.AppendLine($" {module_field.Name}={module_field.GetValue(module)}");
                     }
