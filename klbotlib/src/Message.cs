@@ -1,4 +1,6 @@
 ﻿using klbotlib.Internal;
+using klbotlib.Json;
+using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -39,19 +41,18 @@ namespace klbotlib
             SenderID = sender_id;
             GroupID = group_id;
         }
-
-        internal string BuildReplyPlainMessageBody(string text)
+        internal string BuildReplyMessageJson(string chain)
         {
-            text = HttpUtility.JavaScriptStringEncode(text);
             var context = Context;
-            if (context == MessageContext.Group || context == MessageContext.Private)
-                return $"{{\"target\":\"{GroupID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
+            if (context == MessageContext.Group)
+                return JsonHelper.MessageBuilder.BuildGroupMessageJson(GroupID, chain);
             else if (context == MessageContext.Private)
-                return $"{{\"target\":\"{SenderID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
+                return JsonHelper.MessageBuilder.BuildPrivateMessageJson(SenderID, chain);
             else if (context == MessageContext.Temp)
-                return $"{{\"qq\":\"{SenderID}\",\"group\":\"{GroupID}\",\"messageChain\":[{{\"type\":\"Plain\", \"text\":\"{text}\" }}]}}";
+                return JsonHelper.MessageBuilder.BuildTempMessageJson(SenderID, GroupID, chain);
             else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
         }
+
     }
 
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型
@@ -118,7 +119,7 @@ namespace klbotlib
     //忽略的Message类。显然其内部所有不需要处理的JMessage直接对象都会被构建成这个类型。bot在后续处理中会把这种类型的消息全部忽略
     internal class MessageEmpty : Message
     {
-        public MessageEmpty() : base("ignore") { }
+        public MessageEmpty() : base("Ignore") { }
     }
 
     /// <summary>
@@ -156,5 +157,4 @@ namespace klbotlib
         /// </summary>
         Group
     }
-
 }

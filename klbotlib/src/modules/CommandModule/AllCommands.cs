@@ -269,25 +269,6 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override void Action(KLBot bot, MessagePlain _) => bot.ReloadAllModules();
     }
     [DefaultCommand]
-    internal class SleepCmd : ActionCommand<int>
-    {
-        public override string CommandString => "sleep";
-        public override string ActionName => "睡眠";
-        public override string ActionDescription => "将程序挂起指定时间，期间KLBot将停止轮询。";
-        public override string ParameterDescription => "挂起时间(整数秒)";
-
-        public override bool TryParseCmdStringValue(string value_string, out int value) => int.TryParse(value_string, out value);
-        public override void Action(KLBot bot, MessagePlain cmd_msg, int parameter)
-        {
-            bot.ReplyMessagePlain(cmd_msg, $"开始休眠。时长：{parameter}秒");
-            float remain = parameter / 2f;
-            Thread.Sleep((int)(remain * 1000));
-            Task.Run(() => bot.ReplyMessagePlain(cmd_msg, $"休眠还有一半时间（{remain:f1}/{parameter}秒）结束"));
-            Thread.Sleep((int)(remain * 1000));
-            bot.ReplyMessagePlain(cmd_msg, $"轮询休眠结束");
-        }
-    }
-    [DefaultCommand]
     internal class PtiCmd : AssignmentCommand<int>
     {
         public override AuthorType AuthorityRequirment => AuthorType.开发者;

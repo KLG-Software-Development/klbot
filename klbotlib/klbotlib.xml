@@ -11,6 +11,13 @@
             只有打上此标记之后，该成员的值才会被Module.ExportStatusDict()保存，且机器人启动或关闭时会自动读取或保存这些成员的值
             </summary>
         </member>
+        <member name="F:klbotlib.Modules.ModuleStatusAttribute.IsHidden">
+            <summary>
+            决定该属性标记的字段是否隐藏。
+            如果隐藏(true)，则使用KLBot的GetModuleStatusString() API列出各个模块状态时，不会包含这个字段的值。
+            此字段默认为否(false)。
+            </summary>
+        </member>
         <member name="T:klbotlib.Modules.ModuleSetupAttribute">
             <summary>
             模块配置Attribute，用来标记模块配置。
@@ -305,6 +312,27 @@
         <member name="M:klbotlib.Modules.TimeModule.Processor(klbotlib.MessagePlain)">
             <inheritdoc/>
         </member>
+        <member name="T:klbotlib.Modules.上号Module">
+            <summary>
+            上号模块
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.上号Module.UseSignature">
+            <summary>
+            关闭模块签名
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.上号Module.Filter(klbotlib.MessagePlain)">
+            <summary>
+            过滤器：处理任何消息
+            </summary>
+        </member>
+        <member name="M:klbotlib.Modules.上号Module.Processor(klbotlib.MessagePlain)">
+            <summary>
+            处理器：内容包含上号且不长于五个字符，则复读内容；
+            另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
+            </summary>
+        </member>
         <member name="T:klbotlib.Exceptions.KLBotInitializationException">
             <summary>
             KLBot初始化失败异常
@@ -496,7 +524,7 @@
         </member>
         <member name="M:klbotlib.KLBot.GetModuleStatusString">
             <summary>
-            返回字符串，其中列出当前各模块标记了ModuleStatus的属性值
+            返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
             </summary>
         </member>
         <member name="T:klbotlib.KLBotConfig">

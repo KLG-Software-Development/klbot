@@ -1,6 +1,7 @@
 ﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Internal;
+using klbotlib.Json;
 using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,10 +21,11 @@ namespace klbotlib
     /// </summary>
     public class KLBot
     {
-        private bool IsBooting = true;                //返回Bot是否刚刚启动且未处理过任何消息
+        private bool IsBooting = true;    //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。            
         private readonly Consoleee console = new Consoleee();       //扩展控制台对象
         private readonly Dictionary<string, int> module_index_by_id = new Dictionary<string, int>();
         private readonly Dictionary<string, int> module_count_by_name = new Dictionary<string, int>();
+        private Task<bool> network_task;
         private readonly List<Module> Modules = new List<Module>(); // 此KLBot的模块链条
 
         /// <summary>
@@ -38,9 +41,9 @@ namespace klbotlib
         /// </summary>
         public KLBotConfig Config { get; }
         /// <summary>
-        /// 此KLBot的轮询时间间隔（ms）。默认为500ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
+        /// 此KLBot的轮询时间间隔（ms）。默认为250ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
         /// </summary>
-        public int PollingTimeInterval { get; set; } = 500;
+        public int PollingTimeInterval { get; set; } = 250;
         /// <summary>
         /// 此KLBot的消息循环Flag。设为false时会停止消息循环。
         /// </summary>
@@ -52,8 +55,10 @@ namespace klbotlib
         /// <param name="config_path">配置文件路径。默认为"config/config.json"</param>
         public KLBot(string config_path = "config/config.json")
         {
+            IsBooting = true;
             try
             {
+                network_task = Task<bool>.Run(() =>  true);
                 console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
                 //Config = new BotConfig("http://192.168.31.42", 3205508672, new long[] { 727414436 }, "cache/modules", "internal/modules");  //平滑升级用
                 //File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, JsonHelper.FileSetup));
@@ -64,7 +69,7 @@ namespace klbotlib
                     throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件不存在");
                 }
                 Config = JsonConvert.DeserializeObject<KLBotConfig>(File.ReadAllText(config_path));
-                File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, Json.JsonHelper.FileSetup));
+                File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, Json.JsonHelper.JsonSettings.FileSetting));
                 if (Config.HasNull(out string field_name))
                 {
                     console.WriteLn($"KLBot配置文件解析结果中的{field_name}字段为null。请检查配置文件", ConsoleMessageType.Error);
@@ -78,7 +83,10 @@ namespace klbotlib
                 new FuckModule().AttachTo(this);
                 new ChatQYKModule().AttachTo(this);
                 GetModuleChainString();
-                //SaveAllModuleSetup();   //平滑升级用
+                Modules.AsParallel().ForAll( module => 
+                {
+                    CreateDirectoryIfNotExist(Path.Combine(Config.Pathes.ModulesCacheDir, module.ModuleID), $"{module}的缓存目录");
+                });
                 console.WriteLn($"载入模块配置", ConsoleMessageType.Info);
                 console.WriteLn($"成功初始化KLBot: ");
                 console.WriteLn($"Url: {Config.Network.ServerURL}");
@@ -95,7 +103,7 @@ namespace klbotlib
         /// 把给定群号添加到监听列表
         /// </summary>
         /// <param name="target">需要添加的群号</param>
-        public void AddTarget(long target) => Config.QQ.TargetGroupIDList.Add(target);
+        public void AddTarget(params long[] target) => Config.QQ.TargetGroupIDList.AddRange(target);
         /// <summary>
         /// 把一组群号批量添加到监听列表
         /// </summary>
@@ -178,7 +186,6 @@ namespace klbotlib
             console.WriteLn($"已移除ID为\"{module_id}\"的模块", ConsoleMessageType.Info);
         }
 
-
         //暴露给模块的一些方法
         /// <summary>
         /// 向控制台打印字符串。打印内容会自动包含消息源头的对象的名称
@@ -208,82 +215,97 @@ namespace klbotlib
             else
                 return 0;
         }
+        // 将回复纯文本消息的任务加入网络任务队列
+        internal void AddReplyMessageTask(Message origin_msg, string chain)
+        {
+            string full_json = origin_msg.BuildReplyMessageJson(chain);
+            if (!network_task.IsCompleted)
+            {
+                network_task.ContinueWith((x) =>
+                {
+                    CheckNetworkTaskResult(x.Result);
+                    TryReplyMessage(origin_msg, full_json);
+                });
+            }
+            else
+            {
+                network_task = Task.Run(() => TryReplyMessage(origin_msg, full_json));
+                network_task.ContinueWith(x => CheckNetworkTaskResult(x.Result));
+            }
+        }
 
-
-
-        //TODO: 把发文本消息的方法扩展成发消息链的方法，然后设计一个消息链标记语法
         /// <summary>
         /// 回复给定消息.
         /// 群组消息(MessageContext.Group)将回复至群组内，临时消息(MessageContext.Temp)和私聊(MessageContext.Private)会回复给发送者.
         /// </summary>
         /// <param name="origin_msg">待回复的原始消息</param>
         /// <param name="text">回复的内容. 暂时只实现了回复文本</param>
-        public void ReplyMessagePlain(Message origin_msg, string text)
+        internal bool TryReplyMessage(Message origin_msg, string msg_json)
         {
-            string url;
-            if (origin_msg.Context == MessageContext.Group)
-                url = $"{Config.Network.ServerURL}/sendGroupMessage";
-            else if (origin_msg.Context == MessageContext.Private)
-                url = $"{Config.Network.ServerURL}/sendFriendMessage";
-            else if (origin_msg.Context == MessageContext.Temp)
-                url = $"{Config.Network.ServerURL}/sendTempMessage";
-            else
-                throw new Exception($"暂不支持的消息上下文类型 \"{origin_msg}\"");
-            NetworkHelper.PostJSON(url, origin_msg.BuildReplyPlainMessageBody(text));
+            string url = NetworkHelper.GetSendMessageUrl(Config.Network.ServerURL, origin_msg.Context);
+            try
+            {
+                NetworkHelper.PostJSON(url, msg_json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DiagData.LastException = ex;
+                return false;
+            }
         }
         /// <summary>
         /// 从服务器获取新消息并进行初步过滤
         /// </summary>
-        public List<Message> FetchMessages()
+        private List<Message> FetchMessages()
         {
-            string response_str = NetworkHelper.FetchMessageListJSON($"{Config.Network.ServerURL}/fetchMessage");
-            //构建直接JSON对象
-            JFetchMessageResponse obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
-            //初步过滤
-            var jmsgs = obj.data.Where(x =>
-            {
-                if (x.type == "FriendMessage" || x.type == "TempMessage")
-                    return true;
-                else if (x.type == "GroupMessage")   //如果是群组消息，还需要群组在监听列表里
-                    return Config.QQ.TargetGroupIDList.Contains(x.sender.group.id);
-                else return false;
-            }).ToList();
             List<Message> msgs = new List<Message>();
-            jmsgs.ForEach(jmsg => msgs.Add(MessageFactory.BuildMessage(jmsg))); 
-            return msgs;
+            JFetchMessageResponse obj;
+            do
+            {
+                string response_str = NetworkHelper.FetchMessageListJSON(Config.Network.ServerURL);
+                File.WriteAllText("debug_msg.json", response_str);
+                //构建直接JSON对象
+                obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
+                //初步过滤
+                var jmsgs = obj.data.Where(x =>
+                {
+                    if (x.type == "FriendMessage" || x.type == "TempMessage")
+                        return true;
+                    else if (x.type == "GroupMessage")   //如果是群组消息，还需要群组在监听列表里
+                        return Config.QQ.TargetGroupIDList.Contains(x.sender.group.id);
+                    else return false;
+                }).ToList();
+                jmsgs.ForEach(jmsg => msgs.Add(MessageFactory.BuildMessage(jmsg)));
+            }
+            while (obj.data.Count != 0);   //无限轮询直到拿下所有消息
+            DiagData.ReceivedMessageCount += msgs.Count;
+            return msgs.Where( x => x.Type != "Ignore").ToList(); //提前过滤空消息
         }
         /// <summary>
         /// 用默认消息处理函数依次处理消息列表
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
+        private void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
         /// <summary>
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
-        /// <param name="processor">消息处理函数</param>
+        /// <param name="main_processor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs, Action<Message> processor)
+        private void ProcessMessages(List<Message> msgs, Action<Message> main_processor)
         {
             if (IsBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
                 IsBooting = false;
             }
-            msgs.ForEach( msg => 
-            {
-                if (!(msg is MessageEmpty))    //过滤空消息
-                {
-                    processor(msg);
-                    DiagData.ReceivedMessageCount++;
-                }
-            });
+            msgs.ForEach(msg => { main_processor(msg); });
         }
         // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
         private void MsgLoop(ManualResetEvent wait_for_pause_msgLoop_signal)
         {
-
             long success_counter_cache = 0, continuous_error_counter = 0;
         start:
             IsLoopOn = true;
@@ -374,6 +396,7 @@ namespace klbotlib
                     }
                     else if (cmd == "resume")
                     {
+                        IsBooting = true;   //为暂停继续情形引入重启忽略机制
                         wait_for_pause_msgLoop_signal.Set();
                         console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }
@@ -384,13 +407,23 @@ namespace klbotlib
                         console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
                         console.WriteLn(DiagData.GetSummaryString(), ConsoleMessageType.Info);
                     }
+                    else if (cmd.StartsWith("status "))
+                    {
+                        string id = cmd.Substring(6);
+                        if (!module_index_by_id.ContainsKey(id))
+                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                        else
+                            console.WriteLn(Modules[module_index_by_id[id]].DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                    }
                     else if (cmd == "save")
                     {
                         console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
-                        Modules.ForEach(x =>
-                        {
-                            SaveModuleSetup(x);
+                        Modules.AsParallel().ForAll(x => 
+                        { 
                             SaveModuleStatus(x);
+                            #pragma warning disable CS0618
+                            SaveModuleSetup(x);
+                            #pragma warning restore CS0618
                         });
                     }
                     else if (cmd == "reload")
@@ -412,57 +445,19 @@ namespace klbotlib
             OnExit();
         }
 
-        //早期(v0.4及更早)的处理函数. 已经弃用
-        [Obsolete]
-#pragma warning disable IDE0051
-        private void PaleMutant(Message msg)
-#pragma warning restore IDE0051 // 删除未使用的私有成员
-        {
-            var cmdmod = GetModule<CommandModule>(this);
-            var fuckmod = GetModule<FuckModule>(this);
-            var chatmod = GetModule<ChatQYKModule>(this);
-            if (msg is MessagePlain msg_plain)
-            {
-                //依次判断 以不同模块处理
-                if (cmdmod.ShouldProcess(msg_plain))
-                    ReplyMessagePlain(msg_plain, cmdmod.Processor(msg_plain));
-                else if (fuckmod.ShouldProcess(msg_plain))
-                    ReplyMessagePlain(msg_plain, fuckmod.Processor(msg_plain));
-                else if (msg.Context != MessageContext.Group || msg.TargetID.Contains(Config.QQ.SelfID))
-                    ReplyMessagePlain(msg_plain, chatmod.Processor(msg_plain));
-            }
-        }
         //默认处理函数。用Modules中的模块依次尝试处理消息
         //注意 空消息的过滤已经在上一级ProcessMessages()完成，所以此处入参的所有消息均为非空消息
         private void ModulesProcessMessage(Message msg)
         {
-            Task send_msg_task = null;
             foreach (var module in Modules)
             {
-                if (module.ShouldProcess(msg))
+                //模块会直接在一个单独的Task上依次处理并回复
+                //防止因为处理或网络速度较慢阻塞其他消息的处理
+                bool should_process = module.AddProcessTask(msg);
+                if (should_process)
                 {
-                    bool has_error = false;
-                    string output;
-                    try  //此try用于控制所有模块的处理器异常
-                    {
-                        DiagData.Stopwatch.Restart();
-                        output = module.Processor(msg);
-                        DiagData.Stopwatch.Stop();
-                        DiagData.ProcessedCount++;
-                        DiagData.LastUsedModule = module;
-                        DiagData.LastProcessingTime = DiagData.Stopwatch.ElapsedMilliseconds;
-                    }
-                    catch (Exception ex)
-                    {
-                        output = $"{module}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}";
-                        has_error = true;
-                    }
-                    //直接新建一个线程做回复，防止因为网络速度较慢阻塞其他消息的处理
-                    if (send_msg_task == null)
-                        send_msg_task = Task.Run(() => ReplyOutput(msg, output, has_error, module));
-                    else
-                        send_msg_task.ContinueWith(x => ReplyOutput(msg, output, has_error, module));  //保序
-                    SaveModuleStatus(module, false);   //保存模块状态
+                    DiagData.ProcessedMessageCount++;
+                    DiagData.LastUsedModule = module;
                     if (module.IsTransparent)
                         continue;
                     else
@@ -476,20 +471,17 @@ namespace klbotlib
         /// </summary>
         public void ReloadAllModules()
         {
-            foreach (var module in Modules)
+            Modules.AsParallel().ForAll( module => 
             {
                 LoadModuleSetup(module);
                 LoadModuleStatus(module);
-            }
+            });
         }
-        /// <summary>
-        /// 保存该模块的配置
-        /// </summary>
-        /// <param name="module">模块实例</param>
-        /// <param name="print_info">是否打印保存过程中信息</param>
-        public void SaveModuleSetup(Module module, bool print_info = true)
+        // 保存该模块的配置
+        [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
+        private void SaveModuleSetup(Module module, bool print_info = true)
         {
-            string json = JsonConvert.SerializeObject(module.ExportSetupDict(), Json.JsonHelper.FileSetup);
+            string json = JsonConvert.SerializeObject(module.ExportSetupDict(), JsonHelper.JsonSettings.FileSetting);
             string file_path = GetModuleSetupPath(module);
             if (print_info)
                 console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
@@ -498,7 +490,7 @@ namespace klbotlib
         //保存模块的状态
         private void SaveModuleStatus(Module module, bool print_info = true)
         {
-            string json = JsonConvert.SerializeObject(module.ExportStatusDict(), Json.JsonHelper.FileSetup);
+            string json = JsonConvert.SerializeObject(module.ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
             string file_path = GetModuleStatusPath(module);
             if (print_info)
                 console.WriteLn($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
@@ -512,7 +504,7 @@ namespace klbotlib
             {
                 if (print_info)
                     console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
-                module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), Json.JsonHelper.FileSetup));
+                module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
             }
         }
         //载入所有模块配置
@@ -523,7 +515,7 @@ namespace klbotlib
             {
                 if (print_info)
                     console.WriteLn($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
-                module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), Json.JsonHelper.FileSetup));
+                module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
             }
             else
                 ObjectPrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
@@ -534,11 +526,7 @@ namespace klbotlib
         /// </summary>
         public void OnExit()
         {
-            foreach (var m in Modules)
-            {
-                SaveModuleStatus(m);
-                SaveModuleSetup(m);
-            }
+            Modules.AsParallel().ForAll( m => SaveModuleStatus(m));
             console.WriteLn("有序退出完成", ConsoleMessageType.Info);
         }
 
@@ -600,32 +588,6 @@ namespace klbotlib
             return sb.ToString();
         }
 
-        private void ReplyOutput(Message original_msg, string output, bool has_error, Module module)
-        {
-            DiagData.Stopwatch.Restart();
-            if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈
-            {
-                if (!has_error)
-                {
-                    if (module.UseSignature)
-                        ReplyMessagePlain(original_msg, $"[{module}]\n{output}");
-                    else
-                        ReplyMessagePlain(original_msg, output);
-                }
-                else
-                    ReplyMessagePlain(original_msg, $"[KLBot]\n{output}");
-            }
-            DiagData.Stopwatch.Stop();
-            DiagData.LastReplyTime = DiagData.Stopwatch.ElapsedMilliseconds;
-        }
-        private void CreateDirectoryIfNotExist(string path, string dir_description)
-        {
-            if (!Directory.Exists(path))
-            {
-                console.WriteLn($"{dir_description}\"{path}\"不存在。正在自动创建...", ConsoleMessageType.Warning);
-                Directory.CreateDirectory(path);
-            }
-        }
         //计算模块ID的函数
         internal string CalcModuleID(string module_name, int module_index)
         {
@@ -644,6 +606,22 @@ namespace klbotlib
             string id = CalcModuleID(typeof(T).Name, module_index);
             if (!module_index_by_id.ContainsKey(id))
                 throw new ModuleMissingException($"对象\"{source}\"试图引用ID为\"{id}\"的模块，但该模块不存在");
+        }
+        private void CreateDirectoryIfNotExist(string path, string dir_description)
+        {
+            if (!Directory.Exists(path))
+            {
+                console.WriteLn($"{dir_description}\"{path}\"不存在。正在自动创建...", ConsoleMessageType.Warning);
+                Directory.CreateDirectory(path);
+            }
+        }
+        private void CheckNetworkTaskResult(bool result)
+        {
+            if (!result)   //检查上个发送任务是否正确完成
+            {
+                ObjectPrint(this, $"消息回复失败：{DiagData.LastException}", ConsoleMessageType.Error, "\b\b");
+                console.Write("> ", ConsoleColor.DarkYellow);
+            }
         }
     }
 }

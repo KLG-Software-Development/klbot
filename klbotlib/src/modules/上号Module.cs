@@ -25,8 +25,10 @@
             string msg_text = msg.Text.Trim(), output = string.Empty;
             if (Is上号(msg_text) && !Is上号(LastMsg))
                 output = msg_text;
+            else if (msg_text.Contains("蛤儿"))
+                output = @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}";
             LastMsg = msg_text;
-            return output;
+            return output;  
         }
     }
 }

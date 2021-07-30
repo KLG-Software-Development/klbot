@@ -27,8 +27,8 @@ namespace klbot
                     klg = new(args[0]);
                 else
                     klg = new();
-                TimeModule time_module = new();
-                time_module.AttachTo(klg);
+                new ImageModule().AttachTo(klg);
+                new TimeModule().AttachTo(klg);
                 new 上号Module().AttachTo(klg);
                 Console.WriteLine(klg.GetModuleChainString());
                 klg.MainLoop();

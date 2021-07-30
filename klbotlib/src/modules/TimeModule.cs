@@ -23,9 +23,7 @@ namespace klbotlib.Modules
         public override string Processor(MessagePlain msg)
         {
             if (msg.Text == "报时")
-            {
-                return DateTime.UtcNow.AddHours(TimeZone).ToString();
-            }
+                return DateTime.UtcNow.AddHours(TimeZone).ToString() + @"{\face:大哭}";
             else
             {
                 if (int.TryParse(msg.Text.Substring(5), out int result))

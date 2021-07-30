@@ -21,10 +21,10 @@ Global
 		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Debug|ARM32.ActiveCfg = Debug|ARM32
 		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Debug|ARM32.Build.0 = Debug|ARM32
-		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|Any CPU.ActiveCfg = Release Ref_Only|Any CPU
-		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|Any CPU.Build.0 = Release Ref_Only|Any CPU
-		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|ARM32.ActiveCfg = Release Ref_Only|ARM32
-		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|ARM32.Build.0 = Release Ref_Only|ARM32
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|Any CPU.ActiveCfg = Ref_Only|Any CPU
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|Any CPU.Build.0 = Ref_Only|Any CPU
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|ARM32.ActiveCfg = Ref_Only|ARM32
+		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Ref_Only|ARM32.Build.0 = Ref_Only|ARM32
 		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EC0DE05A-4474-44B2-9D1E-EDA6B0F52AFC}.Release|ARM32.ActiveCfg = Release|ARM32
@@ -33,8 +33,8 @@ Global
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Debug|ARM32.ActiveCfg = Debug|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Debug|ARM32.Build.0 = Debug|Any CPU
-		{33FDB64C-44D3-4D57-90D9-25840721703E}.Ref_Only|Any CPU.ActiveCfg = Release Ref_Only|Any CPU
-		{33FDB64C-44D3-4D57-90D9-25840721703E}.Ref_Only|Any CPU.Build.0 = Release Ref_Only|Any CPU
+		{33FDB64C-44D3-4D57-90D9-25840721703E}.Ref_Only|Any CPU.ActiveCfg = Ref_Only|Any CPU
+		{33FDB64C-44D3-4D57-90D9-25840721703E}.Ref_Only|Any CPU.Build.0 = Ref_Only|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Ref_Only|ARM32.ActiveCfg = Release Ref_Only|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Ref_Only|ARM32.Build.0 = Release Ref_Only|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,10 +46,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {69B10E39-6FB5-4D9D-868C-0F5042B9F199}
-		BuildVersion_StartDate = 2020/10/4
-		BuildVersion_UpdateAssemblyVersion = True
-		BuildVersion_UpdateFileVersion = True
 		BuildVersion_UseGlobalSettings = True
+		BuildVersion_UpdateFileVersion = True
+		BuildVersion_UpdateAssemblyVersion = True
+		BuildVersion_StartDate = 2020/10/4
+		SolutionGuid = {69B10E39-6FB5-4D9D-868C-0F5042B9F199}
 	EndGlobalSection
 EndGlobal

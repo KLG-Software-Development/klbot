@@ -1,5 +1,7 @@
 ﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
+using klbotlib.Internal;
+using klbotlib.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -7,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
@@ -18,8 +21,9 @@ namespace klbotlib.Modules
     {
         //后台变量
         private KLBot host_bot;
-        private string module_id;
         private int module_index = -1;
+        //消息处理Task
+        private Task process_worker;
 
         /// <summary>
         /// 模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名。
@@ -34,13 +38,11 @@ namespace klbotlib.Modules
             private set => module_index = value;
         }
         /// <summary>
-        /// 模块ID. 是模块对象的唯一标识. 等于“模块类名[在同类模块中的排位]”
+        /// 模块ID. 是模块对象的唯一标识. 
+        /// 当模块未附加到KLBot上时，等于模块名；
+        /// 当模块附加到KLBot上时，等于“模块类名#在同类模块中的排位”
         /// </summary>
-        public string ModuleID 
-        {
-            get { AssertAttachedStatus(true); return module_id; }
-            private set => module_id = value; 
-        }
+        public string ModuleID { get; private set; }
         /// <summary>
         /// 返回此模块是否已经被附加到宿主KLBot上
         /// </summary>
@@ -52,7 +54,8 @@ namespace klbotlib.Modules
         /// </summary>
         public virtual bool IsTransparent { get; } = false;
         /// <summary>
-        /// 决定KLBot实例发送此模块的输出时，是否在前面自动加上模块签名"[模块ID]"（默认开启）
+        /// 决定KLBot实例发送此模块的输出时，是否在前面自动加上模块签名"[模块ID]"（默认开启）。
+        /// 开启模块签名时，输出会被MsgMarker解析器默认当作文本消息（显然）
         /// </summary>
         public virtual bool UseSignature { get; } = true;
         /// <summary>
@@ -68,11 +71,6 @@ namespace klbotlib.Modules
         /// <returns>用字符串表示的处理结果. 如果你的命令不输出处理结果，返回null或空字符串</returns>
         public abstract string Processor(Message msg);
         /// <summary>
-        /// 综合过滤器和开关的影响, 返回一条消息是否应被处理
-        /// </summary>
-        /// <param name="msg">待判断消息</param>
-        public bool ShouldProcess(Message msg) => Enabled && Filter(msg);
-        /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
         public KLBot HostBot 
@@ -80,6 +78,10 @@ namespace klbotlib.Modules
             get { AssertAttachedStatus(true); return host_bot; }
             private set => host_bot = value;
         }
+        /// <summary>
+        /// 模块统计和诊断信息
+        /// </summary>
+        public ModuleDiagnosticData DiagData { get; } = new ModuleDiagnosticData();
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -90,8 +92,13 @@ namespace klbotlib.Modules
         /// <summary>
         /// 构造一个模块实例。这个实例不会附加到任何宿主KLBot中
         /// </summary>
-        public Module() => ModuleName = GetType().Name;
+        public Module()
+        {
+            ModuleName = GetType().Name;
+            process_worker = Task.Run(() => { });
+        }
 
+        /*** 公共API ***/
         /// <summary>
         /// 模块打印消息到控制台的标准方法
         /// </summary>
@@ -118,6 +125,7 @@ namespace klbotlib.Modules
             IsAttached = true;
             ModuleIndex = host_bot.GetModuleCountByName(ModuleName);     //模块索引 = 在同类模块中的索引
             ModuleID = host_bot.CalcModuleID(ModuleName, ModuleIndex);   //通过调用HostBot中的模块ID计算算法，确保只需要更新CalcModuleID()函数能够保证一致性
+            Directory.CreateDirectory(host_bot.GetModuleCacheDir(this));    //自动创建模块缓存目录
             host_bot.AddModule(this);
         }
         /// <summary>
@@ -129,63 +137,9 @@ namespace klbotlib.Modules
             host_bot.RemoveModule(ModuleID);
             HostBot = null;
             ModuleIndex = -1;
-            ModuleID = null;
+            ModuleID = GetType().Name;
             IsAttached = false;
         }
-
-
-        //配置和状态的存读档
-        /// <summary>
-        /// 从字典中导入模块属性(ModuleProperty)
-        /// </summary>
-        /// <param name="status_dict">要导入的属性字典</param>
-        internal void ImportDict(Dictionary<string, object> status_dict)
-        {
-            Type type = GetType();
-            foreach (var kvp in status_dict)
-            {
-                PropertyInfo property = type.GetProperty_All(kvp.Key);
-                if (property != null)
-                {
-                    if (!property.CanWrite)
-                        ModulePrint($"配置文件或状态存档中包含模块{ModuleID}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", ConsoleMessageType.Warning);
-                    else if (kvp.Value == null)
-                    {
-                        ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
-                        throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
-                    }
-                    property.SetValue(this, RestoreType(property.PropertyType, kvp.Value));
-                    continue;
-                }
-                else
-                {
-                    FieldInfo field = type.GetField_All(kvp.Key);
-                    if (field != null)
-                    {
-                        if (kvp.Value == null)
-                        {
-                            ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
-                            throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
-                        }
-                        field.SetValue(this, RestoreType(field.FieldType, kvp.Value));
-                        continue;
-                    }
-                    else 
-                        ModulePrint($"键值对导入失败: 模块中不存在字段\"{kvp.Key}\"", ConsoleMessageType.Warning);
-                }
-            }
-        }
-        /// <summary>
-        /// 把模块的所有模块状态(ModuleStatus)导出到字典
-        /// </summary>
-        internal Dictionary<string, object> ExportStatusDict() => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
-        /// <summary>
-        /// 把模块的所有模块配置(ModuleStatus)导出到字典
-        /// </summary>
-        internal Dictionary<string, object> ExportSetupDict() => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
-
-
-        //存读模块自定义文件的标准方法
         /// <summary>
         /// 保存文本到模块缓存目录
         /// </summary>
@@ -243,6 +197,73 @@ namespace klbotlib.Modules
             return File.ReadAllBytes(path);
         }
 
+
+        /*** 暴露给程序集中其他类的API ***/
+        // 向该模块的消息处理队列中添加一条新消息供后续处理
+        internal bool AddProcessTask(Message msg)
+        {
+            if (!Enabled || !Filter(msg))
+                return false;
+            if (!process_worker.IsCompleted)
+                process_worker.ContinueWith( x => ProcessSingleMessage(msg));    //若未完成 则排队
+            else
+                process_worker = Task.Run(() => ProcessSingleMessage(msg));      //已完成则取而代之直接开始
+            return true;
+        }
+        // 从字典中导入模块属性(ModuleProperty)
+        internal void ImportDict(Dictionary<string, object> status_dict)
+        {
+            Type type = GetType();
+            foreach (var kvp in status_dict)
+            {
+                PropertyInfo property = type.GetProperty_All(kvp.Key);
+                if (property != null)
+                {
+                    if (!property.CanWrite)
+                        ModulePrint($"配置文件或状态存档中包含模块{ModuleID}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", ConsoleMessageType.Warning);
+                    else if (kvp.Value == null)
+                    {
+                        ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
+                        throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
+                    }
+                    property.SetValue(this, RestoreType(property.PropertyType, kvp.Value));
+                    continue;
+                }
+                else
+                {
+                    FieldInfo field = type.GetField_All(kvp.Key);
+                    if (field != null)
+                    {
+                        if (kvp.Value == null)
+                        {
+                            ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
+                            throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
+                        }
+                        field.SetValue(this, RestoreType(field.FieldType, kvp.Value));
+                        continue;
+                    }
+                    else
+                        ModulePrint($"键值对导入失败: 模块中不存在字段\"{kvp.Key}\"", ConsoleMessageType.Warning);
+                }
+            }
+        }
+        // 把模块的所有模块状态(ModuleStatus)导出到字典
+        internal Dictionary<string, object> ExportStatusDict() => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
+        // 把模块的所有模块配置(ModuleStatus)导出到字典
+        internal Dictionary<string, object> ExportSetupDict() => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
+        //保存模块的状态
+        internal void SaveModuleStatus(bool print_info = true)
+        {
+            string json = JsonConvert.SerializeObject(ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
+            string file_path = HostBot.GetModuleStatusPath(this);
+            if (print_info)
+                ModulePrint($"正在保存状态至\"{file_path}\"...", ConsoleMessageType.Task);
+            File.WriteAllText(file_path, json);
+        }
+        //返回当前模块的缓存目录绝对路径
+        internal string GetModuleCacheDir()
+            => Path.Combine(Environment.CurrentDirectory, HostBot.GetModuleCacheDir(this));
+
         //helper 
         /// <summary>
         /// NewtonSoft.JsonConvert会把一切整数变成int64，一切浮点数变成double
@@ -299,10 +320,7 @@ namespace klbotlib.Modules
             }
             return properties_dict;
         }
-        /// <summary>
-        /// 检查此模块的附加情况是否与预期相同。如果没有将抛出异常
-        /// </summary>
-        /// <param name="expected">预期附加情况</param>
+        // 检查此模块的附加情况是否与预期相同。如果没有将抛出异常
         private void AssertAttachedStatus(bool expected)
         {
             if (expected && !IsAttached)   //期望已经附加但未附加
@@ -313,9 +331,53 @@ namespace klbotlib.Modules
                 throw new Exception("此模块已经附加到宿主KLBot上，无法完成指定操作");
         }
         /// <summary>
-        /// ToString()函数：未附加时返回模块类型；已附加时返回模块ID
+        /// ToString()函数：未附加时返回模块名；已附加时返回模块ID
         /// </summary>
         public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
+        //处理并调用KLBot回复
+        private void ProcessSingleMessage(Message msg)
+        {
+            AssertAttachedStatus(true); //统一Assert一遍
+            string output;
+            bool has_error = false;
+            try
+            {
+                DiagData.RestartMeasurement();
+                output = Processor(msg);
+                DiagData.StopMeasurement();
+                DiagData.ProcessedMessageCount++;
+            }
+            catch (Exception ex)
+            {
+                DiagData.LastException = ex;
+                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}";
+                has_error = true;
+            }
+            if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈
+            {
+                string signature = "";
+                if (!has_error)
+                {
+                    if (UseSignature)
+                        signature = $"[{this}]\n";
+                }
+                else
+                    signature = $"[KLBot]\n";
+                //编译MsgMarker文本到json消息链
+                string chain = "";
+                try
+                {
+                    chain = MsgMarker.CompileMessageChainJson(this, signature + output);
+                }
+                catch (Exception ex)
+                {
+                    DiagData.LastException = ex;
+                    chain = JsonHelper.MessageElementBuilder.BuildPlainElement($"{this.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
+                }
+                host_bot.AddReplyMessageTask(msg, chain);     //用backing字段 省略Assert
+            }
+            SaveModuleStatus(false);   //保存模块状态
+        }
     }
 
     /// <summary>
