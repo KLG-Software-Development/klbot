@@ -83,7 +83,9 @@ namespace klbotlib.Modules
             else return SingleSentence();
         }
 
+        ///<inheritdoc/>
         public override bool UseSignature => false;         //隐藏返回消息中的模块签名
+        ///<inheritdoc/>
         public override bool Filter(MessagePlain msg)
         {
             if (pattern.IsMatch(msg.Text))
@@ -91,7 +93,8 @@ namespace klbotlib.Modules
                 return !IsTagMe || msg.TargetID.Contains(HostBot.Config.QQ.SelfID);
             }
             else return false;
-        } 
+        }
+        ///<inheritdoc>/>
         public override string Processor(MessagePlain msg) => GenerateFuck();
     }
 }

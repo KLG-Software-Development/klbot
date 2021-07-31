@@ -278,6 +278,11 @@
             生成连续嘴臭句子时的终止概率
             </summary>
         </member>
+        <member name="P:klbotlib.Modules.FuckModule.MaximumLength">
+            <summary>
+            超过此长度时，串联模式不再累加
+            </summary>
+        </member>
         <member name="T:klbotlib.Modules.ImageModule">
             <summary>
             图像模块的demo
