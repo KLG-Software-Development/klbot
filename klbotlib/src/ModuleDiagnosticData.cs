@@ -1,17 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace klbotlib
 {
+    /// <summary>
+    /// 模块诊断统计信息
+    /// </summary>
     public class ModuleDiagnosticData
     {
         private Stopwatch stopwatch = new Stopwatch();
         /// <summary>
         /// 最后一次处理消息消耗的时间
         /// </summary>
-        public long LastProcessTime { get; internal set; } = -1;
+        public string LastProcessTime { get; internal set; } = "N/A";
         /// <summary>
         /// 经过该模块实例处理的消息总数
         /// </summary>
@@ -30,7 +31,7 @@ namespace klbotlib
         internal void StopMeasurement()
         {
             stopwatch.Stop();
-            LastProcessTime = stopwatch.ElapsedMilliseconds;
+            LastProcessTime = stopwatch.Elapsed.ToMsString();
         }
         /// <summary>
         /// 获取此模块的统计信息
@@ -38,8 +39,10 @@ namespace klbotlib
         public string GetSummaryString()
         {
             string re = $"共处理了{ProcessedMessageCount}条消息";
-            if (LastProcessTime != -1)
-                re += $"；最后一次处理耗时{LastProcessTime}ms";
+            if (LastProcessTime != "N/A")
+                re += $"；最后一次处理耗时{LastProcessTime}；\n";
+            if (LastException != null)
+                re += $"最近一次异常信息：{LastException.Message}\n调用栈：\n{LastException.StackTrace}";
             return re;
         }
     }

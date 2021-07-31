@@ -5,7 +5,6 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 
 namespace klbotlib
 {
@@ -137,5 +136,9 @@ namespace klbotlib
             var status_attribute = Attribute.GetCustomAttribute(info, typeof(ModuleStatusAttribute)) as ModuleStatusAttribute;
             return status_attribute != null && !status_attribute.IsHidden;
         }
+    }
+    internal static class TimeSpanExtension
+    {
+        public static string ToMsString(this TimeSpan time_span, int decimals = 4) => time_span.TotalMilliseconds.ToString("f" + decimals) + "ms";
     }
 }

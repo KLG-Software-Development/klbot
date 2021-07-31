@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,8 +59,6 @@ namespace klbotlib
             {
                 network_task = Task<bool>.Run(() =>  true);
                 console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
-                //Config = new BotConfig("http://192.168.31.42", 3205508672, new long[] { 727414436 }, "cache/modules", "internal/modules");  //平滑升级用
-                //File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, JsonHelper.FileSetup));
                 console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
                 if (!File.Exists(config_path))
                 {
@@ -80,7 +77,6 @@ namespace klbotlib
                 //加载模块
                 console.WriteLn("加载自带模块...", ConsoleMessageType.Info);
                 new CommandModule(this).AttachTo(this);
-                new FuckModule().AttachTo(this);
                 new ChatQYKModule().AttachTo(this);
                 GetModuleChainString();
                 Modules.AsParallel().ForAll( module => 
@@ -197,9 +193,9 @@ namespace klbotlib
         public void ObjectPrint(object source, string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "")
         {
             if (source is Module && !string.IsNullOrEmpty(source.ToString()))
-                console.WriteLn($"[{source}] {message}", msg_type, prefix);
+                console.WriteLnWithLock($"[{source}] {message}", msg_type, prefix);
             else
-                console.WriteLn($"[{source.GetType().Name}] {message}", msg_type, prefix);
+                console.WriteLnWithLock($"[{source.GetType().Name}] {message}", msg_type, prefix);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(Config.Pathes.ModulesCacheDir, module.ModuleID);
@@ -239,7 +235,7 @@ namespace klbotlib
         /// 群组消息(MessageContext.Group)将回复至群组内，临时消息(MessageContext.Temp)和私聊(MessageContext.Private)会回复给发送者.
         /// </summary>
         /// <param name="origin_msg">待回复的原始消息</param>
-        /// <param name="text">回复的内容. 暂时只实现了回复文本</param>
+        /// <param name="msg_json">回复消息json</param>
         internal bool TryReplyMessage(Message origin_msg, string msg_json)
         {
             string url = NetworkHelper.GetSendMessageUrl(Config.Network.ServerURL, origin_msg.Context);
@@ -409,11 +405,13 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("status "))
                     {
-                        string id = cmd.Substring(6);
+                        string id = cmd.Substring(7);
                         if (!module_index_by_id.ContainsKey(id))
                             console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
+                        {
                             console.WriteLn(Modules[module_index_by_id[id]].DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                        }
                     }
                     else if (cmd == "save")
                     {
@@ -484,7 +482,7 @@ namespace klbotlib
             string json = JsonConvert.SerializeObject(module.ExportSetupDict(), JsonHelper.JsonSettings.FileSetting);
             string file_path = GetModuleSetupPath(module);
             if (print_info)
-                console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
+                console.WriteLnWithLock($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
             File.WriteAllText(file_path, json);
         }
         //保存模块的状态
@@ -493,7 +491,10 @@ namespace klbotlib
             string json = JsonConvert.SerializeObject(module.ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
             string file_path = GetModuleStatusPath(module);
             if (print_info)
-                console.WriteLn($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
+            {
+                //由于涉及并行处理 需要加锁输出
+                console.WriteLnWithLock($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
+            }
             File.WriteAllText(file_path, json);
         }
         //载入模块的状态
@@ -503,7 +504,7 @@ namespace klbotlib
             if (File.Exists(file_path))
             {
                 if (print_info)
-                    console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
+                    console.WriteLnWithLock($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
                 module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
             }
         }
@@ -514,7 +515,7 @@ namespace klbotlib
             if (File.Exists(file_path))
             {
                 if (print_info)
-                    console.WriteLn($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
+                    console.WriteLnWithLock($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
                 module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
             }
             else
@@ -567,13 +568,13 @@ namespace klbotlib
             StringBuilder sb = new StringBuilder("模块状态：\n");
             foreach (var module in Modules)
             {
-                sb.AppendLine($"> {module.ModuleID}");
+                sb.AppendLine($">{module.ModuleID}");
                 var module_properties = module.GetType().GetProperties_All().Reverse();
                 foreach (var module_property in module_properties)
                 {
                     if (module_property.IsNonHiddenModuleStatus())
                     {
-                        sb.AppendLine($" {module_property.Name}={module_property.GetValue(module)}");
+                        sb.AppendLine($" {module_property.Name.ToString().PadRight(10)} = {module_property.GetValue(module)}");
                     }
                 }
                 var module_fields = module.GetType().GetFields_All().Reverse();
@@ -581,7 +582,7 @@ namespace klbotlib
                 {
                     if (module_field.IsNonHiddenModuleStatus())
                     {
-                        sb.AppendLine($" {module_field.Name}={module_field.GetValue(module)}");
+                        sb.AppendLine($" {module_field.Name.ToString().PadRight(10)} = {module_field.GetValue(module)}");
                     }
                 }
             }

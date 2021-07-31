@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
-using klbotlib.Exceptions;
+﻿using klbotlib.Exceptions;
 using klbotlib.Json;
 using klbotlib.Modules;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace klbotlib.Internal
 {

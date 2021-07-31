@@ -7,7 +7,7 @@ namespace klbotlib.Modules
     /// <summary>
     /// 嘴臭模块
     /// </summary>
-    internal class FuckModule : SingleTypeModule<MessagePlain>
+    public class FuckModule : SingleTypeModule<MessagePlain>
     {
         private readonly RNGCryptoServiceProvider ro = new RNGCryptoServiceProvider();
         [ModuleSetup]
@@ -30,6 +30,9 @@ namespace klbotlib.Modules
         /// </summary>
         [ModuleStatus]
         public int TerminateProbability { get; set; } = 25;
+        /// <summary>
+        /// 超过此长度时，串联模式不再累加
+        /// </summary>
         [ModuleStatus]
         public int MaximumLength { get; set; } = 20;
 

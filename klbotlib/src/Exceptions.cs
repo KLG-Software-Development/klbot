@@ -22,6 +22,10 @@ namespace klbotlib.Exceptions
     /// </summary>
     public class ModuleMissingException : Exception
     {
+        /// <summary>
+        /// 新建一个找不到模块异常的实例
+        /// </summary>
+        /// <param name="msg">异常信息</param>
         public ModuleMissingException(string msg) : base($"找不到模块：{msg}") { }
     }
     internal class ModuleException : Exception

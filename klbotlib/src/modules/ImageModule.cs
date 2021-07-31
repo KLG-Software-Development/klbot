@@ -1,18 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using klbotlib.Modules.ImageModuleNamespace;
+using Newtonsoft.Json;
+using System;
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules
 {
+    /// <summary>
+    /// 图像模块的demo
+    /// </summary>
     public class ImageModule : SingleTypeModule<MessagePlain>
     {
         static Random ro = new Random();
         WebClient client = new WebClient();
         Regex middle_url = new Regex(@"""middleURL""\s*:\s*""(https?://.+?)"",");
-        public override bool UseSignature => false;
 
+        [ModuleStatus]
+        string LastDownloadTime = "N/A";
+        [ModuleStatus]
+        string LastParseTime = "N/A";
+        [ModuleStatus]
+        internal int Fraction { get; set; } = 100;   //只在前n%的结果内随机
+        /// <inheritdoc/>
+        public sealed override bool UseSignature => false;
+        /// <inheritdoc/>
         public ImageModule()
         {
             client.Encoding = Encoding.UTF8;
@@ -36,29 +49,41 @@ namespace klbotlib.Modules
             client.QueryString.Add("nc", "1");
             client.QueryString.Add("rn", "60");
         }
-
+        /// <inheritdoc/>
         public override bool Filter(MessagePlain msg)
         {
             string text = msg.Text.Trim();
-            return (text.EndsWith("图来") && text.Length != 2);
+            return ((text.EndsWith("图来") || text.EndsWith("图来!")|| text.EndsWith("图来！"))
+                && text.Length != 2);
         }
+        /// <inheritdoc/>
         public override string Processor(MessagePlain msg)
         {
-            int retry = -1;
+            Stopwatch sw = new Stopwatch();
+            string url;
             string word = msg.Text.Trim().Substring(0, msg.Text.Length - 2);
+            client.QueryString.Remove("word");
+            client.QueryString.Remove("pn");
             client.QueryString.Add("word", word);
-            client.QueryString.Add("pn", ro.Next(100).ToString());
+            client.QueryString.Add("pn", ro.Next(6).ToString());    //只用前6页
+            sw.Restart();
             string json = client.DownloadString("https://image.baidu.com/search/acjson");
-            int slice_len = json.Length / 6;
-        retry:
-            retry++;
-            string slice = json.Substring(ro.Next(json.Length - slice_len - 1), slice_len);
-            if (!middle_url.IsMatch(slice) && retry < 10)
-                goto retry;
-            if (retry == 10)
-                return "[ImageModule]\n重试10次仍无法找到url。图片获取失败";
-            string url = middle_url.Match(slice).Groups[1].Value;
+            sw.Stop();
+            LastDownloadTime = sw.Elapsed.ToMsString();
+            sw.Restart();
+            JResult result = JsonConvert.DeserializeObject<JResult>(json);
+            int max_index = Convert.ToInt32(Math.Round(result.data.Length * (Fraction / 100f)));
+            url = result.data[ro.Next(max_index)].middleURL;
+            sw.Stop();
+            LastParseTime = sw.Elapsed.ToMsString();
             return $@"\image:\url:{url}";
         }
     }
+    
+}
+
+namespace klbotlib.Modules.ImageModuleNamespace
+{
+    class JResult { public JImage[] data; }
+    class JImage { public string middleURL; }
 }

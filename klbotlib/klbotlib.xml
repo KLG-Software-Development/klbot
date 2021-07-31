@@ -43,7 +43,9 @@
         </member>
         <member name="P:klbotlib.Modules.Module.ModuleID">
             <summary>
-            模块ID. 是模块对象的唯一标识. 等于“模块类名[在同类模块中的排位]”
+            模块ID. 是模块对象的唯一标识. 
+            当模块未附加到KLBot上时，等于模块名；
+            当模块附加到KLBot上时，等于“模块类名#在同类模块中的排位”
             </summary>
         </member>
         <member name="P:klbotlib.Modules.Module.IsAttached">
@@ -60,7 +62,8 @@
         </member>
         <member name="P:klbotlib.Modules.Module.UseSignature">
             <summary>
-            决定KLBot实例发送此模块的输出时，是否在前面自动加上模块签名"[模块ID]"（默认开启）
+            决定KLBot实例发送此模块的输出时，是否在前面自动加上模块签名"[模块ID]"（默认开启）。
+            开启模块签名时，输出会被MsgMarker解析器默认当作文本消息（显然）
             </summary>
         </member>
         <member name="M:klbotlib.Modules.Module.Filter(klbotlib.Message)">
@@ -77,15 +80,14 @@
             <param name="msg">待处理消息</param>
             <returns>用字符串表示的处理结果. 如果你的命令不输出处理结果，返回null或空字符串</returns>
         </member>
-        <member name="M:klbotlib.Modules.Module.ShouldProcess(klbotlib.Message)">
-            <summary>
-            综合过滤器和开关的影响, 返回一条消息是否应被处理
-            </summary>
-            <param name="msg">待判断消息</param>
-        </member>
         <member name="P:klbotlib.Modules.Module.HostBot">
             <summary>
             模块所附加到的宿主KLBot
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.DiagData">
+            <summary>
+            模块统计和诊断信息
             </summary>
         </member>
         <member name="P:klbotlib.Modules.Module.Enabled">
@@ -123,22 +125,6 @@
         <member name="M:klbotlib.Modules.Module.Detach">
             <summary>
             将模块从当前宿主KLBot上分离
-            </summary>
-        </member>
-        <member name="M:klbotlib.Modules.Module.ImportDict(System.Collections.Generic.Dictionary{System.String,System.Object})">
-            <summary>
-            从字典中导入模块属性(ModuleProperty)
-            </summary>
-            <param name="status_dict">要导入的属性字典</param>
-        </member>
-        <member name="M:klbotlib.Modules.Module.ExportStatusDict">
-            <summary>
-            把模块的所有模块状态(ModuleStatus)导出到字典
-            </summary>
-        </member>
-        <member name="M:klbotlib.Modules.Module.ExportSetupDict">
-            <summary>
-            把模块的所有模块配置(ModuleStatus)导出到字典
             </summary>
         </member>
         <member name="M:klbotlib.Modules.Module.SaveFileAsString(System.String,System.String)">
@@ -182,15 +168,9 @@
             把模块中的所有含有attribute_type标记的成员导出到字典
             </summary>
         </member>
-        <member name="M:klbotlib.Modules.Module.AssertAttachedStatus(System.Boolean)">
-            <summary>
-            检查此模块的附加情况是否与预期相同。如果没有将抛出异常
-            </summary>
-            <param name="expected">预期附加情况</param>
-        </member>
         <member name="M:klbotlib.Modules.Module.ToString">
             <summary>
-            ToString()函数：未附加时返回模块类型；已附加时返回模块ID
+            ToString()函数：未附加时返回模块名；已附加时返回模块ID
             </summary>
         </member>
         <member name="T:klbotlib.Modules.SingleTypeModule`1">
@@ -298,6 +278,23 @@
             生成连续嘴臭句子时的终止概率
             </summary>
         </member>
+        <member name="T:klbotlib.Modules.ImageModule">
+            <summary>
+            图像模块的demo
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.ImageModule.UseSignature">
+            <inheritdoc/>
+        </member>
+        <member name="M:klbotlib.Modules.ImageModule.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="M:klbotlib.Modules.ImageModule.Filter(klbotlib.MessagePlain)">
+            <inheritdoc/>
+        </member>
+        <member name="M:klbotlib.Modules.ImageModule.Processor(klbotlib.MessagePlain)">
+            <inheritdoc/>
+        </member>
         <member name="T:klbotlib.Modules.TimeModule">
             <summary>
             报时模块。一个简单的范例模块
@@ -343,6 +340,17 @@
             模块配置异常
             </summary>
         </member>
+        <member name="T:klbotlib.Exceptions.ModuleMissingException">
+            <summary>
+            找不到模块异常
+            </summary>
+        </member>
+        <member name="M:klbotlib.Exceptions.ModuleMissingException.#ctor(System.String)">
+            <summary>
+            新建一个找不到模块异常的实例
+            </summary>
+            <param name="msg">异常信息</param>
+        </member>
         <member name="T:klbotlib.VersionExtension">
             <summary>
             Version扩展
@@ -364,13 +372,6 @@
             <summary>
             直接从JSON解析出的消息包对象
             </summary>
-        </member>
-        <member name="M:klbotlib.Internal.NetworkHelper.PostJSON(System.String,System.String)">
-            <summary>
-            POST一条JSON字符串到给定URL
-            </summary>
-            <param name="url">目标url</param>
-            <param name="json_string">JSON字符串</param>
         </member>
         <member name="T:klbotlib.KLBot">
             <summary>
@@ -394,7 +395,7 @@
         </member>
         <member name="P:klbotlib.KLBot.PollingTimeInterval">
             <summary>
-            此KLBot的轮询时间间隔（ms）。默认为500ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
+            此KLBot的轮询时间间隔（ms）。默认为250ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
             </summary>
         </member>
         <member name="F:klbotlib.KLBot.IsLoopOn">
@@ -408,7 +409,7 @@
             </summary>
             <param name="config_path">配置文件路径。默认为"config/config.json"</param>
         </member>
-        <member name="M:klbotlib.KLBot.AddTarget(System.Int64)">
+        <member name="M:klbotlib.KLBot.AddTarget(System.Int64[])">
             <summary>
             把给定群号添加到监听列表
             </summary>
@@ -462,13 +463,13 @@
             <param name="msg_type">消息类别 分为无、信息、警告、错误、任务. 默认为信息. </param>
             <param name="prefix">要在消息类别标识前附加的内容</param>
         </member>
-        <member name="M:klbotlib.KLBot.ReplyMessagePlain(klbotlib.Message,System.String)">
+        <member name="M:klbotlib.KLBot.TryReplyMessage(klbotlib.Message,System.String)">
             <summary>
             回复给定消息.
             群组消息(MessageContext.Group)将回复至群组内，临时消息(MessageContext.Temp)和私聊(MessageContext.Private)会回复给发送者.
             </summary>
             <param name="origin_msg">待回复的原始消息</param>
-            <param name="text">回复的内容. 暂时只实现了回复文本</param>
+            <param name="msg_json">回复消息json</param>
         </member>
         <member name="M:klbotlib.KLBot.FetchMessages">
             <summary>
@@ -487,7 +488,7 @@
             用processor依次处理消息列表。返回非空消息的个数
             </summary>
             <param name="msgs">待处理消息列表</param>
-            <param name="processor">消息处理函数</param>
+            <param name="main_processor">消息处理函数</param>
             <returns>已处理的消息数量</returns>
         </member>
         <member name="M:klbotlib.KLBot.MainLoop">
@@ -499,13 +500,6 @@
             <summary>
             重新载入所有模块配置和状态
             </summary>
-        </member>
-        <member name="M:klbotlib.KLBot.SaveModuleSetup(klbotlib.Modules.Module,System.Boolean)">
-            <summary>
-            保存该模块的配置
-            </summary>
-            <param name="module">模块实例</param>
-            <param name="print_info">是否打印保存过程中信息</param>
         </member>
         <member name="M:klbotlib.KLBot.OnExit">
             <summary>
@@ -552,16 +546,6 @@
             最近一次处理消息的模块
             </summary>
         </member>
-        <member name="F:klbotlib.KLBotDiagnosticData.LastProcessingTime">
-            <summary>
-            最近一次处理消息耗时（毫秒）
-            </summary>
-        </member>
-        <member name="F:klbotlib.KLBotDiagnosticData.LastReplyTime">
-            <summary>
-            最近一次发送消息耗时（毫秒）
-            </summary>
-        </member>
         <member name="P:klbotlib.KLBotDiagnosticData.SuccessPackageCount">
             <summary>
             KLBot初始化后，成功进行查询的总次数
@@ -572,14 +556,14 @@
             KLBot初始化后，接收到的消息总数
             </summary>
         </member>
-        <member name="P:klbotlib.KLBotDiagnosticData.ProcessedCount">
+        <member name="P:klbotlib.KLBotDiagnosticData.ProcessedMessageCount">
             <summary>
             KLBot初始化后，所有模块处理消息的总次数。不同模块处理次数会叠加，比如一条消息被两个模块分别处理两次，则计为两次。
             </summary>
         </member>
         <member name="P:klbotlib.KLBotDiagnosticData.LastException">
             <summary>
-            最近一次异常的调用栈
+            最近一次KLBot异常的调用栈
             </summary>
         </member>
         <member name="M:klbotlib.KLBotDiagnosticData.GetSummaryString">
@@ -656,6 +640,41 @@
         <member name="F:klbotlib.MessageContext.Group">
             <summary>
             群组
+            </summary>
+        </member>
+        <member name="T:klbotlib.ModuleDiagnosticData">
+            <summary>
+            模块诊断统计信息
+            </summary>
+        </member>
+        <member name="P:klbotlib.ModuleDiagnosticData.LastProcessTime">
+            <summary>
+            最后一次处理消息消耗的时间
+            </summary>
+        </member>
+        <member name="P:klbotlib.ModuleDiagnosticData.ProcessedMessageCount">
+            <summary>
+            经过该模块实例处理的消息总数
+            </summary>
+        </member>
+        <member name="P:klbotlib.ModuleDiagnosticData.LastException">
+            <summary>
+            最近一次异常的调用栈
+            </summary>
+        </member>
+        <member name="M:klbotlib.ModuleDiagnosticData.RestartMeasurement">
+            <summary>
+            重新开始处理计时
+            </summary>
+        </member>
+        <member name="M:klbotlib.ModuleDiagnosticData.StopMeasurement">
+            <summary>
+            结束计时并记录处理时间
+            </summary>
+        </member>
+        <member name="M:klbotlib.ModuleDiagnosticData.GetSummaryString">
+            <summary>
+            获取此模块的统计信息
             </summary>
         </member>
     </members>

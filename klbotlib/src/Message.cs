@@ -1,10 +1,7 @@
 ﻿using klbotlib.Internal;
 using klbotlib.Json;
-using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Web;
 
 namespace klbotlib
 {

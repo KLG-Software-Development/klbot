@@ -5,8 +5,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 // 所有命令都在本文件、本命名空间中定义
 namespace klbotlib.Modules.CommandModuleNamespace.Commands
@@ -260,15 +258,6 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             return sb.ToString();
         }
     }
-    [DefaultCommand]
-    internal class ReloadCmd : SimpleActionCommand
-    {
-        public override AuthorType AuthorityRequirment => AuthorType.开发者;
-        public override string CommandString => "reload";
-        public override string ActionDescription => "重新载入所有模块配置文件";
-        public override void Action(KLBot bot, MessagePlain _) => bot.ReloadAllModules();
-    }
-    [DefaultCommand]
     internal class PtiCmd : AssignmentCommand<int>
     {
         public override AuthorType AuthorityRequirment => AuthorType.开发者;
@@ -320,7 +309,6 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).MaximumLength = value;
         public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
     }
-    //聊天模块命令
     [DefaultCommand]
     internal class TagMeCmd : SwitchCommand
     {
@@ -329,5 +317,17 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override string Format => "tag-me";
         public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).IsTagMe;
         public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).IsTagMe = value;
+    }
+    //图像模块命令
+    [DefaultCommand]
+    internal class ImgModFracCmd : AssignmentCommand<int>
+    {
+        public override AuthorType AuthorityRequirment => AuthorType.野人;
+        public override string PropertyName => "图像模块-选取比例";
+        public override string CommandString => "imgmod frac";
+        public override string ParameterDescription => "整数百分率(%)";
+        public override int GetBotProperty(KLBot bot) => bot.GetModule<ImageModule>(this).Fraction;
+        public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).TerminateProbability = value;
+        public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
     }
 }
