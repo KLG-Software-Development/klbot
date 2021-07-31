@@ -94,7 +94,7 @@ namespace klbotlib.Modules
             }
             else return false;
         }
-        ///<inheritdoc>/>
+        ///<inheritdoc/>
         public override string Processor(MessagePlain msg) => GenerateFuck();
     }
 }
