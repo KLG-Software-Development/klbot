@@ -1,5 +1,6 @@
 ﻿using klbotlib;
 using klbotlib.Exceptions;
+using klbotlib.Extensions;
 using klbotlib.Modules;
 using System;
 using System.Reflection;

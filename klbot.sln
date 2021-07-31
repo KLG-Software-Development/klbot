@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "klbot", "klbot\klbot.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "klbotlib", "klbotlib\klbotlib.csproj", "{33FDB64C-44D3-4D57-90D9-25840721703E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModuleCollection", "ModuleCollection\ModuleCollection.csproj", "{31B54F30-D9C5-422F-B04B-1AA79875EA47}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Release|ARM32.ActiveCfg = Release|Any CPU
 		{33FDB64C-44D3-4D57-90D9-25840721703E}.Release|ARM32.Build.0 = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Debug|ARM32.ActiveCfg = Debug|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Debug|ARM32.Build.0 = Debug|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Ref_Only|Any CPU.ActiveCfg = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Ref_Only|Any CPU.Build.0 = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Ref_Only|ARM32.ActiveCfg = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Ref_Only|ARM32.Build.0 = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|ARM32.ActiveCfg = Release|Any CPU
+		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|ARM32.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
 ﻿using Gleee.Consoleee;
+using klbotlib.Extensions;
 using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;

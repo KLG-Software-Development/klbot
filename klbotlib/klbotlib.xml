@@ -173,6 +173,24 @@
             ToString()函数：未附加时返回模块名；已附加时返回模块ID
             </summary>
         </member>
+        <member name="M:klbotlib.Modules.Module.TryGetFieldAndProperty``1(System.String,``0@)">
+            <summary>
+            尝试获取模块特定字段的值。只允许public字段
+            </summary>
+            <typeparam name="T">字段类型</typeparam>
+            <param name="name"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:klbotlib.Modules.Module.TrySetFieldAndProperty``1(System.String,``0)">
+            <summary>
+            尝试设置模块特定字段的值。只允许public字段
+            </summary>
+            <typeparam name="T">字段类型</typeparam>
+            <param name="name"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
         <member name="T:klbotlib.Modules.SingleTypeModule`1">
             <summary>
             方便实现只处理单个种类的Message的模块的基类
@@ -220,9 +238,20 @@
             开关型命令的基类. 统一调用方法：^[命令字符串]$
             </summary>
         </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.ExternalSwitchCommand">
+            <summary>
+            专门管理外部模块的开关型命令基类
+            </summary>
+        </member>
         <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.AssignmentCommand`1">
             <summary>
             赋值型命令的基类. 统一调用方法：^[命令字符串] 参数$
+            </summary>
+            <typeparam name="T">参数的类型</typeparam>
+        </member>
+        <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.ExternalAssignmentCommand`1">
+            <summary>
+            专门管理外部模块的赋值型命令基类
             </summary>
             <typeparam name="T">参数的类型</typeparam>
         </member>
@@ -258,90 +287,6 @@
             </summary>
             <typeparam name="T">执行指令的对象类型</typeparam>
         </member>
-        <member name="T:klbotlib.Modules.FuckModule">
-            <summary>
-            嘴臭模块
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.FuckModule.IsTagMe">
-            <summary>
-            TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.FuckModule.IsCascadeMode">
-            <summary>
-            串联模式 开启时嘴臭模块会输出一系列长嘴臭句子. 否则将输出单句.
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.FuckModule.TerminateProbability">
-            <summary>
-            生成连续嘴臭句子时的终止概率
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.FuckModule.MaximumLength">
-            <summary>
-            超过此长度时，串联模式不再累加
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.FuckModule.UseSignature">
-            <inheritdoc/>
-        </member>
-        <member name="M:klbotlib.Modules.FuckModule.Filter(klbotlib.MessagePlain)">
-            <inheritdoc/>
-        </member>
-        <!-- Badly formed XML comment ignored for member "M:klbotlib.Modules.FuckModule.Processor(klbotlib.MessagePlain)" -->
-        <member name="T:klbotlib.Modules.ImageModule">
-            <summary>
-            图像模块的demo
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.ImageModule.UseSignature">
-            <inheritdoc/>
-        </member>
-        <member name="M:klbotlib.Modules.ImageModule.#ctor">
-            <inheritdoc/>
-        </member>
-        <member name="M:klbotlib.Modules.ImageModule.Filter(klbotlib.MessagePlain)">
-            <inheritdoc/>
-        </member>
-        <member name="M:klbotlib.Modules.ImageModule.Processor(klbotlib.MessagePlain)">
-            <inheritdoc/>
-        </member>
-        <member name="T:klbotlib.Modules.TimeModule">
-            <summary>
-            报时模块。一个简单的范例模块
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.TimeModule.IsTransparent">
-            <inheritdoc/>
-        </member>
-        <member name="M:klbotlib.Modules.TimeModule.Filter(klbotlib.MessagePlain)">
-            <inheritdoc/>
-        </member>
-        <member name="M:klbotlib.Modules.TimeModule.Processor(klbotlib.MessagePlain)">
-            <inheritdoc/>
-        </member>
-        <member name="T:klbotlib.Modules.上号Module">
-            <summary>
-            上号模块
-            </summary>
-        </member>
-        <member name="P:klbotlib.Modules.上号Module.UseSignature">
-            <summary>
-            关闭模块签名
-            </summary>
-        </member>
-        <member name="M:klbotlib.Modules.上号Module.Filter(klbotlib.MessagePlain)">
-            <summary>
-            过滤器：处理任何消息
-            </summary>
-        </member>
-        <member name="M:klbotlib.Modules.上号Module.Processor(klbotlib.MessagePlain)">
-            <summary>
-            处理器：内容包含上号且不长于五个字符，则复读内容；
-            另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
-            </summary>
-        </member>
         <member name="T:klbotlib.Exceptions.KLBotInitializationException">
             <summary>
             KLBot初始化失败异常
@@ -363,17 +308,63 @@
             </summary>
             <param name="msg">异常信息</param>
         </member>
-        <member name="T:klbotlib.VersionExtension">
+        <member name="T:klbotlib.Extensions.VersionExtension">
             <summary>
             Version扩展
             </summary>
         </member>
-        <member name="M:klbotlib.VersionExtension.ToKLGBuildString(System.Version)">
+        <member name="M:klbotlib.Extensions.VersionExtension.ToKLGBuildString(System.Version)">
             <summary>
             从版本号计算KLG标准的Build编号
             </summary>
             <param name="version">版本号</param>
             <returns>KLG标准的Build编号</returns>
+        </member>
+        <member name="M:klbotlib.Extensions.DictionaryExtension.Serialize(System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            将字符串字典序列化为二进制
+            </summary>
+            <param name="dict">待序列化字典</param>
+        </member>
+        <member name="M:klbotlib.Extensions.DictionaryExtension.Deserialize(System.Byte[])">
+            <summary>
+            将二进制反序列化为字典
+            </summary>
+            <param name="bin">待反序列化字节数组</param>
+        </member>
+        <member name="M:klbotlib.Extensions.UnitStringExtension.ToMemorySizeString(System.Int64,System.Int32)">
+            <summary>
+            将字节数自动转换为合适数据单位的字符串
+            </summary>
+            <param name="byte_count">字节数量</param>
+            <param name="decimals">小数位数</param>
+        </member>
+        <member name="M:klbotlib.Extensions.UnitStringExtension.ToTimeSpanString(System.Int64,System.Int32)">
+            <summary>
+            将毫秒数自动转换为合适时间单位的字符串
+            </summary>
+            <param name="ms">毫秒数</param>
+            <param name="decimals">小数位数</param>
+        </member>
+        <member name="M:klbotlib.Extensions.UnitStringExtension.ToTimeSpanString(System.Double,System.Int32)">
+            <summary>
+            将毫秒数自动转换为合适时间单位的字符串
+            </summary>
+            <param name="ms">毫秒数</param>
+            <param name="decimals">小数位数</param>
+        </member>
+        <member name="M:klbotlib.Extensions.TypeExtension.GetRootBaseType(System.Type)">
+            <summary>
+            获取除object以外最基本的基类
+            </summary>
+            <param name="type">类型</param>
+        </member>
+        <member name="M:klbotlib.Extensions.TypeExtension.GetProperty_All(System.Type,System.String)">
+            <summary>
+            获取所有属性字段
+            </summary>
+            <param name="type">类型</param>
+            <param name="name">属性字段名称</param>
         </member>
         <member name="T:klbotlib.Internal.JMessage">
             <summary>
@@ -384,6 +375,21 @@
             <summary>
             直接从JSON解析出的消息包对象
             </summary>
+        </member>
+        <member name="T:klbotlib.JKLBotConfig">
+            <summary>
+            KLBot启动配置类
+            </summary>
+        </member>
+        <member name="M:klbotlib.JKLBotConfig.#ctor(System.String,System.Int64,System.Collections.Generic.IEnumerable{System.Int64},System.String,System.String)">
+            <summary>
+            创建一个KLBot配置
+            </summary>
+            <param name="url">mirai服务器所在URL</param>
+            <param name="self_id">KLBot自身ID (QQ号)</param>
+            <param name="targets">监听群组列表</param>
+            <param name="modules_cache_dir">模块缓存目录（相对）。所有模块的缓存目录集中在该目录下</param>
+            <param name="modules_save_dir">模块状态和模块配置的存档目录（相对）。所有模块的状态存档和配置存档文件集中在该目录下</param>
         </member>
         <member name="T:klbotlib.KLBot">
             <summary>
@@ -400,11 +406,6 @@
             此KLBot的统计和诊断信息
             </summary>
         </member>
-        <member name="P:klbotlib.KLBot.Config">
-            <summary>
-            此KLBot的运行配置
-            </summary>
-        </member>
         <member name="P:klbotlib.KLBot.PollingTimeInterval">
             <summary>
             此KLBot的轮询时间间隔（ms）。默认为250ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
@@ -413,6 +414,31 @@
         <member name="F:klbotlib.KLBot.IsLoopOn">
             <summary>
             此KLBot的消息循环Flag。设为false时会停止消息循环。
+            </summary>
+        </member>
+        <member name="P:klbotlib.KLBot.SelfID">
+            <summary>
+            配置项：此KLBot自身的QQ号
+            </summary>
+        </member>
+        <member name="P:klbotlib.KLBot.TargetGroupIDList">
+            <summary>
+            配置项：此KLBot的监听群组QQ号列表
+            </summary>
+        </member>
+        <member name="P:klbotlib.KLBot.ModulesCacheDir">
+            <summary>
+            配置项：模块私有目录。用来存取模块自己的自定义文件
+            </summary>
+        </member>
+        <member name="P:klbotlib.KLBot.ModulesSaveDir">
+            <summary>
+            配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
+            </summary>
+        </member>
+        <member name="P:klbotlib.KLBot.ServerURL">
+            <summary>
+            配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
             </summary>
         </member>
         <member name="M:klbotlib.KLBot.#ctor(System.String)">
@@ -532,21 +558,6 @@
             <summary>
             返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
             </summary>
-        </member>
-        <member name="T:klbotlib.KLBotConfig">
-            <summary>
-            KLBot启动配置类
-            </summary>
-        </member>
-        <member name="M:klbotlib.KLBotConfig.#ctor(System.String,System.Int64,System.Collections.Generic.IEnumerable{System.Int64},System.String,System.String)">
-            <summary>
-            创建一个KLBot配置
-            </summary>
-            <param name="url">mirai服务器所在URL</param>
-            <param name="self_id">KLBot自身ID (QQ号)</param>
-            <param name="targets">监听群组列表</param>
-            <param name="modules_cache_dir">模块缓存目录（相对）。所有模块的缓存目录集中在该目录下</param>
-            <param name="modules_save_dir">模块状态和模块配置的存档目录（相对）。所有模块的状态存档和配置存档文件集中在该目录下</param>
         </member>
         <member name="T:klbotlib.KLBotDiagnosticData">
             <summary>

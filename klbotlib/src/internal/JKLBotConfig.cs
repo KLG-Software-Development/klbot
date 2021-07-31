@@ -27,11 +27,11 @@ namespace klbotlib
     /// KLBot启动配置类
     /// </summary>
     [JsonObject(MemberSerialization.Fields)]
-    public class KLBotConfig
+    internal class JKLBotConfig
     {
-        internal QQConfig QQ;
-        internal NetworkConfig Network;
-        internal PathesConfig Pathes;
+        internal JQQConfig QQ;
+        internal JNetworkConfig Network;
+        internal JPathesConfig Pathes;
 
         /// <summary>
         /// 创建一个KLBot配置
@@ -41,11 +41,11 @@ namespace klbotlib
         /// <param name="targets">监听群组列表</param>
         /// <param name="modules_cache_dir">模块缓存目录（相对）。所有模块的缓存目录集中在该目录下</param>
         /// <param name="modules_save_dir">模块状态和模块配置的存档目录（相对）。所有模块的状态存档和配置存档文件集中在该目录下</param>
-        public KLBotConfig(string url, long self_id, IEnumerable<long> targets, string modules_cache_dir, string modules_save_dir)
+        public JKLBotConfig(string url, long self_id, IEnumerable<long> targets, string modules_cache_dir, string modules_save_dir)
         {
-            QQ = new QQConfig(self_id, targets);
-            Network = new NetworkConfig(url);
-            Pathes = new PathesConfig(modules_cache_dir, modules_save_dir);
+            QQ = new JQQConfig(self_id, targets);
+            Network = new JNetworkConfig(url);
+            Pathes = new JPathesConfig(modules_cache_dir, modules_save_dir);
         }
         internal bool HasNull(out string null_field_name)
         {
@@ -65,34 +65,34 @@ namespace klbotlib
         }
     }
     [JsonObject(MemberSerialization.Fields)]
-    internal class QQConfig : Config
+    internal class JQQConfig : Config
     {
         //Bot账号的自身ID
         public long SelfID;
         //Bot监听的群组的ID列表
         public List<long> TargetGroupIDList;
-        public QQConfig(long selfID, IEnumerable<long> targetGroupIDList)
+        public JQQConfig(long selfID, IEnumerable<long> targetGroupIDList)
         {
             SelfID = selfID;
             TargetGroupIDList = targetGroupIDList.ToList();
         }
     }
     [JsonObject(MemberSerialization.Fields)]
-    internal class NetworkConfig : Config
+    internal class JNetworkConfig : Config
     {
         //mirai服务器的URL
         public string ServerURL;
-        public NetworkConfig(string server)
+        public JNetworkConfig(string server)
         {
             ServerURL = server;
         }
     }
     [JsonObject(MemberSerialization.Fields)]
-    internal class PathesConfig : Config
+    internal class JPathesConfig : Config
     {
         public string ModulesCacheDir = "cache/modules";   //模块私有目录 用来存取模块自己的自定义文件
         public string ModulesSaveDir = "saves";  //模块存档目录 保存或读取模块配置和模块状态的路径
-        public PathesConfig(string modules_cache_dir, string modules_save_dir)
+        public JPathesConfig(string modules_cache_dir, string modules_save_dir)
         {
             ModulesCacheDir = modules_cache_dir;
             ModulesSaveDir = modules_save_dir;

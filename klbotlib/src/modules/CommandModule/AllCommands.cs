@@ -1,4 +1,5 @@
-﻿using System;
+﻿using klbotlib.Extensions;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -91,6 +92,26 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public sealed override bool IsCmd(string cmd) => cmd == Format;
     }
     /// <summary>
+    /// 专门管理外部模块的开关型命令基类
+    /// </summary>
+    internal abstract class ExternalSwitchCommand : SwitchCommand
+    {
+        public abstract string TargetModuleID { get; }
+        public abstract string MemberName { get; }           //此命令要修改的属性或者字段名
+
+        public sealed override bool GetBotProperty(KLBot bot)
+        {
+            if (!bot[TargetModuleID].TryGetFieldAndProperty<bool>(MemberName, out bool value))
+                throw new Exception($"找不到字段\"{MemberName}\"");
+            return value;
+        }
+        public sealed override void SetBotProperty(KLBot bot, bool value)
+        {
+            if (!bot[TargetModuleID].TrySetFieldAndProperty<bool>(MemberName, value))
+                throw new Exception($"找不到可设置的布尔字段\"{MemberName}\"");
+        }
+    }
+    /// <summary>
     /// 赋值型命令的基类. 统一调用方法：^[命令字符串] 参数$
     /// </summary>
     /// <typeparam name="T">参数的类型</typeparam>
@@ -125,8 +146,31 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             }
         }
     }
+    /// <summary>
+    /// 专门管理外部模块的赋值型命令基类
+    /// </summary>
+    /// <typeparam name="T">参数的类型</typeparam>
+    internal abstract class ExternalAssignmentCommand<T> : AssignmentCommand<T>
+    {
+        private string type_name = typeof(T).Name;
 
-//所有命令
+        public abstract string TargetModuleID { get; }
+        public abstract string MemberName { get; }           //此命令要修改的属性或者字段名
+
+        public sealed override T GetBotProperty(KLBot bot)
+        {
+            if (!bot[TargetModuleID].TryGetFieldAndProperty<T>(MemberName, out T value))
+                throw new Exception($"找不到{type_name}字段\"{MemberName}\"");
+            return value;
+        }
+        public sealed override void SetBotProperty(KLBot bot, T value)
+        {
+            if (!bot[TargetModuleID].TrySetFieldAndProperty<T>(MemberName, value))
+                throw new Exception($"找不到可设置的{type_name}字段\"{MemberName}\"");
+        }
+    }
+
+    //所有命令
     //通用命令
     [DefaultCommand]
     internal class HelpCmd : InfoCommand
@@ -275,59 +319,48 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string SwitchName => "嘴臭模块-总开关";
         public override string Format => "fuckmod enabled";
-        public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).Enabled;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).Enabled = value;
+        public override bool GetBotProperty(KLBot bot) => bot["FuckModule"].Enabled;
+        public override void SetBotProperty(KLBot bot, bool value) => bot["FuckModule"].Enabled = value;
     }
     [DefaultCommand]
-    internal class FuckModCascadeCmd : SwitchCommand
+    internal class FuckModCascadeCmd : ExternalSwitchCommand
     {
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string SwitchName => "嘴臭模块-串联模式";
         public override string Format => "fuckmod cascade";
-        public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).IsCascadeMode;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).IsCascadeMode = value;
+        public override string TargetModuleID => "FuckModule";
+        public override string MemberName => "IsCascade";
     }
     [DefaultCommand]
-    internal class FuckModTerminateProbCmd : AssignmentCommand<int>
-    {
-        public override AuthorType AuthorityRequirment => AuthorType.野人;
-        public override string PropertyName => "嘴臭模块-终止概率";
-        public override string CommandString => "fuckmod terminal-prob";
-        public override string ParameterDescription => "整数概率(%)";
-        public override int GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).TerminateProbability;
-        public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).TerminateProbability = value;
-        public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
-    }
-    [DefaultCommand]
-    internal class FuckModMaxLengthCmd : AssignmentCommand<int>
+    internal class FuckModMaxLengthCmd : ExternalAssignmentCommand<int>
     {
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string PropertyName => "嘴臭模块-最大长度";
         public override string CommandString => "fuckmod max-length";
         public override string ParameterDescription => "长度(整数)";
-        public override int GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).MaximumLength;
-        public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).MaximumLength = value;
+        public override string TargetModuleID => "FuckModule";
+        public override string MemberName => "MaxLength";
         public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
     }
     [DefaultCommand]
-    internal class TagMeCmd : SwitchCommand
+    internal class TagMeCmd : ExternalSwitchCommand
     {
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string SwitchName => "TagMe模式";
         public override string Format => "tag-me";
-        public override bool GetBotProperty(KLBot bot) => bot.GetModule<FuckModule>(this).IsTagMe;
-        public override void SetBotProperty(KLBot bot, bool value) => bot.GetModule<FuckModule>(this).IsTagMe = value;
+        public override string TargetModuleID => "FuckModule";
+        public override string MemberName => "IsTagMe";
     }
     //图像模块命令
     [DefaultCommand]
-    internal class ImgModFracCmd : AssignmentCommand<int>
+    internal class ImgModFracCmd : ExternalAssignmentCommand<int>
     {
         public override AuthorType AuthorityRequirment => AuthorType.野人;
         public override string PropertyName => "图像模块-选取比例";
         public override string CommandString => "imgmod frac";
         public override string ParameterDescription => "整数百分率(%)";
-        public override int GetBotProperty(KLBot bot) => bot.GetModule<ImageModule>(this).Fraction;
-        public override void SetBotProperty(KLBot bot, int value) => bot.GetModule<FuckModule>(this).TerminateProbability = value;
+        public override string TargetModuleID => "ImageModule";
+        public override string MemberName => "Fraction";
         public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
     }
 }

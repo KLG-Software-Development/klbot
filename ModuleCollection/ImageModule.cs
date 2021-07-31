@@ -4,35 +4,29 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules
 {
-    /// <summary>
-    /// 图像模块的demo
-    /// </summary>
+    // 图像模块的demo
     public class ImageModule : SingleTypeModule<MessagePlain>
     {
-        static Random ro = new Random();
-        WebClient client = new WebClient();
-        Regex middle_url = new Regex(@"""middleURL""\s*:\s*""(https?://.+?)"",");
+        static readonly Random ro = new Random();
+        readonly WebClient client = new WebClient();
 
         [ModuleStatus]
-        string LastDownloadTime = "N/A";
+        public string LastDownloadTime = "N/A";
         [ModuleStatus]
-        string LastParseTime = "N/A";
+        public string LastParseTime = "N/A";
         [ModuleStatus]
-        internal int Fraction { get; set; } = 100;   //只在前n%的结果内随机
-        /// <inheritdoc/>
+        public int Fraction { get; set; } = 100;   //只在前n%的结果内随机
         public sealed override bool UseSignature => false;
-        /// <inheritdoc/>
         public ImageModule()
         {
             client.Encoding = Encoding.UTF8;
             client.Headers.Add("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2");
-            client.Headers.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0");
+            client.Headers.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86; rv:60.0) Gecko/20100101 Firefox/60.0");
             client.Headers.Add("Upgrade-Insecure-Requests", "1");
-            client.Headers.Add("X-Forwarded-For", $"{ro.Next(255)}.{ro.Next(255)}.{ro.Next(255)}.{ro.Next(255)}");
+            //client.Headers.Add("X-Forwarded-For", $"{ro.Next(255)}.{ro.Next(255)}.{ro.Next(255)}.{ro.Next(255)}");
             client.QueryString.Add("charset", "UTF-8");
             client.QueryString.Add("tn", "resultjson_com");
             client.QueryString.Add("ipn", "rj");
@@ -49,14 +43,12 @@ namespace klbotlib.Modules
             client.QueryString.Add("nc", "1");
             client.QueryString.Add("rn", "60");
         }
-        /// <inheritdoc/>
         public override bool Filter(MessagePlain msg)
         {
             string text = msg.Text.Trim();
             return ((text.EndsWith("图来") || text.EndsWith("图来!")|| text.EndsWith("图来！"))
                 && text.Length != 2);
         }
-        /// <inheritdoc/>
         public override string Processor(MessagePlain msg)
         {
             Stopwatch sw = new Stopwatch();
@@ -79,11 +71,14 @@ namespace klbotlib.Modules
             return $@"\image:\url:{url}";
         }
     }
-    
 }
 
 namespace klbotlib.Modules.ImageModuleNamespace
 {
     class JResult { public JImage[] data; }
     class JImage { public string middleURL; }
+    public static class TimeSpanExtension
+    {
+        public static string ToMsString(this TimeSpan time_span, int decimals = 4) => time_span.TotalMilliseconds.ToString("f" + decimals) + "ms";
+    }
 }

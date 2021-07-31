@@ -1,5 +1,6 @@
 ﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
+using klbotlib.Extensions;
 using klbotlib.Internal;
 using klbotlib.Json;
 using klbotlib.Modules;
@@ -34,11 +35,7 @@ namespace klbotlib
         /// <summary>
         /// 此KLBot的统计和诊断信息
         /// </summary>
-        public KLBotDiagnosticData DiagData = new KLBotDiagnosticData();  
-        /// <summary>
-        /// 此KLBot的运行配置
-        /// </summary>
-        public KLBotConfig Config { get; }
+        public KLBotDiagnosticData DiagData = new KLBotDiagnosticData();
         /// <summary>
         /// 此KLBot的轮询时间间隔（ms）。默认为250ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
         /// </summary>
@@ -47,6 +44,26 @@ namespace klbotlib
         /// 此KLBot的消息循环Flag。设为false时会停止消息循环。
         /// </summary>
         public bool IsLoopOn = false;
+        /// <summary>
+        /// 配置项：此KLBot自身的QQ号
+        /// </summary>
+        public long SelfID { get; }
+        /// <summary>
+        /// 配置项：此KLBot的监听群组QQ号列表
+        /// </summary>
+        public List<long> TargetGroupIDList { get; }
+        /// <summary>
+        /// 配置项：模块私有目录。用来存取模块自己的自定义文件
+        /// </summary>
+        public string ModulesCacheDir { get; }
+        /// <summary>
+        /// 配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
+        /// </summary>
+        public string ModulesSaveDir { get; }
+        /// <summary>
+        /// 配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
+        /// </summary>
+        public string ServerURL { get; }
 
         /// <summary>
         /// 构造函数
@@ -65,13 +82,20 @@ namespace klbotlib
                     console.WriteLn($"KLBot配置文件{config_path}不存在", ConsoleMessageType.Error);
                     throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件不存在");
                 }
-                Config = JsonConvert.DeserializeObject<KLBotConfig>(File.ReadAllText(config_path));
+                JKLBotConfig Config = JsonConvert.DeserializeObject<JKLBotConfig>(File.ReadAllText(config_path));
                 File.WriteAllText(config_path, JsonConvert.SerializeObject(Config, Json.JsonHelper.JsonSettings.FileSetting));
                 if (Config.HasNull(out string field_name))
                 {
                     console.WriteLn($"KLBot配置文件解析结果中的{field_name}字段为null。请检查配置文件", ConsoleMessageType.Error);
                     throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件中含有null");
                 }
+                console.WriteLn($"加载配置...", ConsoleMessageType.Info);
+                //导出Config
+                SelfID = Config.QQ.SelfID;
+                TargetGroupIDList = Config.QQ.TargetGroupIDList;
+                ServerURL = Config.Network.ServerURL;
+                ModulesCacheDir = Config.Pathes.ModulesCacheDir;
+                ModulesSaveDir = Config.Pathes.ModulesSaveDir;
                 //创建模块存档目录（如果不存在）
                 CreateDirectoryIfNotExist(Config.Pathes.ModulesSaveDir, "模块存档目录");
                 //加载模块
@@ -99,12 +123,12 @@ namespace klbotlib
         /// 把给定群号添加到监听列表
         /// </summary>
         /// <param name="target">需要添加的群号</param>
-        public void AddTarget(params long[] target) => Config.QQ.TargetGroupIDList.AddRange(target);
+        public void AddTarget(params long[] target) => TargetGroupIDList.AddRange(target);
         /// <summary>
         /// 把一组群号批量添加到监听列表
         /// </summary>
         /// <param name="targets">需要添加的群号集合</param>
-        public void AddTarget(IEnumerable<long> targets) => Config.QQ.TargetGroupIDList.AddRange(targets);
+        public void AddTarget(IEnumerable<long> targets) => TargetGroupIDList.AddRange(targets);
 
         // 模块的增加/删除/查询
         /// <summary>
@@ -128,7 +152,7 @@ namespace klbotlib
                     module_count_by_name[m.ModuleName]++;
                 Modules.Add(m);
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
-                CreateDirectoryIfNotExist(Config.Pathes.ModulesCacheDir, $"模块{m}的缓存目录");
+                CreateDirectoryIfNotExist(ModulesCacheDir, $"模块{m}的缓存目录");
                 //载入模块配置
                 LoadModuleSetup(m);
                 LoadModuleStatus(m);
@@ -182,7 +206,7 @@ namespace klbotlib
             console.WriteLn($"已移除ID为\"{module_id}\"的模块", ConsoleMessageType.Info);
         }
 
-        //暴露给模块的一些方法
+        //暴露给Module类的一些方法
         /// <summary>
         /// 向控制台打印字符串。打印内容会自动包含消息源头的对象的名称
         /// </summary>
@@ -198,11 +222,11 @@ namespace klbotlib
                 console.WriteLnWithLock($"[{source.GetType().Name}] {message}", msg_type, prefix);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
-        internal string GetModuleCacheDir(Module module) => Path.Combine(Config.Pathes.ModulesCacheDir, module.ModuleID);
+        internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
         // 获取模块的ModuleStatus存档文件路径
-        internal string GetModuleStatusPath(Module module) => Path.Combine(Config.Pathes.ModulesSaveDir, module.ModuleID + "_status.json");
+        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleID + "_status.json");
         // 获取模块的ModuleSetup配置文件路径
-        internal string GetModuleSetupPath(Module module) => Path.Combine(Config.Pathes.ModulesSaveDir, module.ModuleID + "_setup.json");
+        internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleID + "_setup.json");
         // 返回KLBot中给定模块类型的模块数量
         internal int GetModuleCountByName(string module_name)
         {
@@ -238,7 +262,7 @@ namespace klbotlib
         /// <param name="msg_json">回复消息json</param>
         internal bool TryReplyMessage(Message origin_msg, string msg_json)
         {
-            string url = NetworkHelper.GetSendMessageUrl(Config.Network.ServerURL, origin_msg.Context);
+            string url = NetworkHelper.GetSendMessageUrl(ServerURL, origin_msg.Context);
             try
             {
                 NetworkHelper.PostJSON(url, msg_json);
@@ -259,7 +283,7 @@ namespace klbotlib
             JFetchMessageResponse obj;
             do
             {
-                string response_str = NetworkHelper.FetchMessageListJSON(Config.Network.ServerURL);
+                string response_str = NetworkHelper.FetchMessageListJSON(ServerURL);
                 //构建直接JSON对象
                 obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
                 //初步过滤
@@ -268,7 +292,7 @@ namespace klbotlib
                     if (x.type == "FriendMessage" || x.type == "TempMessage")
                         return true;
                     else if (x.type == "GroupMessage")   //如果是群组消息，还需要群组在监听列表里
-                        return Config.QQ.TargetGroupIDList.Contains(x.sender.group.id);
+                        return TargetGroupIDList.Contains(x.sender.group.id);
                     else return false;
                 }).ToList();
                 jmsgs.ForEach(jmsg => msgs.Add(MessageFactory.BuildMessage(jmsg)));
@@ -415,7 +439,7 @@ namespace klbotlib
                     else if (cmd == "save")
                     {
                         console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
-                        Modules.AsParallel().ForAll(x => 
+                        Modules.ForEach(x => 
                         { 
                             SaveModuleStatus(x);
                             #pragma warning disable CS0618
@@ -426,11 +450,7 @@ namespace klbotlib
                     else if (cmd == "reload")
                     {
                         console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
-                        Modules.ForEach(x =>
-                        {
-                            LoadModuleSetup(x);
-                            LoadModuleStatus(x);
-                        });
+                        ReloadAllModules();
                     }
                     else if (cmd == "lasterror")
                         console.WriteLn($"最近一次错误信息：\n{DiagData.LastException}", ConsoleMessageType.Info);
@@ -468,7 +488,7 @@ namespace klbotlib
         /// </summary>
         public void ReloadAllModules()
         {
-            Modules.AsParallel().ForAll( module => 
+            Modules.ForEach( module => 
             {
                 LoadModuleSetup(module);
                 LoadModuleStatus(module);
@@ -526,7 +546,7 @@ namespace klbotlib
         /// </summary>
         public void OnExit()
         {
-            Modules.AsParallel().ForAll( m => SaveModuleStatus(m));
+            Modules.ForEach( m => SaveModuleStatus(m));
             console.WriteLn("有序退出完成", ConsoleMessageType.Info);
         }
 
@@ -552,7 +572,7 @@ namespace klbotlib
         {
             StringBuilder sb = new StringBuilder("监听群组列表:\n");
             int index = 0;
-            Config.QQ.TargetGroupIDList.ForEach(target_id =>
+            TargetGroupIDList.ForEach(target_id =>
             {
                 sb.AppendLine($"  [{index}]  {target_id}");
                 index++;

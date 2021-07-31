@@ -31,6 +31,16 @@
     <ProjectReference Include="..\klbotlib\klbotlib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="ModuleCollection">
+      <HintPath>..\ModuleCollection\bin\Release\netstandard2.0\ModuleCollection.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <ProjectExtensions><VisualStudio><UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_UseGlobalSettings="True" /></VisualStudio></ProjectExtensions>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="&quot;C:\A\Programming\Projects\klbot\copy_exe.bat&quot;" />
+  </Target>
   
 </Project>

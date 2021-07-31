@@ -1,12 +1,11 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using klbotlib.Extensions;
 
 namespace klbotlib.Modules
 {
-    /// <summary>
-    /// 嘴臭模块
-    /// </summary>
+    // 嘴臭模块
     public class FuckModule : SingleTypeModule<MessagePlain>
     {
         private readonly RNGCryptoServiceProvider ro = new RNGCryptoServiceProvider();
@@ -15,26 +14,17 @@ namespace klbotlib.Modules
         [ModuleSetup]
         private readonly string[] sub, you, v, human, organ, subfix, adj_of_organ, adv, connector, combine, stuff, status;
 
-        /// <summary>
-        /// TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
-        /// </summary>
+        // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
         [ModuleStatus]
         public bool IsTagMe { get; set; } = false;
-        /// <summary>
-        /// 串联模式 开启时嘴臭模块会输出一系列长嘴臭句子. 否则将输出单句.
-        /// </summary>
+        // 串联模式 开启时嘴臭模块会输出一系列长嘴臭句子. 否则将输出单句.
         [ModuleStatus]
-        public bool IsCascadeMode { get; set; } = true;
-        /// <summary>
-        /// 生成连续嘴臭句子时的终止概率
-        /// </summary>
+        public bool IsCascade { get; set; } = true;
+        // 生成连续嘴臭句子时的终止概率
+        public int TermProb { get; set; } = 25;
+        // 超过此长度时，串联模式不再累加
         [ModuleStatus]
-        public int TerminateProbability { get; set; } = 25;
-        /// <summary>
-        /// 超过此长度时，串联模式不再累加
-        /// </summary>
-        [ModuleStatus]
-        public int MaximumLength { get; set; } = 20;
+        public int MaxLength { get; set; } = 20;
 
         private string Pick(string[] a) => a[ro.Next(a.Length)];
         private string SingleSentence()
@@ -71,10 +61,10 @@ namespace klbotlib.Modules
         }
         private string GenerateFuck()
         {
-            if (IsCascadeMode)
+            if (IsCascade)
             {
                 StringBuilder builder = new StringBuilder(SingleSentence());
-                while (ro.Next(100) > TerminateProbability && builder.Length <= MaximumLength)
+                while (ro.Next(100) > TermProb && builder.Length <= MaxLength)
                 {
                     builder.AppendFormat(" {0}", SingleSentence());
                 }
@@ -83,18 +73,16 @@ namespace klbotlib.Modules
             else return SingleSentence();
         }
 
-        ///<inheritdoc/>
-        public override bool UseSignature => false;         //隐藏返回消息中的模块签名
-        ///<inheritdoc/>
+        public override bool UseSignature => false; //隐藏返回消息中的模块签名        
         public override bool Filter(MessagePlain msg)
         {
             if (pattern.IsMatch(msg.Text))
             {
-                return !IsTagMe || msg.TargetID.Contains(HostBot.Config.QQ.SelfID);
+                return !IsTagMe || msg.TargetID.Contains(HostBot.SelfID);
             }
-            else return false;
+            else 
+                return false;
         }
-        ///<inheritdoc/>
         public override string Processor(MessagePlain msg) => GenerateFuck();
     }
 }

@@ -14,7 +14,7 @@ namespace klbotlib.Modules
 
         public override bool IsTransparent => false;
         public override bool UseSignature => false;
-        public override bool Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.Config.QQ.SelfID);
+        public override bool Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID);
         public override string Processor(MessagePlain msg)
         {
             Uri host = new Uri(url + msg.Text);

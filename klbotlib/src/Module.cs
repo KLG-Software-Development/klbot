@@ -1,5 +1,6 @@
 ﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
+using klbotlib.Extensions;
 using klbotlib.Internal;
 using klbotlib.Json;
 using Newtonsoft.Json;
@@ -334,6 +335,73 @@ namespace klbotlib.Modules
         /// ToString()函数：未附加时返回模块名；已附加时返回模块ID
         /// </summary>
         public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
+        /// <summary>
+        /// 尝试获取模块特定字段的值。只允许public字段
+        /// </summary>
+        /// <typeparam name="T">字段类型</typeparam>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetFieldAndProperty<T>(string name, out T value)
+        {
+            value = default(T);
+            Type type = GetType();
+            var p = type.GetProperty(name);
+            if (p != null )
+            {
+                if (p.PropertyType == typeof(T))
+                {
+                    value = (T)p.GetValue(this);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            var f = type.GetField(name);
+            if (f != null )
+            {
+                if (f.FieldType == typeof(T))
+                {
+                    value = (T)f.GetValue(this);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            return false;
+        }
+        /// <summary>
+        /// 尝试设置模块特定字段的值。只允许public字段
+        /// </summary>
+        /// <typeparam name="T">字段类型</typeparam>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TrySetFieldAndProperty<T>(string name, T value)
+        {
+            Type type = GetType();
+            var p = type.GetProperty(name);
+            if (p != null)
+            {
+                if (p.PropertyType == typeof(T) && p.CanWrite)
+                {
+                    p.SetValue(this, value);
+                    return true;
+                }
+                else return false;
+            }
+            var f = type.GetField(name);
+            if (f != null)
+            {
+                if (f.FieldType == typeof(T) && !f.IsInitOnly)
+                {
+                    f.SetValue(this, value);
+                    return true;
+                }
+                else return false;
+            }
+            return false;
+        }
         //处理并调用KLBot回复
         private void ProcessSingleMessage(Message msg)
         {
