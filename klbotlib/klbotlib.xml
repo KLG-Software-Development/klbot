@@ -283,6 +283,13 @@
             超过此长度时，串联模式不再累加
             </summary>
         </member>
+        <member name="P:klbotlib.Modules.FuckModule.UseSignature">
+            <inheritdoc/>
+        </member>
+        <member name="M:klbotlib.Modules.FuckModule.Filter(klbotlib.MessagePlain)">
+            <inheritdoc/>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:klbotlib.Modules.FuckModule.Processor(klbotlib.MessagePlain)" -->
         <member name="T:klbotlib.Modules.ImageModule">
             <summary>
             图像模块的demo

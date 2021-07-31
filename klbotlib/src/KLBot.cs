@@ -260,7 +260,6 @@ namespace klbotlib
             do
             {
                 string response_str = NetworkHelper.FetchMessageListJSON(Config.Network.ServerURL);
-                File.WriteAllText("debug_msg.json", response_str);
                 //构建直接JSON对象
                 obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
                 //初步过滤
