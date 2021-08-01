@@ -4,6 +4,7 @@ using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules
@@ -46,8 +47,8 @@ namespace klbotlib.Modules
         }
 
         public override bool IsTransparent => false;
-        public override bool Filter(MessagePlain msg) => cmdPat.IsMatch(msg.Text.Trim());
-        public override string Processor(MessagePlain msg)
+        public override int Filter(MessagePlain msg) => cmdPat.IsMatch(msg.Text.Trim()) ? 0 : 1;
+        public override string Processor(MessagePlain msg, int _)
         {
             string cmd_str = cmdPat.Match(msg.Text).Groups[1].Value.ToLower();
             //遍历命令模块中的命令列表，寻找第一个匹配

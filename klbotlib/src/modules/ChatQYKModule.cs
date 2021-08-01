@@ -14,8 +14,8 @@ namespace klbotlib.Modules
 
         public override bool IsTransparent => false;
         public override bool UseSignature => false;
-        public override bool Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID);
-        public override string Processor(MessagePlain msg)
+        public override int Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? 1 : 0;
+        public override string Processor(MessagePlain msg, int _)
         {
             Uri host = new Uri(url + msg.Text);
             string jreply = client.DownloadString(host);

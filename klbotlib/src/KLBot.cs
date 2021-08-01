@@ -594,7 +594,7 @@ namespace klbotlib
             StringBuilder sb = new StringBuilder("模块状态：\n");
             foreach (var module in Modules)
             {
-                sb.AppendLine($">{module.ModuleID}");
+                sb.AppendLine($"<{module.ModuleID}>");
                 Type type = module.GetType();
                 List<MemberInfo> members = new List<MemberInfo>();
                 members.AddRange(type.GetProperties_All().Reverse());

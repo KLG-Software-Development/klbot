@@ -74,15 +74,13 @@ namespace klbotlib.Modules
         }
 
         public override bool UseSignature => false; //隐藏返回消息中的模块签名        
-        public override bool Filter(MessagePlain msg)
+        public override int Filter(MessagePlain msg)
         {
-            if (pattern.IsMatch(msg.Text))
-            {
-                return !IsTagMe || msg.TargetID.Contains(HostBot.SelfID);
-            }
+            if (pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfID)))
+                return 1;
             else 
-                return false;
+                return 0;
         }
-        public override string Processor(MessagePlain msg) => GenerateFuck();
+        public override string Processor(MessagePlain msg, int _) => GenerateFuck();
     }
 }

@@ -15,12 +15,16 @@
         /// <summary>
         /// 过滤器：处理任何消息
         /// </summary>
-        public override bool Filter(MessagePlain msg) => true;
+        public override bool Filter(MessagePlain msg, out object filter_out)
+        {
+            filter_out = null;
+            return true;
+        }
         /// <summary>
         /// 处理器：内容包含上号且不长于五个字符，则复读内容；
         /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
         /// </summary>
-        public override string Processor(MessagePlain msg)
+        public override string Processor(MessagePlain msg, object _)
         {
             string msg_text = msg.Text.Trim(), output = string.Empty;
             if (Is上号(msg_text) && !Is上号(LastMsg))

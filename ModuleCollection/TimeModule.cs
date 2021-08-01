@@ -14,25 +14,33 @@ namespace klbotlib.Modules
         private int TimeZone = 8; //默认是UTC+8
 
         /// <inheritdoc/>
-        public override bool Filter(MessagePlain msg)
+        public override int Filter(MessagePlain msg)
         {
-            return msg.Text == "报时" || msg.Text.StartsWith("设置时区为");
+            if (msg.Text == "报时")
+                return 1;
+            else if (msg.Text.StartsWith("设置时区为"))
+                return 2;
+            else
+                return 0;
         }
 
         /// <inheritdoc/>
-        public override string Processor(MessagePlain msg)
+        public override string Processor(MessagePlain msg, int code)
         {
-            if (msg.Text == "报时")
-                return DateTime.UtcNow.AddHours(TimeZone).ToString() + @"{\face:大哭}";
-            else
+            switch (code)
             {
-                if (int.TryParse(msg.Text.Substring(5), out int result))
-                {
-                    TimeZone = result;
-                    return $"时区已设置为UTC{TimeZone:+#;-#;#}";
-                }
-                else
-                    return $"错误：你输了什么狗屁东西？";
+                case 1:
+                    return DateTime.UtcNow.AddHours(TimeZone).ToString() + @"{\face:大哭}";
+                case 2:
+                    if (int.TryParse(msg.Text.Substring(5), out int result))
+                    {
+                        TimeZone = result;
+                        return $"时区已设置为UTC{TimeZone:+#;-#;#}";
+                    }
+                    else
+                        return $"错误：你输了什么狗屁东西？";
+                default:
+                    return $"意外收到未知状态码{code}";
             }
         }
     }

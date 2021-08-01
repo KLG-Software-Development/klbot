@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-
+#pragma warning disable IDE0052 // 删除未读的私有成员
 namespace klbotlib.Modules
 {
     // 图像模块的demo
@@ -52,19 +52,24 @@ namespace klbotlib.Modules
             client.QueryString.Add("nc", "1");
             client.QueryString.Add("rn", "60");
         }
-        public override bool Filter(MessagePlain msg)
+        public override int Filter(MessagePlain msg)
         {
             string text = msg.Text.Trim();
-            return (text.EndsWith("图来") && text.Length != 2) || pattern1.IsMatch(text);
+            if (text.EndsWith("图来") && text.Length != 2)
+                return 1;
+            else if (pattern1.IsMatch(text))
+                return 2;
+            else
+                return 0;
         }
-        public override string Processor(MessagePlain msg)
+        public override string Processor(MessagePlain msg, int status_code)
         {
             string url, word, text = msg.Text.Trim();
-            if (pattern1.IsMatch(text))
-                word = pattern1.Match(text).Groups[1].Value;
-            else 
+            //根据不同的过滤器输出，用不同方式取出搜索词
+            if (status_code == 1)
                 word = text.Substring(0, msg.Text.Length - 2);
-
+            else
+                word = pattern1.Match(text).Groups[1].Value;
             //每次都使用上一次缓存的list_num（如果存在）
             bool is_cached = false;
             int list_num = 0;
@@ -113,9 +118,9 @@ namespace klbotlib.Modules
         }
     }
 }
-
 namespace klbotlib.Modules.ImageModuleNamespace
 {
     class JResult { public int listNum; public JImage[] data; }
     class JImage { public string middleURL; }
 }
+#pragma warning restore IDE0052 // 删除未读的私有成员

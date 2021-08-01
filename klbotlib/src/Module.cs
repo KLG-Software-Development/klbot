@@ -64,13 +64,16 @@ namespace klbotlib.Modules
         /// 当模块总开关开启时，结果为true的消息会被处理，结果为false的函数会忽略.
         /// </summary>
         /// <param name="msg">待判断消息</param>
-        public abstract bool Filter(Message msg);
+        /// <param name="filter_out">随过滤器判断完毕后返回的附加对象，最终会被传送给处理器。</param>
+        /// <returns>返回码。这个返回码会被处理器接收</returns>
+        public abstract int Filter(Message msg);
         /// <summary>
         /// 处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
         /// </summary>
         /// <param name="msg">待处理消息</param>
-        /// <returns>用字符串表示的处理结果. 如果你的命令不输出处理结果，返回null或空字符串</returns>
-        public abstract string Processor(Message msg);
+        /// <param name="filter_out">过滤器的附加输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
+        /// <returns>用字符串表示的处理结果。如果你的模块不输出处理结果，返回null或空字符串</returns>
+        public abstract string Processor(Message msg, object filter_out);
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
@@ -200,15 +203,16 @@ namespace klbotlib.Modules
 
 
         /*** 暴露给程序集中其他类的API ***/
-        // 向该模块的消息处理队列中添加一条新消息供后续处理
+        // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
         internal bool AddProcessTask(Message msg)
         {
-            if (!Enabled || !Filter(msg))
+            object filter_out = Filter(msg);
+            if (!Enabled || (filter_out != null))
                 return false;
             if (!process_worker.IsCompleted)
-                process_worker.ContinueWith( x => ProcessSingleMessage(msg));    //若未完成 则排队
+                process_worker.ContinueWith( x => ProcessSingleMessage(msg, filter_out));    //若未完成 则排队
             else
-                process_worker = Task.Run(() => ProcessSingleMessage(msg));      //已完成则取而代之直接开始
+                process_worker = Task.Run(() => ProcessSingleMessage(msg, filter_out));      //已完成则取而代之直接开始
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
@@ -403,15 +407,15 @@ namespace klbotlib.Modules
             return false;
         }
         //处理并调用KLBot回复
-        private void ProcessSingleMessage(Message msg)
+        private void ProcessSingleMessage(Message msg, object filter_out)
         {
-            AssertAttachedStatus(true); //统一Assert一遍
+            AssertAttachedStatus(true); //统一Assert附加情况
             string output;
             bool has_error = false;
             try
             {
                 DiagData.RestartMeasurement();
-                output = Processor(msg);
+                output = Processor(msg, filter_out);
                 DiagData.StopMeasurement();
                 DiagData.ProcessedMessageCount++;
             }
@@ -459,27 +463,27 @@ namespace klbotlib.Modules
         /// 过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
         /// </summary>
         /// <param name="msg">待判断消息</param>
-        public abstract bool Filter(T msg);
+        public abstract int Filter(T msg);
         /// <summary>
         /// 处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
         /// </summary>
         /// <param name="msg">待处理消息</param>
         /// <returns>用字符串表示的处理结果</returns>
-        public abstract string Processor(T msg);
+        public abstract string Processor(T msg, int status_code);
 
         ///<Inheritdoc/>
-        public sealed override bool Filter(Message msg)
+        public sealed override int Filter(Message msg)
         {
             if (msg is T tmsg)
                 return Filter(tmsg);
             else
-                return false;
+                return 0;
         }
         ///<Inheritdoc/>
-        public sealed override string Processor(Message msg)
+        public sealed override string Processor(Message msg, object status_code)
         {
             if (msg is T tmsg)
-                return Processor(tmsg);
+                return Processor(tmsg, status_code);
             else
             {
                 ModulePrint("意外遇到无法处理的消息类型", ConsoleMessageType.Error);
