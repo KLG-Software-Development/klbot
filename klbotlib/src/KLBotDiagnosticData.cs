@@ -35,7 +35,11 @@ namespace klbotlib
         {
             string re = $"已发起{SuccessPackageCount}次查询；共收到{ReceivedMessageCount}条消息；经过各模块处理{ProcessedMessageCount}次";
             if (LastUsedModule != null)
-                re += $"；最后一个参与处理的模块为{ LastUsedModule}；处理耗时{LastUsedModule.DiagData.LastProcessTime}";
+            {
+                re += $"；最后一个参与处理的模块为{ LastUsedModule}";
+                if (LastUsedModule.DiagData.LastProcessTime != "N/A")
+                    re += $"；该次处理耗时{LastUsedModule.DiagData.LastProcessTime}";
+            }
             return re;
         }
     }

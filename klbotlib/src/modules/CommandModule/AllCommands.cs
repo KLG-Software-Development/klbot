@@ -150,6 +150,22 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
     /// 专门管理外部模块的赋值型命令基类
     /// </summary>
     /// <typeparam name="T">参数的类型</typeparam>
+    internal abstract class IntExternalAssignmentCommand : ExternalAssignmentCommand<int>
+    {
+        public virtual int MinInclusive { get; } = int.MinValue;
+        public virtual int MaxExclusive { get; } = int.MaxValue;
+        public sealed override bool TryParseCmdStringValue(string value_string, out int val)
+        {
+            val = default(int);
+            if (int.TryParse(value_string, out val) && val >= 0 && val <= 100)
+                return true;
+            return false;
+        }
+    }
+    /// <summary>
+    /// 专门管理外部模块的赋值型命令基类
+    /// </summary>
+    /// <typeparam name="T">参数的类型</typeparam>
     internal abstract class ExternalAssignmentCommand<T> : AssignmentCommand<T>
     {
         private string type_name = typeof(T).Name;
@@ -361,6 +377,12 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         public override string ParameterDescription => "整数百分率(%)";
         public override string TargetModuleID => "ImageModule";
         public override string MemberName => "Fraction";
-        public override bool TryParseCmdStringValue(string value_string, out int val) => int.TryParse(value_string, out val);
+        public override bool TryParseCmdStringValue(string value_string, out int val)
+        {
+            val = default(int);
+            if (int.TryParse(value_string, out val) && val >= 0 && val <= 100)
+                return true;
+            return false;
+        }
     }
 }

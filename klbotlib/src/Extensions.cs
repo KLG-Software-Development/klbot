@@ -147,6 +147,36 @@ namespace klbotlib.Extensions
             var status_attribute = Attribute.GetCustomAttribute(info, typeof(ModuleStatusAttribute)) as ModuleStatusAttribute;
             return status_attribute != null && !status_attribute.IsHidden;
         }
+        public static bool TryGetValue(this MemberInfo info, object obj, out object value)
+        {
+            value = null;
+            if (info is FieldInfo fi)
+            {
+                value = fi.GetValue(obj);
+                return true;
+            }
+            else if (info is PropertyInfo pi)
+            {
+                value = pi.GetValue(obj);
+                return true;
+            }
+            return false;
+        }
+        public static bool TrySetValue(this MemberInfo info, object obj, object value)
+        {
+            value = null;
+            if (info is FieldInfo fi)
+            {
+                fi.SetValue(obj, value);
+                return true;
+            }
+            else if (info is PropertyInfo pi)
+            {
+                pi.SetValue(obj, value);
+                return true;
+            }
+            return false;
+        }
     }
     public static class TimeSpanExtension
     {

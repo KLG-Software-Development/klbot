@@ -2,3 +2,6 @@
 
 # CS0649: 从未对字段“ChatterBotReply.result”赋值，字段将一直保持其默认值 0
 dotnet_diagnostic.CS0649.severity = silent
+
+# IDE0052: 删除未读的私有成员
+dotnet_diagnostic.IDE0052.severity = none

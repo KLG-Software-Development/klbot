@@ -53,8 +53,4 @@
       <Private>true</Private>
     </Reference>
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="&quot;C:\A\Programming\Projects\klbot\copy_dll.bat&quot;" />
-  </Target>
 </Project>

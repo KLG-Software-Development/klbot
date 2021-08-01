@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using klbotlib.Extensions;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -52,15 +54,32 @@ namespace klbotlib
             var fields = GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (var field in fields)
             {
-                if ((Config)field.GetValue(this) == null)
+                if (field.GetValue(this) == null)
                 {
-                    null_field_name = $"BotConfig.{field.Name}";
+                    null_field_name = $"{field.Name}";
                     return true;
                 }
                 else if (((Config)field.GetValue(this)).HasNull(out null_field_name))
                     return true;
             }
             null_field_name = string.Empty;
+            return false;
+        }
+        internal bool HasNullFast(out string null_field_name)
+        {
+            null_field_name = string.Empty;
+            Type type = GetType();
+            var fields = type.GetFields_All().Where(f => f.FieldType.GetRootBaseType() == typeof(Config));
+            foreach (var field in fields)
+            {
+                if (field.GetValue(this) == null)
+                {
+                    null_field_name = $"{field.Name}";
+                    return true;
+                }
+                else if (((Config)field.GetValue(this)).HasNull(out null_field_name))
+                    return true;
+            }
             return false;
         }
     }

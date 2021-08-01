@@ -1,24 +1,33 @@
-﻿using klbotlib.Modules.ImageModuleNamespace;
+﻿using klbotlib.Extensions;
+using klbotlib.Modules.ImageModuleNamespace;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules
 {
     // 图像模块的demo
     public class ImageModule : SingleTypeModule<MessagePlain>
     {
-        static readonly Random ro = new Random();
+        readonly static Regex pattern1 = new Regex(@"来点(\S+?)图");
+        readonly static Random ro = new Random();
         readonly WebClient client = new WebClient();
+        readonly Stopwatch sw = new Stopwatch();
 
+        [ModuleStatus(IsHidden = true)]
+        Dictionary<string, int> ListNumCache = new Dictionary<string, int>();  //缓存每个搜索词的结果数量
         [ModuleStatus]
-        public string LastDownloadTime = "N/A";
+        int CacheCount = 0;
         [ModuleStatus]
-        public string LastParseTime = "N/A";
+        string LastDownloadTime = "N/A";
         [ModuleStatus]
-        public int Fraction { get; set; } = 100;   //只在前n%的结果内随机
+        string LastParseTime = "N/A";
+        [ModuleStatus]
+        public int Fraction = 50;   //只在前n%的结果内随机
         public sealed override bool UseSignature => false;
         public ImageModule()
         {
@@ -46,39 +55,67 @@ namespace klbotlib.Modules
         public override bool Filter(MessagePlain msg)
         {
             string text = msg.Text.Trim();
-            return ((text.EndsWith("图来") || text.EndsWith("图来!")|| text.EndsWith("图来！"))
-                && text.Length != 2);
+            return (text.EndsWith("图来") && text.Length != 2) || pattern1.IsMatch(text);
         }
         public override string Processor(MessagePlain msg)
         {
-            Stopwatch sw = new Stopwatch();
-            string url;
-            string word = msg.Text.Trim().Substring(0, msg.Text.Length - 2);
+            string url, word, text = msg.Text.Trim();
+            if (pattern1.IsMatch(text))
+                word = pattern1.Match(text).Groups[1].Value;
+            else 
+                word = text.Substring(0, msg.Text.Length - 2);
+
+            //每次都使用上一次缓存的list_num（如果存在）
+            bool is_cached = false;
+            int list_num = 0;
+            if (ListNumCache.ContainsKey(word))
+            {
+                is_cached = true;
+                list_num = ListNumCache[word];
+                if (list_num == 0)
+                    goto not_found; //缓存的值为0，意味着无结果
+            }
+            int max_index = Convert.ToInt32(Math.Round(list_num * (Fraction / 100f)));
+            int pn = ro.Next(max_index);
+            string json = FetchData(pn, word);
+            ModulePrint($"成功获取json，pn={pn}");
+            sw.Restart();
+            JResult result = JsonConvert.DeserializeObject<JResult>(json);
+            //更新字典
+            if (!is_cached)
+            {
+                ListNumCache.Add(word, result.listNum);
+                CacheCount++;
+            }
+            else
+                ListNumCache[word] = result.listNum;
+            url = result.data[ro.Next(result.data.Length)].middleURL;
+            sw.Stop();
+            LastParseTime = sw.Elapsed.ToMsString();
+            if (string.IsNullOrEmpty(url))
+                goto not_found;
+            else
+                return $@"\image:\url:{url}";
+            not_found:
+            return $"{HostBot.GetModule<FuckModule>(this).SingleSentence()}，找不到";
+        }
+
+        private string FetchData(int pn, string word)
+        {
+            sw.Restart();
             client.QueryString.Remove("word");
             client.QueryString.Remove("pn");
             client.QueryString.Add("word", word);
-            client.QueryString.Add("pn", ro.Next(6).ToString());    //只用前6页
-            sw.Restart();
-            string json = client.DownloadString("https://image.baidu.com/search/acjson");
+            client.QueryString.Add("pn", pn.ToString());
             sw.Stop();
             LastDownloadTime = sw.Elapsed.ToMsString();
-            sw.Restart();
-            JResult result = JsonConvert.DeserializeObject<JResult>(json);
-            int max_index = Convert.ToInt32(Math.Round(result.data.Length * (Fraction / 100f)));
-            url = result.data[ro.Next(max_index)].middleURL;
-            sw.Stop();
-            LastParseTime = sw.Elapsed.ToMsString();
-            return $@"\image:\url:{url}";
+            return client.DownloadString("https://image.baidu.com/search/acjson");
         }
     }
 }
 
 namespace klbotlib.Modules.ImageModuleNamespace
 {
-    class JResult { public JImage[] data; }
+    class JResult { public int listNum; public JImage[] data; }
     class JImage { public string middleURL; }
-    public static class TimeSpanExtension
-    {
-        public static string ToMsString(this TimeSpan time_span, int decimals = 4) => time_span.TotalMilliseconds.ToString("f" + decimals) + "ms";
-    }
 }

@@ -1,7 +1,7 @@
-﻿using System.Security.Cryptography;
+﻿using klbotlib.Extensions;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using klbotlib.Extensions;
 
 namespace klbotlib.Modules
 {
@@ -27,7 +27,7 @@ namespace klbotlib.Modules
         public int MaxLength { get; set; } = 20;
 
         private string Pick(string[] a) => a[ro.Next(a.Length)];
-        private string SingleSentence()
+        public string SingleSentence()
         {
             int mode = ro.Next(20);
             switch (mode)

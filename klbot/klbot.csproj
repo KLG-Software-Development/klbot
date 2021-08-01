@@ -5,7 +5,7 @@
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyVersion>1.4.*</AssemblyVersion>
-    <FileVersion>1.2</FileVersion>
+    <FileVersion>1.4</FileVersion>
     <Deterministic>false</Deterministic>
     <Copyright>KLG Science</Copyright>
     <Authors>Deleeete</Authors>
@@ -13,10 +13,7 @@
     <Version>1.4</Version>
     <Platforms>AnyCPU;ARM32</Platforms>
     <Configurations>Debug;Release;Ref_Only</Configurations>
-  </PropertyGroup>
-  <PropertyGroup>
-    <Deterministic>False</Deterministic>
-    <PackageId>com.klg.klbot</PackageId>
+    <PackageId>KLG.PaleMutant</PackageId>
   </PropertyGroup>
   
   <ItemGroup>
@@ -28,13 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\klbotlib\klbotlib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="ModuleCollection">
-      <HintPath>..\ModuleCollection\bin\Release\netstandard2.0\ModuleCollection.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\ModuleCollection\ModuleCollection.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_UseGlobalSettings="True" /></VisualStudio></ProjectExtensions>

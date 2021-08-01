@@ -17,9 +17,9 @@ namespace klbot
             Version lib_version = klbotlib.Info.LibInfo.GetLibVersion();
             long query_counter_cache = 0;
             int fatal_failure_counter = 0;
-            Console.WriteLine($"KLBot via mirai - Build {lib_version.ToKLGBuildString()}");
-            Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor}");
-            Console.WriteLine($"core library version: {lib_version.Major}.{lib_version.Minor}\n");
+            Console.WriteLine($"KLBot via mirai");
+            Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor} Build {exe_version.ToKLGBuildString()}");
+            Console.WriteLine($"corelib version: {lib_version.Major}.{lib_version.Minor} Build {lib_version.ToKLGBuildString()}\n");
         start:
             KLBot klg = null;
             try
