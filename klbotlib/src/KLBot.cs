@@ -7,6 +7,7 @@ using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -205,6 +206,29 @@ namespace klbotlib
             }
             console.WriteLn($"已移除ID为\"{module_id}\"的模块", ConsoleMessageType.Info);
         }
+        /// <summary>
+        /// 允许外部调用回复纯文本消息的接口。纯文本限制规避了MsgMarker编译错误，保证模块输出编译异常不会泄露到KLBot中。
+        /// </summary>
+        /// <param name="module">调用模块</param>
+        /// <param name="origin_msg">待回复的原始消息</param>
+        /// <param name="text">回复内容</param>
+        public void ReplyPlainMessage(Module module, Message origin_msg, string text)
+        {
+            string full_json = origin_msg.BuildReplyMessageJson(MsgMarker.CompileMessageChainJson(module, text, true));
+            if (!network_task.IsCompleted)
+            {
+                network_task.ContinueWith((x) =>
+                {
+                    CheckNetworkTaskResult(x.Result);
+                    TryReplyMessage(origin_msg, full_json);
+                });
+            }
+            else
+            {
+                network_task = Task.Run(() => TryReplyMessage(origin_msg, full_json));
+                network_task.ContinueWith(x => CheckNetworkTaskResult(x.Result));
+            }
+        }
 
         //暴露给Module类的一些成员
         internal CmdLoopStatus CmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
@@ -217,17 +241,17 @@ namespace klbotlib
         /// <param name="prefix">要在消息类别标识前附加的内容</param>
         public void ObjectPrint(object source, string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "")
         {
-            while (CmdStat != CmdLoopStatus.Output)
+            while (CmdStat == CmdLoopStatus.Output)
+            { Thread.Sleep(1); }
+
+            string source_name = source is Module m ? m.ModuleID : source.GetType().Name;
+            if (CmdStat == CmdLoopStatus.ReadLn)
             {
-                string source_name = source is Module m ? m.ModuleID : source.GetType().Name;
-                if (CmdStat == CmdLoopStatus.ReadLn)
-                {
-                    console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
-                    console.Write("> ", ConsoleColor.DarkYellow);
-                }
-                else
-                    console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
+                console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
+                console.Write("> ", ConsoleColor.DarkYellow);
             }
+            else
+                console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
@@ -243,8 +267,12 @@ namespace klbotlib
             else
                 return 0;
         }
-        // 将回复纯文本消息的任务加入网络任务队列
-        internal void AddReplyMessageTask(Message origin_msg, string chain)
+        /// <summary>
+        /// 将回复纯文本消息的任务加入网络任务队列
+        /// </summary>
+        /// <param name="origin_msg">要回复的原始消息</param>
+        /// <param name="chain">消息链条</param>
+        internal void AddReplyMessageTaskWithChain(Message origin_msg, string chain)
         {
             string full_json = origin_msg.BuildReplyMessageJson(chain);
             if (!network_task.IsCompleted)
@@ -307,7 +335,7 @@ namespace klbotlib
             }
             while (obj.data.Count != 0);   //无限轮询直到拿下所有消息
             DiagData.ReceivedMessageCount += msgs.Count;
-            return msgs.Where( x => x.Type != "Ignore").ToList(); //提前过滤空消息
+            return msgs.Where( x => !(x is MessageEmpty)).ToList(); //提前过滤空消息
         }
         /// <summary>
         /// 用默认消息处理函数依次处理消息列表
@@ -475,6 +503,7 @@ namespace klbotlib
         {
             foreach (var module in Modules)
             {
+                //if (module.ModuleName == "ImgRecgModule") Debugger.Break();
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
                 bool should_process = module.AddProcessTask(msg);

@@ -29,6 +29,7 @@ namespace klbot
                 else
                     klg = new();
                 new ImageModule().AttachTo(klg);
+                new IMGPModule().AttachTo(klg);
                 new TimeModule().AttachTo(klg);
                 new 上号Module().AttachTo(klg);
                 new FuckModule().AttachTo(klg);

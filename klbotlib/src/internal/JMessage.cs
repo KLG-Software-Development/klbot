@@ -14,5 +14,6 @@ namespace klbotlib.Internal
         public long time;
         public long target;
         public string text;
+        public string url;
     }
 }

@@ -90,8 +90,10 @@ namespace klbotlib.Internal
         }
 
         //把任意类型MsgMarker转换成相应的MessageChain
-        internal static string CompileMessageChainJson(Module module, string content)
+        internal static string CompileMessageChainJson(Module module, string content, bool always_plain = false)  //锁定纯文本
         {
+            if (always_plain)
+                return CompilePlainChainJson(content);
             if (!TryParsePrefix(content, out string type, out string body, start_only: true))
             {
                 //无prefix语法则默认当作纯文本

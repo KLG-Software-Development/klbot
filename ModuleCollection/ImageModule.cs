@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-#pragma warning disable IDE0052 // 删除未读的私有成员
+
 namespace klbotlib.Modules
 {
     // 图像模块的demo
@@ -123,4 +123,3 @@ namespace klbotlib.Modules.ImageModuleNamespace
     class JResult { public int listNum; public JImage[] data; }
     class JImage { public string middleURL; }
 }
-#pragma warning restore IDE0052 // 删除未读的私有成员

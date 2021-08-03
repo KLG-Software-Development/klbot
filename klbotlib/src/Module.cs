@@ -71,9 +71,9 @@ namespace klbotlib.Modules
         /// 处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
         /// </summary>
         /// <param name="msg">待处理消息</param>
-        /// <param name="filter_out">过滤器的附加输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
+        /// <param name="status_code">过滤器的附加输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
         /// <returns>用字符串表示的处理结果。如果你的模块不输出处理结果，返回null或空字符串</returns>
-        public abstract string Processor(Message msg, object filter_out);
+        public abstract string Processor(Message msg, int status_code);
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
@@ -206,13 +206,15 @@ namespace klbotlib.Modules
         // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
         internal bool AddProcessTask(Message msg)
         {
-            object filter_out = Filter(msg);
-            if (!Enabled || (filter_out != null))
+            if (!Enabled)
+                return false;
+            int status_code = Filter(msg);
+            if (status_code == 0)
                 return false;
             if (!process_worker.IsCompleted)
-                process_worker.ContinueWith( x => ProcessSingleMessage(msg, filter_out));    //若未完成 则排队
+                process_worker.ContinueWith( x => ProcessSingleMessage(msg, status_code));    //若未完成 则排队
             else
-                process_worker = Task.Run(() => ProcessSingleMessage(msg, filter_out));      //已完成则取而代之直接开始
+                process_worker = Task.Run(() => ProcessSingleMessage(msg, status_code));      //已完成则取而代之直接开始
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
@@ -407,7 +409,7 @@ namespace klbotlib.Modules
             return false;
         }
         //处理并调用KLBot回复
-        private void ProcessSingleMessage(Message msg, object filter_out)
+        private void ProcessSingleMessage(Message msg, int status_code)
         {
             AssertAttachedStatus(true); //统一Assert附加情况
             string output;
@@ -415,14 +417,14 @@ namespace klbotlib.Modules
             try
             {
                 DiagData.RestartMeasurement();
-                output = Processor(msg, filter_out);
+                output = Processor(msg, status_code);
                 DiagData.StopMeasurement();
                 DiagData.ProcessedMessageCount++;
             }
             catch (Exception ex)
             {
                 DiagData.LastException = ex;
-                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}";
+                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Substring(0, 32)}...\n\n调用栈：\n{ex.StackTrace.Substring(1000)}...";
                 has_error = true;
             }
             if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈
@@ -446,7 +448,7 @@ namespace klbotlib.Modules
                     DiagData.LastException = ex;
                     chain = JsonHelper.MessageElementBuilder.BuildPlainElement($"{this.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
                 }
-                host_bot.AddReplyMessageTask(msg, chain);     //用backing字段 省略Assert
+                host_bot.AddReplyMessageTaskWithChain(msg, chain);     //用backing字段 省略Assert
             }
             SaveModuleStatus(false);   //保存模块状态
         }
@@ -460,7 +462,7 @@ namespace klbotlib.Modules
     public abstract class SingleTypeModule<T> : Module where T : Message
     {
         /// <summary>
-        /// 过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
+        /// 单类型过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
         /// </summary>
         /// <param name="msg">待判断消息</param>
         public abstract int Filter(T msg);
@@ -474,13 +476,13 @@ namespace klbotlib.Modules
         ///<Inheritdoc/>
         public sealed override int Filter(Message msg)
         {
-            if (msg is T tmsg)
-                return Filter(tmsg);
+            if (msg.GetType() == typeof(T))
+                return Filter((T)msg);
             else
                 return 0;
         }
         ///<Inheritdoc/>
-        public sealed override string Processor(Message msg, object status_code)
+        public sealed override string Processor(Message msg, int status_code)
         {
             if (msg is T tmsg)
                 return Processor(tmsg, status_code);

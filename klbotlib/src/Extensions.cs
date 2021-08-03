@@ -73,6 +73,22 @@ namespace klbotlib.Extensions
             }
             return value.ToString($"f{decimals}") + mem_units[unit_index];
         }
+        /// <summary>
+        /// 将字节数自动转换为合适数据单位的字符串
+        /// </summary>
+        /// <param name="byte_count">字节数量</param>
+        /// <param name="decimals">小数位数</param>
+        public static string ToMemorySizeString(this int byte_count, int decimals)
+        {
+            int unit_index = 0;
+            double value = byte_count;
+            while (value > 1024f && unit_index < mem_units.Length)
+            {
+                unit_index++;
+                value /= 1024f;
+            }
+            return value.ToString($"f{decimals}") + mem_units[unit_index];
+        }
 
         //double/long ms -> time unit
         private static readonly string[] time_units = new string[] { "毫秒", "秒", "分钟", "小时", "天" };
