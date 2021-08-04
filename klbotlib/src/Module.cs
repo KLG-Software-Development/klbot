@@ -424,7 +424,7 @@ namespace klbotlib.Modules
             catch (Exception ex)
             {
                 DiagData.LastException = ex;
-                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Substring(0, 32)}...\n\n调用栈：\n{ex.StackTrace.Substring(1000)}...";
+                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(64)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
                 has_error = true;
             }
             if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈

@@ -11,7 +11,7 @@
     <Authors>Deleeete</Authors>
     <Company>KLG Science</Company>
     <Version>1.4</Version>
-    <Platforms>AnyCPU;ARM32</Platforms>
+    <Platforms>AnyCPU;ARM32;x64</Platforms>
     <Configurations>Debug;Release;Ref_Only</Configurations>
     <PackageId>KLG.PaleMutant</PackageId>
   </PropertyGroup>
@@ -29,9 +29,5 @@
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_UseGlobalSettings="True" /></VisualStudio></ProjectExtensions>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="&quot;C:\A\Programming\Projects\klbot\copy_exe.bat&quot;" />
-  </Target>
   
 </Project>

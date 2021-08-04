@@ -15,7 +15,7 @@ namespace klbotlib
         /// </summary>
         public IReadOnlyList<string> UrlList { get => url_list; }
 
-        public MessageImage(long sender_id, long group_id) : base(sender_id, group_id) { }
+        internal MessageImage(long sender_id, long group_id) : base(sender_id, group_id) { }
 
         internal void Add(params string[] url) => url_list.AddRange(url);
         internal void AddRange(IEnumerable<string> url) => url_list.AddRange(url);

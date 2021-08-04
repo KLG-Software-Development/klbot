@@ -11,10 +11,6 @@ namespace klbotlib
     {
         private List<long> target_id = new List<long>();
         /// <summary>
-        /// 消息类型。文本消息="Plain"；空消息="Ignore"；其他类型的QQ消息暂时没有实现。
-        /// </summary>
-        //public virtual string Type { get; } = "Ignore";
-        /// <summary>
         /// 发送者的ID（QQ号）。如果没有则为-1
         /// </summary>
         public long SenderID { get; internal set; } = -1;

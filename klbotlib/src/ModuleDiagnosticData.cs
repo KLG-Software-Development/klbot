@@ -41,9 +41,9 @@ namespace klbotlib
         {
             string re = $"共处理了{ProcessedMessageCount}条消息";
             if (LastProcessTime != "N/A")
-                re += $"；最后一次处理耗时{LastProcessTime}；\n";
+                re += $"；最后一次处理耗时{LastProcessTime}";
             if (LastException != null)
-                re += $"最近一次异常信息：{LastException.Message}\n调用栈：\n{LastException.StackTrace}";
+                re += $"；\n最近一次异常信息：{LastException.Message}\n调用栈：\n{LastException.StackTrace}";
             return re;
         }
     }

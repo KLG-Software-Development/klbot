@@ -12,6 +12,7 @@
     <AssemblyVersion>0.6.*</AssemblyVersion>
     <FileVersion>0.6.0</FileVersion>
     <Configurations>Debug;Release;Ref_Only</Configurations>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -25,13 +26,34 @@
     <DocumentationFile></DocumentationFile>
     <Optimize>false</Optimize>
   </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DocumentationFile />
+    <Optimize>false</Optimize>
+  </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DocumentationFile>C:\A\Programming\Projects\klbot\klbotlib\klbotlib.xml</DocumentationFile>
     <Optimize>true</Optimize>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DocumentationFile>C:\A\Programming\Projects\klbot\klbotlib\klbotlib.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|AnyCPU'">
+    <DocumentationFile>C:\A\Programming\Projects\klbot\klbotlib\klbotlib.xml</DocumentationFile>
+    <PackageId>KLG.KLBotCoreLib-Ref-Only</PackageId>
+    <Optimize>true</Optimize>
+    <Description>KLBot机器人核心库。此程序集为reference only，不包含可执行代码，仅用于KLBot机器人模块开发，无法用于编写可执行程序。</Description>
+    <ProduceOnlyReferenceAssembly>true</ProduceOnlyReferenceAssembly>
+    <OutputPath>bin\Ref_Only\</OutputPath>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|x64'">
     <DocumentationFile>C:\A\Programming\Projects\klbot\klbotlib\klbotlib.xml</DocumentationFile>
     <PackageId>KLG.KLBotCoreLib-Ref-Only</PackageId>
     <Optimize>true</Optimize>

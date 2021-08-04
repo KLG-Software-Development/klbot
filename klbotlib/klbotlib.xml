@@ -72,13 +72,16 @@
             当模块总开关开启时，结果为true的消息会被处理，结果为false的函数会忽略.
             </summary>
             <param name="msg">待判断消息</param>
+            <param name="filter_out">随过滤器判断完毕后返回的附加对象，最终会被传送给处理器。</param>
+            <returns>返回码。这个返回码会被处理器接收</returns>
         </member>
-        <member name="M:klbotlib.Modules.Module.Processor(klbotlib.Message)">
+        <member name="M:klbotlib.Modules.Module.Processor(klbotlib.Message,System.Int32)">
             <summary>
             处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
             </summary>
             <param name="msg">待处理消息</param>
-            <returns>用字符串表示的处理结果. 如果你的命令不输出处理结果，返回null或空字符串</returns>
+            <param name="status_code">过滤器的附加输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
+            <returns>用字符串表示的处理结果。如果你的模块不输出处理结果，返回null或空字符串</returns>
         </member>
         <member name="P:klbotlib.Modules.Module.HostBot">
             <summary>
@@ -200,11 +203,11 @@
         </member>
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(`0)">
             <summary>
-            过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
+            单类型过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
             </summary>
             <param name="msg">待判断消息</param>
         </member>
-        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(`0)">
+        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(`0,System.Int32)">
             <summary>
             处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
             </summary>
@@ -214,7 +217,7 @@
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(klbotlib.Message)">
             <Inheritdoc/>
         </member>
-        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(klbotlib.Message)">
+        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(klbotlib.Message,System.Int32)">
             <Inheritdoc/>
         </member>
         <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.SimpleActionCommand">
@@ -339,6 +342,13 @@
             <param name="bin">待反序列化字节数组</param>
         </member>
         <member name="M:klbotlib.Extensions.UnitStringExtension.ToMemorySizeString(System.Int64,System.Int32)">
+            <summary>
+            将字节数自动转换为合适数据单位的字符串
+            </summary>
+            <param name="byte_count">字节数量</param>
+            <param name="decimals">小数位数</param>
+        </member>
+        <member name="M:klbotlib.Extensions.UnitStringExtension.ToMemorySizeString(System.Int32,System.Int32)">
             <summary>
             将字节数自动转换为合适数据单位的字符串
             </summary>
@@ -498,6 +508,14 @@
             </summary>
             <param name="module_id">要删除的模块ID</param>
         </member>
+        <member name="M:klbotlib.KLBot.ReplyPlainMessage(klbotlib.Modules.Module,klbotlib.Message,System.String)">
+            <summary>
+            允许外部调用回复纯文本消息的接口。纯文本限制规避了MsgMarker编译错误，保证模块输出编译异常不会泄露到KLBot中。
+            </summary>
+            <param name="module">调用模块</param>
+            <param name="origin_msg">待回复的原始消息</param>
+            <param name="text">回复内容</param>
+        </member>
         <member name="M:klbotlib.KLBot.ObjectPrint(System.Object,System.String,Gleee.Consoleee.ConsoleMessageType,System.String)">
             <summary>
             向控制台打印字符串。打印内容会自动包含消息源头的对象的名称
@@ -506,6 +524,13 @@
             <param name="message">需要向控制台打印的消息</param>
             <param name="msg_type">消息类别 分为无、信息、警告、错误、任务. 默认为信息. </param>
             <param name="prefix">要在消息类别标识前附加的内容</param>
+        </member>
+        <member name="M:klbotlib.KLBot.AddReplyMessageTaskWithChain(klbotlib.Message,System.String)">
+            <summary>
+            将回复纯文本消息的任务加入网络任务队列
+            </summary>
+            <param name="origin_msg">要回复的原始消息</param>
+            <param name="chain">消息链条</param>
         </member>
         <member name="M:klbotlib.KLBot.TryReplyMessage(klbotlib.Message,System.String)">
             <summary>
@@ -616,11 +641,6 @@
             klbot内部使用的消息抽象类。所有QQ消息都继承此类
             </summary>
         </member>
-        <member name="P:klbotlib.Message.Type">
-            <summary>
-            消息类型。文本消息="Plain"；空消息="Ignore"；其他类型的QQ消息暂时没有实现。
-            </summary>
-        </member>
         <member name="P:klbotlib.Message.SenderID">
             <summary>
             发送者的ID（QQ号）。如果没有则为-1
@@ -641,15 +661,11 @@
             此消息的上下文。私聊=Private；临时会话=Temp；群聊=Group
             </summary>
         </member>
-        <member name="T:klbotlib.MessagePlain">
+        <member name="M:klbotlib.Message.TargetContains(System.Int64)">
             <summary>
-            纯文本消息类
+            返回此消息是否@了某个ID
             </summary>
-        </member>
-        <member name="P:klbotlib.MessagePlain.Text">
-            <summary>
-            此消息的文本内容
-            </summary>
+            <param name="id">待判断ID</param>
         </member>
         <member name="T:klbotlib.MessageContext">
             <summary>
@@ -669,6 +685,41 @@
         <member name="F:klbotlib.MessageContext.Group">
             <summary>
             群组
+            </summary>
+        </member>
+        <member name="T:klbotlib.MessageImage">
+            <summary>
+            图像消息类
+            </summary>
+        </member>
+        <member name="P:klbotlib.MessageImage.UrlList">
+            <summary>
+            图像的Url的列表，顺序从先到后
+            </summary>
+        </member>
+        <member name="P:klbotlib.MessageImagePlain.UrlList">
+            <summary>
+            图像的Url
+            </summary>
+        </member>
+        <member name="P:klbotlib.MessageImagePlain.Text">
+            <summary>
+            随图像一同发送的文字
+            </summary>
+        </member>
+        <member name="T:klbotlib.MessagePlain">
+            <summary>
+            纯文本消息类
+            </summary>
+        </member>
+        <member name="P:klbotlib.MessagePlain.Text">
+            <summary>
+            此消息的文本内容
+            </summary>
+        </member>
+        <member name="P:klbotlib.MessageVoice.Url">
+            <summary>
+            语音的url
             </summary>
         </member>
         <member name="T:klbotlib.ModuleDiagnosticData">

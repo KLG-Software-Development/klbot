@@ -180,7 +180,7 @@ namespace klbotlib.Modules
                     word = ipmsg.Text.Trim();
                     type = Uri.EscapeDataString(type_by_word_proc[word]);
                     body = $"image&image_url={esc_url}&type={type}&show=true";
-                    HostBot.ReplyPlainMessage(this, msg, "处理中...");
+                    //HostBot.ReplyPlainMessage(this, msg, "处理中...");
                     JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(http_helper.PostString(post_url, body));
                     //错误检查
                     if (reply_proc.errno != 0 || reply_proc.msg.Trim().ToLower() != "success")

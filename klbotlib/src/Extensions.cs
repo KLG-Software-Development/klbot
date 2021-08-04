@@ -220,5 +220,19 @@ namespace klbotlib.Extensions
             return BitConverter.ToInt32(buffer, 0) % max + min;
         }
     }
+    public static class StringExtension
+    {
+        /// <summary>
+        /// 将超过指定长度限制的字符串的中间部分省略
+        /// </summary>
+        /// <param name="max_length">长度上限</param>
+        public static string Shorten(this string s, int max_length)
+        {
+            if (s.Length > max_length)
+                return s.Substring(0, max_length / 2) + "..." + s.Substring(s.Length - max_length / 2, s.Length);
+            else
+                return s;
+        }
+    }
 #pragma warning restore CS1591 
 }

@@ -149,7 +149,6 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
     /// <summary>
     /// 专门管理外部模块的赋值型命令基类
     /// </summary>
-    /// <typeparam name="T">参数的类型</typeparam>
     internal abstract class IntExternalAssignmentCommand : ExternalAssignmentCommand<int>
     {
         public virtual int MinInclusive { get; } = int.MinValue;

@@ -11,6 +11,7 @@
     <FileVersion>0.1</FileVersion>
     <Deterministic>False</Deterministic>
     <RootNamespace>ModuleCollection</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

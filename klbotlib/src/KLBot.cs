@@ -251,7 +251,7 @@ namespace klbotlib
                 console.Write("> ", ConsoleColor.DarkYellow);
             }
             else
-                console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
+                console.WriteLn($"[{source_name}] {message}", msg_type, prefix);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
