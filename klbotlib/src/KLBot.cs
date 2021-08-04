@@ -468,8 +468,28 @@ namespace klbotlib
                     if (!module_index_by_id.ContainsKey(id))
                         console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                     else
-                    {
                         console.WriteLn(Modules[module_index_by_id[id]].DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                }
+                else if (cmd.StartsWith("enable "))
+                {
+                    string id = cmd.Substring(7);
+                    if (!module_index_by_id.ContainsKey(id))
+                        console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                    else
+                    {
+                        Modules[module_index_by_id[id]].Enabled = true;
+                        console.WriteLn($"成功启用{id}", ConsoleMessageType.Info);
+                    }
+                }
+                else if (cmd.StartsWith("disable "))
+                {
+                    string id = cmd.Substring(8);
+                    if (!module_index_by_id.ContainsKey(id))
+                        console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                    else
+                    {
+                        Modules[module_index_by_id[id]].Enabled = false;
+                        console.WriteLn($"成功禁用{id}", ConsoleMessageType.Info);
                     }
                 }
                 else if (cmd == "save")
