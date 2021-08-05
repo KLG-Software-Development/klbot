@@ -27,10 +27,10 @@ namespace KLBotUnitTest
             var tm = new TimeModule();
             Assert.AreEqual(tm.ModuleIndex, -1, "模块初始情况下模块应处于未附加状态，模块索引为-1");
             tm.AttachTo(test_bot);
-            Assert.AreEqual(TestConst.CoreModuleCount, tm.ModuleIndex,  "调用AttachTo(KLBot)后模块索引应等于在模块链条同类模块中的索引。此处是第一个TimeModule，应为0");
+            Assert.AreEqual(0, tm.ModuleIndex,  "调用AttachTo(KLBot)后模块索引应等于在模块链条同类模块中的索引。此处是第一个TimeModule，应为0");
             var tm2 = new TimeModule();
             tm2.AttachTo(test_bot);
-            Assert.AreEqual(TestConst.CoreModuleCount + 1, tm2.ModuleIndex, "调用AttachTo(KLBot)后模块索引应等于在模块链条中的索引。此处是第二个TimeModule，应为1");
+            Assert.AreEqual(1, tm2.ModuleIndex, "调用AttachTo(KLBot)后模块索引应等于在模块链条中的索引。此处是第二个TimeModule，应为1");
         }
     }
 }
