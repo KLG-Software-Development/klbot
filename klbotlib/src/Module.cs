@@ -22,7 +22,6 @@ namespace klbotlib.Modules
     {
         //后台变量
         private KLBot host_bot;
-        private int module_index = -1;
         //消息处理Task
         private Task process_worker;
 
@@ -33,11 +32,7 @@ namespace klbotlib.Modules
         /// <summary>
         /// 模块索引。等于模块在宿主KLBot链条中的索引
         /// </summary>
-        public int ModuleIndex
-        {
-            get { AssertAttachedStatus(true); return module_index; }
-            private set => module_index = value;
-        }
+        public int ModuleIndex { get; private set; } = -1;
         /// <summary>
         /// 模块ID. 是模块对象的唯一标识. 
         /// 当模块未附加到KLBot上时，等于模块名；

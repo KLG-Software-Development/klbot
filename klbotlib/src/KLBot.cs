@@ -46,7 +46,7 @@ namespace klbotlib
         /// <summary>
         /// 此KLBot的消息循环Flag。设为false时会停止消息循环。
         /// </summary>
-        public bool IsLoopOn = false;
+        public bool IsLoopOn { get; set; } = false;
         /// <summary>
         /// 配置项：此KLBot自身的QQ号
         /// </summary>

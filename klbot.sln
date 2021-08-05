@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "klbotlib", "klbotlib\klbotl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModuleCollection", "ModuleCollection\ModuleCollection.csproj", "{31B54F30-D9C5-422F-B04B-1AA79875EA47}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLBotUnitTest", "KLBotUnitTest\KLBotUnitTest.csproj", "{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -94,6 +96,30 @@ Global
 		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|ARM64.Build.0 = Release|Any CPU
 		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|x64.ActiveCfg = Release|x64
 		{31B54F30-D9C5-422F-B04B-1AA79875EA47}.Release|x64.Build.0 = Release|x64
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|ARM32.ActiveCfg = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|ARM32.Build.0 = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|Any CPU.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|Any CPU.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|ARM32.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|ARM32.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|ARM64.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|ARM64.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|x64.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Ref_Only|x64.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|ARM32.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|ARM32.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|ARM64.Build.0 = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF846344-F002-40B8-B5E2-2FDBA9FBBFE7}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
