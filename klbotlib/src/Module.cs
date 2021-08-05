@@ -342,12 +342,12 @@ namespace klbotlib.Modules
         /// </summary>
         public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
         /// <summary>
-        /// 尝试获取模块特定字段的值。只允许public字段
+        /// 尝试获取模块特定字段的值。只允许获取public字段
         /// </summary>
         /// <typeparam name="T">字段类型</typeparam>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <param name="name">字段名称</param>
+        /// <param name="value">输出字段的值</param>
+        /// <returns>是否获取成功</returns>
         public bool TryGetFieldAndProperty<T>(string name, out T value)
         {
             value = default(T);
@@ -377,13 +377,13 @@ namespace klbotlib.Modules
             return false;
         }
         /// <summary>
-        /// 尝试设置模块特定字段的值。只允许public字段
+        /// 尝试设置模块特定字段的值。只允许设置public字段
         /// </summary>
         /// <typeparam name="T">字段类型</typeparam>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public bool TrySetFieldAndProperty<T>(string name, T value)
+        /// <param name="name">字段名称</param>
+        /// <param name="value">设置字段值</param>
+        /// <returns>设置字段是否成功</returns>
+        internal bool TrySetFieldAndProperty<T>(string name, T value)
         {
             Type type = GetType();
             var p = type.GetProperty(name);

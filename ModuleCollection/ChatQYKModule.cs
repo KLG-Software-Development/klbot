@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 namespace klbotlib.Modules
 {
     //聊天bot模块
-    internal class ChatQYKModule : SingleTypeModule<MessagePlain>
+    public class ChatQYKModule : SingleTypeModule<MessagePlain>
     {
         const string url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
         static readonly WebClient client = new WebClient();

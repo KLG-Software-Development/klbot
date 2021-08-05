@@ -32,6 +32,7 @@ namespace klbot
                 new IMGPModule().AttachTo(klg);
                 new TimeModule().AttachTo(klg);
                 new 上号Module().AttachTo(klg);
+                new ChatQYKModule().AttachTo(klg);
                 new FuckModule().AttachTo(klg);
                 Console.WriteLine(klg.GetModuleChainString());
                 klg.MainLoop();

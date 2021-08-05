@@ -103,7 +103,6 @@ namespace klbotlib
                 //加载模块
                 console.WriteLn("加载自带模块...", ConsoleMessageType.Info);
                 new CommandModule(this).AttachTo(this);
-                new ChatQYKModule().AttachTo(this);
                 GetModuleChainString();
                 Modules.ForEach( module => 
                 {
