@@ -14,14 +14,14 @@ namespace KLBotUnitTest
         public void TestMethod000_ModuleCount()
         {
             KLBot test_bot = new();
-            Assert.AreEqual(test_bot.ModuleCount, 1, "模块链条初始长度不为1。核心库中引入了新的模块吗？");
+            Assert.AreEqual(TestConst.CoreModuleCount, test_bot.ModuleCount);
             new TimeModule().AttachTo(test_bot);
-            Assert.AreEqual(test_bot.ModuleCount, 2);
+            Assert.AreEqual(TestConst.CoreModuleCount + 1, test_bot.ModuleCount);
             var tm = new TimeModule();
             tm.AttachTo(test_bot);
-            Assert.AreEqual(test_bot.ModuleCount, 3);
+            Assert.AreEqual(TestConst.CoreModuleCount + 2, test_bot.ModuleCount);
             tm.Detach();
-            Assert.AreEqual(test_bot.ModuleCount, 2);
+            Assert.AreEqual(TestConst.CoreModuleCount + 1, test_bot.ModuleCount);
         }
     }
 }

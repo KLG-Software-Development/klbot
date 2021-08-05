@@ -30,7 +30,7 @@ namespace klbotlib.Modules
         /// </summary>
         public string ModuleName { get; }
         /// <summary>
-        /// 模块索引。等于模块在宿主KLBot链条中的索引
+        /// 模块索引。等于模块在宿主KLBot链条中同类模块中的排位
         /// </summary>
         public int ModuleIndex { get; private set; } = -1;
         /// <summary>

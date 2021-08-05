@@ -8,8 +8,10 @@
 
 #Link
 *.lnk
+*.ps1
 
 # User-specific files
+*.editorconfig
 *.rsuser
 *.suo
 *.user
