@@ -1,4 +1,5 @@
-﻿using klbotlib.Extensions;
+﻿#pragma warning disable IDE0044 // 添加只读修饰符
+using klbotlib.Extensions;
 using klbotlib.Modules.ImageModuleNamespace;
 using Newtonsoft.Json;
 using System;
@@ -102,7 +103,7 @@ namespace klbotlib.Modules
             else
                 return $@"\image:\url:{url}";
             not_found:
-            return $"{HostBot.GetModule<FuckModule>(this).SingleSentence()}，找不到";
+            return $"{HostBot.GetModule<FuckModule>().SingleSentence()}，找不到";
         }
 
         private string FetchData(int pn, string word)

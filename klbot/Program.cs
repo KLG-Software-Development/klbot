@@ -27,13 +27,14 @@ namespace klbot
                 if (args.Length != 0)
                     klg = new(args[0]);
                 else
-                    klg = new();
-                new ImageModule().AttachTo(klg);
-                new IMGPModule().AttachTo(klg);
-                new TimeModule().AttachTo(klg);
-                new 上号Module().AttachTo(klg);
-                new ChatQYKModule().AttachTo(klg);
-                new FuckModule().AttachTo(klg);
+                    klg = new KLBot();
+                var imgm = new ImageModule();
+                klg.AddModule(imgm);
+                klg.AddModule(new IMGPModule());
+                klg.AddModule(new TimeModule());
+                klg.AddModule(new 上号Module());
+                klg.AddModule(new ChatQYKModule());
+                klg.AddModule(new FuckModule());
                 Console.WriteLine(klg.GetModuleChainString());
                 klg.MainLoop();
             }

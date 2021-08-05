@@ -96,7 +96,7 @@ namespace klbotlib.Modules.CommandModuleNamespace
         {
             try
             {
-                AuthorType authority = bot.GetModule<CommandModule>(this).GetAuthorType(msg.SenderID);
+                AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(msg.SenderID);
                 if (authority < AuthorityRequirment)
                     return $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}";
                 else
@@ -122,7 +122,7 @@ namespace klbotlib.Modules.CommandModuleNamespace
 
         public string Run(KLBot bot, T target_object, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
-            AuthorType authority = bot.GetModule<CommandModule>(this).GetAuthorType(msg.SenderID);
+            AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(msg.SenderID);
             if (authority < AuthorityRequirment)
                 return $"错误：拒绝访问。\r\n调用者权限级别：{authority}\r\n命令权限级别：{AuthorityRequirment}";
             else

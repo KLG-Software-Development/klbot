@@ -196,7 +196,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("命令列表: ");
-            foreach (Command cmd in bot.GetModule<CommandModule>(this).Cmds)
+            foreach (Command cmd in bot.GetModule<CommandModule>().Cmds)
             {
                 sb.AppendLine($"{cmd.Format}\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\n");
             }

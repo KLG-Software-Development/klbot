@@ -21,18 +21,14 @@ namespace klbotlib.Modules
     public abstract class Module
     {
         //后台变量
-        private KLBot host_bot;
+        private KLBot _host_bot;
         //消息处理Task
-        private Task process_worker;
+        private Task _process_worker;
 
         /// <summary>
         /// 模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名。
         /// </summary>
         public string ModuleName { get; }
-        /// <summary>
-        /// 模块索引。等于模块在宿主KLBot链条中同类模块中的排位
-        /// </summary>
-        public int ModuleIndex { get; private set; } = -1;
         /// <summary>
         /// 模块ID. 是模块对象的唯一标识. 
         /// 当模块未附加到KLBot上时，等于模块名；
@@ -74,8 +70,8 @@ namespace klbotlib.Modules
         /// </summary>
         public KLBot HostBot 
         { 
-            get { AssertAttachedStatus(true); return host_bot; }
-            private set => host_bot = value;
+            get { AssertAttachedStatus(true); return _host_bot; }
+            private set => _host_bot = value;
         }
         /// <summary>
         /// 模块统计和诊断信息
@@ -94,7 +90,7 @@ namespace klbotlib.Modules
         public Module()
         {
             ModuleName = GetType().Name;
-            process_worker = Task.Run(() => { });
+            _process_worker = Task.Run(() => { });
         }
 
         /*** 公共API ***/
@@ -112,33 +108,7 @@ namespace klbotlib.Modules
         /// <typeparam name="T">目标模块的类型</typeparam>
         /// <param name="index">目标模块在同类型模块中的索引。默认为0</param>
         /// <returns>获取到的模块实例</returns>
-        public T GetModule<T>(int index = 0) where T : Module => HostBot.GetModule<T>(this, index);
-        /// <summary>
-        /// 将模块附加到指定的KLBot实例上
-        /// </summary>
-        /// <param name="host_bot">目标宿主KLBot。此参数不能是null</param>
-        public void AttachTo(KLBot host_bot)
-        {
-            AssertAttachedStatus(false);
-            HostBot = host_bot ?? throw new ArgumentNullException("附加的目标宿主KLBot为null，因此无法初始化模块");
-            IsAttached = true;
-            ModuleIndex = host_bot.GetModuleCountByName(ModuleName);     //模块索引 = 在同类模块中的索引
-            ModuleID = host_bot.CalcModuleID(ModuleName, ModuleIndex);   //通过调用HostBot中的模块ID计算算法，确保只需要更新CalcModuleID()函数能够保证一致性
-            Directory.CreateDirectory(host_bot.GetModuleCacheDir(this));    //自动创建模块缓存目录
-            host_bot.AddModule(this);
-        }
-        /// <summary>
-        /// 将模块从当前宿主KLBot上分离
-        /// </summary>
-        public void Detach()
-        {
-            AssertAttachedStatus(true);
-            host_bot.RemoveModule(ModuleID);
-            HostBot = null;
-            ModuleIndex = -1;
-            ModuleID = GetType().Name;
-            IsAttached = false;
-        }
+        public T GetModule<T>(int index = 0) where T : Module => HostBot.GetModule<T>(index);
         /// <summary>
         /// 保存文本到模块缓存目录
         /// </summary>
@@ -198,6 +168,20 @@ namespace klbotlib.Modules
 
 
         /*** 暴露给程序集中其他类的API ***/
+        //注册此模块的宿主KLBot和其他信息。这些信息逻辑上应该由调用者（即KLBot实例）传入
+        internal void Register(KLBot host, string module_id)
+        {
+            HostBot = host ?? throw new ArgumentNullException("附加的目标宿主KLBot为null，因此无法初始化模块");
+            IsAttached = true;
+            ModuleID = module_id;
+        }
+        // 将模块从当前宿主KLBot上分离
+        internal void Erase()
+        {
+            HostBot = null;
+            ModuleID = GetType().Name;
+            IsAttached = false;
+        }
         // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
         internal bool AddProcessTask(Message msg)
         {
@@ -206,10 +190,10 @@ namespace klbotlib.Modules
             int status_code = Filter(msg);
             if (status_code == 0)
                 return false;
-            if (!process_worker.IsCompleted)
-                process_worker.ContinueWith( x => ProcessSingleMessage(msg, status_code));    //若未完成 则排队
+            if (!_process_worker.IsCompleted)
+                _process_worker.ContinueWith( x => ProcessSingleMessage(msg, status_code));    //若未完成 则排队
             else
-                process_worker = Task.Run(() => ProcessSingleMessage(msg, status_code));      //已完成则取而代之直接开始
+                _process_worker = Task.Run(() => ProcessSingleMessage(msg, status_code));      //已完成则取而代之直接开始
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
@@ -443,7 +427,7 @@ namespace klbotlib.Modules
                     DiagData.LastException = ex;
                     chain = JsonHelper.MessageElementBuilder.BuildPlainElement($"{this.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
                 }
-                host_bot.AddReplyMessageTaskWithChain(msg, chain);     //用backing字段 省略Assert
+                _host_bot.AddReplyMessageTaskWithChain(msg, chain);     //用backing字段 省略Assert
             }
             SaveModuleStatus(false);   //保存模块状态
         }
