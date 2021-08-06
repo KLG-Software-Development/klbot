@@ -123,6 +123,11 @@ namespace klbotlib.Modules
         /// <returns>获取到的模块实例</returns>
         public T GetModule<T>(int index = 0) where T : Module => HostBot.GetModule<T>(index);
         /// <summary>
+        /// 返回模块缓存目录中是否存在某个文件
+        /// </summary>
+        /// <param name="relative_path">对模块缓存目录的相对路径</param>
+        public bool FileExist(string relative_path) => File.Exists(Path.Combine(HostBot.GetModuleCacheDir(this), relative_path));
+        /// <summary>
         /// 保存文本到模块缓存目录
         /// </summary>
         /// <param name="relative_path">对模块缓存目录的相对路径</param>
@@ -177,6 +182,19 @@ namespace klbotlib.Modules
                 throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
             }
             return File.ReadAllBytes(path);
+        }
+        /// <summary>
+        /// 从模块缓存目录里删除文件
+        /// </summary>
+        /// <param name="relative_path">要删除的文件对模块缓存目录的相对路径</param>
+        public void DeleteFile(string relative_path)
+        {
+            string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
+            HostBot.ObjectPrint(this, $"正在删除文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
+            if (!File.Exists(path))
+                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，未删除", ConsoleMessageType.Error);
+            else
+                File.Delete(path);
         }
 
 

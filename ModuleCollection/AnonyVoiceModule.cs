@@ -1,7 +1,6 @@
 ﻿#pragma warning disable IDE0044 
 using klbotlib.Modules.AnonyVoiceModuleNamespace;
 using klbotlib.Modules.ModuleUtils;
-using NAudio.Wave;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -80,13 +79,13 @@ namespace klbotlib.Modules
                     JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                     if (reply.errno != 0)
                         return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
-                    string b64_mpeg = reply.data.Substring(prefix.Length); 
-                    //SaveFileAsBinary(temp_mpeg_name, mpeg_bin);
+                    string mpeg_b64 = reply.data.Substring(prefix.Length); 
+                    //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                     user_stat[msg.SenderID] = UserStatus.Idle;
                     //string b64_amr = ConvertToAmr();
-                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + b64_mpeg);
-                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是wav编码测试：");
-                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToWav(b64_mpeg));
+                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
+                    //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
+                    //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
                     return "已发送";
                 case 4:
                     string tone = msg.Text.Trim().Substring(5);
@@ -140,23 +139,46 @@ namespace klbotlib.Modules
             else
                 return $"KLBot暂时不支持在此运行平台下转换";
         }
-        string ConvertToWav(string b64_mp3)
+        string ConvertToSlk()
         {
-            byte[] bin_mp3 = Convert.FromBase64String(b64_mp3);
-            using (MemoryStream ms_in = new MemoryStream(bin_mp3))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                using (Mp3FileReader mfr = new Mp3FileReader(ms_in))
-                {
-                    using (WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(mfr))
-                    {
-                        using (MemoryStream ms_out = new MemoryStream())
-                        {
-                            WaveFileWriter.WriteWavFileToStream(ms_out, pcm);
-                            return Convert.ToBase64String(ms_out.ToArray());
-                        }
-                    }
-                }
+                //mpeg -> pcm
+                Process ffmpeg = new Process();
+                ffmpeg.StartInfo.FileName = "ffmpeg";
+                ffmpeg.StartInfo.WorkingDirectory = ModuleCacheDir;
+                ffmpeg.StartInfo.Arguments = $"-i {temp_mpeg_name} -ar 16000 -ac 1 -f s16le -acodec pcm_s16be tmp.pcm -y";  //16000Hz 16bit
+                ffmpeg.StartInfo.UseShellExecute = false;
+                ffmpeg.StartInfo.RedirectStandardOutput = true;
+                ffmpeg.StartInfo.RedirectStandardError = true;
+                ffmpeg.Start();
+                ffmpeg.BeginErrorReadLine();
+                ffmpeg.BeginOutputReadLine();
+                ffmpeg.WaitForExit(15000);
+                if (!FileExist("tmp.pcm"))
+                    throw new Exception("编码转换失败。FFmpeg运行失败");
+                Process slkenc = new Process();
+                slkenc.StartInfo.FileName = "slkenc";
+                slkenc.StartInfo.WorkingDirectory = ModuleCacheDir;
+                slkenc.StartInfo.Arguments = $"tmp.pcm tmp.amr -Fs_API 16000 -Fs_maxInternal 16000 -quiet -tencent -rate 128000 -DTX 1";
+                slkenc.StartInfo.UseShellExecute = false;
+                slkenc.StartInfo.RedirectStandardOutput = true;
+                slkenc.StartInfo.RedirectStandardError = true;
+                slkenc.Start();
+                slkenc.BeginErrorReadLine();
+                slkenc.BeginOutputReadLine();
+                slkenc.WaitForExit(15000);
+                //DeleteFile("tmp.pcm");      //用完删除 可以一定程度上指示运行结果
+                if (!FileExist("tmp.amr"))
+                    throw new Exception("编码转换失败。slkenc运行失败");
+                byte[] amr_bin = ReadFileAsBinary("tmp.amr");
+                if (amr_bin.Length == 0)
+                    throw new Exception("编码转换失败。FFmpeg运行失败");
+                DeleteFile("tmp.amr");  //同理
+                return Convert.ToBase64String(amr_bin);
             }
+            else
+                return $"KLBot暂时不支持在此运行平台下转换";
         }
     }
 }
