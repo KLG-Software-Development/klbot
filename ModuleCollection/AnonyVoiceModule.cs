@@ -1,10 +1,12 @@
 ﻿#pragma warning disable IDE0044 
 using klbotlib.Modules.AnonyVoiceModuleNamespace;
 using klbotlib.Modules.ModuleUtils;
+using NAudio.Wave;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
@@ -79,11 +81,12 @@ namespace klbotlib.Modules
                     if (reply.errno != 0)
                         return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
                     string b64_mpeg = reply.data.Substring(prefix.Length); 
-                    //byte[] mpeg_bin = Convert.FromBase64String(b64_mpeg);
                     //SaveFileAsBinary(temp_mpeg_name, mpeg_bin);
                     user_stat[msg.SenderID] = UserStatus.Idle;
                     //string b64_amr = ConvertToAmr();
                     HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + b64_mpeg);
+                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是wav编码测试：");
+                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToWav(b64_mpeg));
                     return "已发送";
                 case 4:
                     string tone = msg.Text.Trim().Substring(5);
@@ -136,6 +139,24 @@ namespace klbotlib.Modules
             }
             else
                 return $"KLBot暂时不支持在此运行平台下转换";
+        }
+        string ConvertToWav(string b64_mp3)
+        {
+            byte[] bin_mp3 = Convert.FromBase64String(b64_mp3);
+            using (MemoryStream ms_in = new MemoryStream(bin_mp3))
+            {
+                using (Mp3FileReader mfr = new Mp3FileReader(ms_in))
+                {
+                    using (WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(mfr))
+                    {
+                        using (MemoryStream ms_out = new MemoryStream())
+                        {
+                            WaveFileWriter.WriteWavFileToStream(ms_out, pcm);
+                            return Convert.ToBase64String(ms_out.ToArray());
+                        }
+                    }
+                }
+            }
         }
     }
 }

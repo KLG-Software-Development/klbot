@@ -414,7 +414,7 @@ namespace klbotlib.Modules
             bool has_error = false;
             try   //对处理器的异常控制
             {
-                ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]等待处理器完成...");
+                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
                 output = Processor(msg, status_code);
                 DiagData.StopMeasurement();
@@ -437,10 +437,10 @@ namespace klbotlib.Modules
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
                 _host_bot.ReplyMessage(this, msg, signature + output);
-                ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 已调用回复接口.");
+                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else
-                ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
+                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
             SaveModuleStatus(false);   //保存模块状态
         }
     }
