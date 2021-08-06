@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using ImgEncoder = System.Drawing.Imaging.Encoder;
 
 namespace klbotlib.Modules.ModuleUtils
@@ -46,6 +47,34 @@ namespace klbotlib.Modules.ModuleUtils
                 request.Headers.Add(kvp.Key, kvp.Value);
             }
             using (var stream = request.GetRequestStream())
+            {
+                byte[] data = Encoding.GetBytes(body);
+                stream.Write(data, 0, data.Length);
+                stream.Close();
+            }
+            using (var stream = request.GetResponse().GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+                return reader.ReadToEnd();
+            }
+        }
+        /// <summary>
+        /// 向指定地址POST一条字符串 (异步版)
+        /// </summary>
+        /// <param name="url">地址</param>
+        /// <param name="body">内容</param>
+        /// <returns></returns>
+        public async Task<string> PostStringAsync(string url, string body)
+        {
+            HttpWebRequest request = WebRequest.CreateHttp(url);
+            request.Method = "POST";
+            request.UserAgent = UA;
+            request.ContentType = ContentType;
+            foreach (var kvp in Headers)
+            {
+                request.Headers.Add(kvp.Key, kvp.Value);
+            }
+            using (var stream = await request.GetRequestStreamAsync())
             {
                 byte[] data = Encoding.GetBytes(body);
                 stream.Write(data, 0, data.Length);

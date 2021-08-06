@@ -28,9 +28,9 @@ namespace klbot
                     klg = new(args[0]);
                 else
                     klg = new KLBot();
-                var imgm = new ImageModule();
-                klg.AddModule(imgm);
+                klg.AddModule(new ImageModule());
                 klg.AddModule(new IMGPModule());
+                klg.AddModule(new AnonyVoiceModule());
                 klg.AddModule(new TimeModule());
                 klg.AddModule(new 上号Module());
                 klg.AddModule(new ChatQYKModule());

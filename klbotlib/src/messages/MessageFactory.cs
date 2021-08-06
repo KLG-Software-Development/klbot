@@ -94,7 +94,11 @@ namespace klbotlib
         private static MessagePlain BuildPlain(JMessagePackage msg_package)
         {
             bool is_after_at = false;
-            MessagePlain ret = new MessagePlain(msg_package.sender.id, msg_package.sender.group.id);
+            MessagePlain ret;
+            if (msg_package.sender.group == null)
+                ret = new MessagePlain(msg_package.sender.id, -1);
+            else
+                ret = new MessagePlain(msg_package.sender.id, msg_package.sender.group.id);
             foreach (var sub_msg in msg_package.messageChain)
             {
                 if (sub_msg.type == "Plain")

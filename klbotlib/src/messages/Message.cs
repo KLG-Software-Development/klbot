@@ -50,11 +50,11 @@ namespace klbotlib
         {
             var context = Context;
             if (context == MessageContext.Group)
-                return JsonHelper.MessageBuilder.BuildGroupMessageJson(GroupID, chain);
+                return JsonHelper.MessageJsonBuilder.BuildGroupMessageJson(GroupID, chain);
             else if (context == MessageContext.Private)
-                return JsonHelper.MessageBuilder.BuildPrivateMessageJson(SenderID, chain);
+                return JsonHelper.MessageJsonBuilder.BuildPrivateMessageJson(SenderID, chain);
             else if (context == MessageContext.Temp)
-                return JsonHelper.MessageBuilder.BuildTempMessageJson(SenderID, GroupID, chain);
+                return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(SenderID, GroupID, chain);
             else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
         }
 

@@ -7,9 +7,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules
@@ -46,10 +48,16 @@ namespace klbotlib.Modules
         /// </summary>
         public virtual bool IsTransparent { get; } = false;
         /// <summary>
-        /// 决定KLBot实例发送此模块的输出时，是否在前面自动加上模块签名"[模块ID]"（默认开启）。
+        /// 决定是否在输出前自动加上模块签名"[模块ID]"（默认开启）。
         /// 开启模块签名时，输出会被MsgMarker解析器默认当作文本消息（显然）
         /// </summary>
         public virtual bool UseSignature { get; } = true;
+        /// <summary>
+        /// 决定是否使用纯异步执行. 
+        /// 此项为true时, 处理器处理消息时不会阻塞, 但完成消息处理的顺序不能得到保证. 
+        /// 此项为false时, 处理器仅在处理完上一条消息后才会开始处理下一条消息.
+        /// </summary>
+        public virtual bool IsAsync { get; } = false;
         /// <summary>
         /// 过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
         /// 当模块总开关开启时，结果为true的消息会被处理，结果为false的函数会忽略.
@@ -77,6 +85,11 @@ namespace klbotlib.Modules
         /// 模块统计和诊断信息
         /// </summary>
         public ModuleDiagnosticData DiagData { get; } = new ModuleDiagnosticData();
+        /// <summary>
+        /// 获取此模块的缓存目录。仅当模块已附加到宿主KLBot上时有效，否则会抛出异常。
+        /// </summary>
+        public string ModuleCacheDir { get => HostBot.GetModuleCacheDir(this); }
+
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -190,10 +203,15 @@ namespace klbotlib.Modules
             int status_code = Filter(msg);
             if (status_code == 0)
                 return false;
-            if (!_process_worker.IsCompleted)
-                _process_worker.ContinueWith( x => ProcessSingleMessage(msg, status_code));    //若未完成 则排队
+            if (IsAsync)
+                Task.Run(() => ProcessMessage(msg, status_code));
             else
-                _process_worker = Task.Run(() => ProcessSingleMessage(msg, status_code));      //已完成则取而代之直接开始
+            {
+                if (!_process_worker.IsCompleted)
+                    _process_worker.ContinueWith(x => ProcessMessage(msg, status_code));    //若未完成 则排队
+                else
+                    _process_worker = Task.Run(() => ProcessMessage(msg, status_code));      //已完成则取而代之直接开始
+            }
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
@@ -247,7 +265,7 @@ namespace klbotlib.Modules
             File.WriteAllText(file_path, json);
         }
         //返回当前模块的缓存目录绝对路径
-        internal string GetModuleCacheDir()
+        public string GetModuleCacheDirAbsolutePath()
             => Path.Combine(Environment.CurrentDirectory, HostBot.GetModuleCacheDir(this));
 
         //helper 
@@ -388,13 +406,15 @@ namespace klbotlib.Modules
             return false;
         }
         //处理并调用KLBot回复
-        private void ProcessSingleMessage(Message msg, int status_code)
+        private void ProcessMessage(Message msg, int status_code)
         {
+            //ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务已开始...");
             AssertAttachedStatus(true); //统一Assert附加情况
             string output;
             bool has_error = false;
-            try
+            try   //对处理器的异常控制
             {
+                ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
                 output = Processor(msg, status_code);
                 DiagData.StopMeasurement();
@@ -403,32 +423,24 @@ namespace klbotlib.Modules
             catch (Exception ex)
             {
                 DiagData.LastException = ex;
-                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(64)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
+                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
                 has_error = true;
             }
-            if (!string.IsNullOrEmpty(output))  //模块输出string.Empty或null时 根据约定意味着模块没有输出 这时啥也不回复哈
+            if (!string.IsNullOrEmpty(output))  //处理器输出不为空时
             {
                 string signature = "";
-                if (!has_error)
+                if (!has_error)     
                 {
                     if (UseSignature)
                         signature = $"[{this}]\n";
                 }
                 else
-                    signature = $"[KLBot]\n";
-                //编译MsgMarker文本到json消息链
-                string chain = "";
-                try
-                {
-                    chain = MsgMarker.CompileMessageChainJson(this, signature + output);
-                }
-                catch (Exception ex)
-                {
-                    DiagData.LastException = ex;
-                    chain = JsonHelper.MessageElementBuilder.BuildPlainElement($"{this.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
-                }
-                _host_bot.AddReplyMessageTaskWithChain(msg, chain);     //用backing字段 省略Assert
+                    signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
+                _host_bot.ReplyMessage(this, msg, signature + output);
+                ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 已调用回复接口.");
             }
+            else
+                ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
             SaveModuleStatus(false);   //保存模块状态
         }
     }

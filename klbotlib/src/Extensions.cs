@@ -229,7 +229,7 @@ namespace klbotlib.Extensions
         public static string Shorten(this string s, int max_length)
         {
             if (s.Length > max_length)
-                return s.Substring(0, max_length / 2) + "..." + s.Substring(s.Length - max_length / 2, s.Length);
+                return s.Substring(0, max_length) + "...";
             else
                 return s;
         }

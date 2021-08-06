@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Web;
 
 namespace klbotlib.Json
@@ -22,14 +23,25 @@ namespace klbotlib.Json
         }
 
         //构建完整消息
-        internal static class MessageBuilder
+        internal static class MessageJsonBuilder
         {
-            internal static string BuildPrivateMessageJson(long target_id, string chain)
-                => $"{{\"target\":\"{target_id}\",\"messageChain\":[{chain}]}}";
-            internal static string BuildGroupMessageJson(long target_id, string chain)
-                => $"{{\"target\":\"{target_id}\",\"messageChain\":[{chain}]}}";
-            internal static string BuildTempMessageJson(long target_id, long group_id, string chain)
-                => $"{{\"qq\":\"{target_id}\",\"group\":\"{group_id}\",\"messageChain\":[{chain}]}}";
+            
+            internal static string BuildPrivateMessageJson(long user_id, string chain)
+                => $"{{\"target\":\"{user_id}\",\"messageChain\":[{chain}]}}";
+            internal static string BuildGroupMessageJson(long group_id, string chain)
+                => $"{{\"target\":\"{group_id}\",\"messageChain\":[{chain}]}}";
+            internal static string BuildTempMessageJson(long user_id, long group_id, string chain)
+                => $"{{\"qq\":\"{user_id}\",\"group\":\"{group_id}\",\"messageChain\":[{chain}]}}";
+            internal static string BuildMessageJson(long user_id, long group_id, MessageContext context, string chain)
+            {
+                if (context == MessageContext.Group)
+                    return JsonHelper.MessageJsonBuilder.BuildGroupMessageJson(group_id, chain);
+                else if (context == MessageContext.Private)
+                    return JsonHelper.MessageJsonBuilder.BuildPrivateMessageJson(user_id, chain);
+                else if (context == MessageContext.Temp)
+                    return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(user_id, group_id, chain);
+                else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
+            }
         }
         //构建消息链上的元素
         internal static class MessageElementBuilder

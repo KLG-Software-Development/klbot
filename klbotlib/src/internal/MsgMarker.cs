@@ -67,30 +67,26 @@ namespace klbotlib.Internal
             return string.Join(",", elements);
         }
         //把图像类型的MsgMarker编译为MessageChain
-        private static string CompileImageChainJson(Module module, string content)
+        private static string CompileImageChainJson(string content)
         {
             if (!TryParsePrefix(content, out string key, out string value))
                 throw new MsgMarkerException($"无法解析图像消息\"{content}\"");
             if (key != "url" &&  key != "base64")
                 throw new MsgMarkerException($"不支持的图像来源类型\"{key}\"");
-            if (key == "url" && !proto_pat.IsMatch(value))  //来源类型为url且未指定协议类型
-                value = $"file://{Path.Combine(module.GetModuleCacheDir(), value)}";
             return JsonHelper.MessageElementBuilder.BuildImageElement(key, value);
         }
         //把语音类型的MsgMarker编译为MessageChain
-        private static string CompileVoiceChainJson(Module module, string content)
+        private static string CompileVoiceChainJson(string content)
         {
             if (!TryParsePrefix(content, out string key, out string value))
                 throw new MsgMarkerException($"无法解析音频消息\"{content}\"");
             if (key != "url" && key != "base64")
                 throw new MsgMarkerException($"不支持的音频来源类型\"{key}\"");
-            if (key == "url" && !proto_pat.IsMatch(value))  //来源类型为url且未指定协议类型
-                value = $"file://{Path.Combine(module.GetModuleCacheDir(), value)}";
             return JsonHelper.MessageElementBuilder.BuildVoiceElement(key, value);
         }
 
         //把任意类型MsgMarker转换成相应的MessageChain
-        internal static string CompileMessageChainJson(Module module, string content, bool always_plain = false)  //锁定纯文本
+        internal static string CompileMessageChainJson(string content, bool always_plain = false)  //锁定纯文本
         {
             if (always_plain)
                 return CompilePlainChainJson(content);
@@ -105,9 +101,9 @@ namespace klbotlib.Internal
                 case "plain":
                     return CompilePlainChainJson(body);
                 case "image":
-                    return CompileImageChainJson(module, body);
+                    return CompileImageChainJson(body);
                 case "voice":
-                    return CompileVoiceChainJson(module, body);
+                    return CompileVoiceChainJson(body);
             }
             throw new MsgMarkerException($"不支持的消息类型\"{type}\"");
         }
