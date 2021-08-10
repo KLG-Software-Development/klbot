@@ -20,7 +20,7 @@ namespace klbotlib.Modules
     /// 消息处理模块基类.
     /// 这是KLBot功能实现的基本单位
     /// </summary>
-    public abstract class Module
+    public abstract class Module : IFileAPI, ISendMessageAPI
     {
         //后台变量
         private KLBot _host_bot;
@@ -59,6 +59,14 @@ namespace klbotlib.Modules
         /// </summary>
         public virtual bool IsAsync { get; } = false;
         /// <summary>
+        /// 模块的友好名称。仅用于打印模块链条信息和帮助，默认和ModuleName字段相同，即模块类名。
+        /// </summary>
+        public virtual string FriendlyName { get => ModuleName; }
+        /// <summary>
+        /// 模块的帮助信息。KLBot在接收到“[模块友好名称]帮助”时，会回复此字符串中的内容。
+        /// </summary>
+        public virtual string HelpInfo { get => "模块没有内置帮助信息"; }
+        /// <summary>
         /// 过滤器(Message -> bool)。模块通过这个函数判断是否要处理某一条消息。
         /// 在模块总开关开启的情况下，如果传入一条消息时输出为空或null，这条消息会忽略，否则它将和输出一同被传送给处理器Processor(Message, string -> string)。
         /// </summary>
@@ -88,7 +96,14 @@ namespace klbotlib.Modules
         /// 获取此模块的缓存目录。仅当模块已附加到宿主KLBot上时有效，否则会抛出异常。
         /// </summary>
         public string ModuleCacheDir { get => HostBot.GetModuleCacheDir(this); }
-
+        /// <summary>
+        /// 缓存操作接口
+        /// </summary>
+        public IFileAPI Cache { get => (IFileAPI)this; }
+        /// <summary>
+        /// 发送消息操作接口
+        /// </summary>
+        public ISendMessageAPI Messaging { get => (ISendMessageAPI)this; }
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -125,13 +140,13 @@ namespace klbotlib.Modules
         /// 返回模块缓存目录中是否存在某个文件
         /// </summary>
         /// <param name="relative_path">对模块缓存目录的相对路径</param>
-        public bool FileExist(string relative_path) => File.Exists(Path.Combine(HostBot.GetModuleCacheDir(this), relative_path));
+        bool IFileAPI.FileExist(string relative_path) => File.Exists(Path.Combine(HostBot.GetModuleCacheDir(this), relative_path));
         /// <summary>
         /// 保存文本到模块缓存目录
         /// </summary>
         /// <param name="relative_path">对模块缓存目录的相对路径</param>
         /// <param name="text">保存的内容</param>
-        public void SaveFileAsString(string relative_path, string text)
+        void IFileAPI.SaveFileAsString(string relative_path, string text)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
             HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
@@ -144,7 +159,7 @@ namespace klbotlib.Modules
         /// </summary>
         /// <param name="relative_path">对模块缓存目录的相对路径</param>
         /// <param name="bin">保存的内容</param>
-        public void SaveFileAsBinary(string relative_path, byte[] bin)
+        void IFileAPI.SaveFileAsBinary(string relative_path, byte[] bin)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
             HostBot.ObjectPrint(this, $"Saving \"{Path.GetFileName(path)}\" to \"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
@@ -156,7 +171,7 @@ namespace klbotlib.Modules
         /// 从模块缓存目录里读取文本
         /// </summary>
         /// <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
-        public string ReadFileAsString(string relative_path)
+        string IFileAPI.ReadFileAsString(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
             HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
@@ -171,7 +186,7 @@ namespace klbotlib.Modules
         /// 从模块缓存目录里读取二进制
         /// </summary>
         /// <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
-        public byte[] ReadFileAsBinary(string relative_path)
+        byte[] IFileAPI.ReadFileAsBinary(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
             HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
@@ -186,7 +201,7 @@ namespace klbotlib.Modules
         /// 从模块缓存目录里删除文件
         /// </summary>
         /// <param name="relative_path">要删除的文件对模块缓存目录的相对路径</param>
-        public void DeleteFile(string relative_path)
+        void IFileAPI.DeleteFile(string relative_path)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relative_path);
             HostBot.ObjectPrint(this, $"正在删除文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
@@ -195,6 +210,62 @@ namespace klbotlib.Modules
             else
                 File.Delete(path);
         }
+        /// <summary>
+        /// 发送消息接口
+        /// </summary>
+        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="context">发送的消息上下文类型</param>
+        /// <param name="user_id">用户ID</param>
+        /// <param name="group_id">群组ID</param>
+        /// <param name="content">待编译MsgMarker文本</param>
+        void ISendMessageAPI.SendMessage(MessageContext context, long user_id, long group_id, string content)
+            => HostBot.SendMessage(this, context, user_id, group_id, content);
+        /// <summary>
+        /// 回复消息接口
+        /// </summary>
+        /// <param name="module">调用模块</param>
+        /// <param name="origin_msg">待回复的原始消息</param>
+        /// <param name="content">回复内容</param>
+        void ISendMessageAPI.ReplyMessage(Message origin_msg, string content)
+        {
+            //统一Assert
+            AssertAttachedStatus(true);
+            switch (origin_msg.Context)
+            {
+                case MessageContext.Group:
+                    _host_bot.SendMessage(this, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
+                    break;
+                case MessageContext.Temp:
+                case MessageContext.Private:
+                    _host_bot.SendMessage(this, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
+                    break;
+            }
+        }
+        /// <summary>
+        /// 发送群消息接口
+        /// </summary>
+        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="group_id">目标群组ID</param>
+        /// <param name="content">MsgMarker文本</param>
+        void ISendMessageAPI.SendGroupMessage(long group_id, string content)
+            => HostBot.SendMessage(this, MessageContext.Group, -1, group_id, content);
+        /// <summary>
+        /// 发送临时消息接口
+        /// </summary>
+        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="user_id">目标用户ID</param>
+        /// <param name="group_id">通过的群组的ID</param>
+        /// <param name="content">MsgMarker文本</param>
+        void ISendMessageAPI.SendGroupMessage(long user_id, long group_id, string content)
+            => HostBot.SendMessage(this, MessageContext.Group, user_id, group_id, content);
+        /// <summary>
+        /// 发送私聊消息接口
+        /// </summary>
+        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="user_id">目标用户ID</param>
+        /// <param name="content">MsgMarker文本</param>
+        void ISendMessageAPI.SendPrivateMessage(long user_id, string content)
+            => HostBot.SendMessage(this, MessageContext.Group, user_id, -1, content);
 
 
         /*** 暴露给程序集中其他类的API ***/

@@ -83,7 +83,7 @@ namespace klbotlib.Modules
                     //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                     user_stat[msg.SenderID] = UserStatus.Idle;
                     //string b64_amr = ConvertToAmr();
-                    HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
+                    Messaging.SendGroupMessage(target_groups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
                     //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
                     //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
                     return "已发送";
@@ -132,7 +132,7 @@ namespace klbotlib.Modules
                 p.BeginErrorReadLine();
                 p.BeginOutputReadLine();
                 p.WaitForExit(15000);
-                byte[] amr_bin = ReadFileAsBinary("tmp.amr");
+                byte[] amr_bin = Cache.ReadFileAsBinary("tmp.amr");
                 if (amr_bin.Length == 0)
                     throw new Exception("AMR文件转换失败。FFMpeg进程没有正确完成任务");
                 return Convert.ToBase64String(amr_bin);
@@ -156,7 +156,7 @@ namespace klbotlib.Modules
                 ffmpeg.BeginErrorReadLine();
                 ffmpeg.BeginOutputReadLine();
                 ffmpeg.WaitForExit(15000);
-                if (!FileExist("tmp.pcm"))
+                if (!Cache.FileExist("tmp.pcm"))
                     throw new Exception("编码转换失败。FFmpeg运行失败");
                 Process slkenc = new Process();
                 slkenc.StartInfo.FileName = "slkenc";
@@ -170,12 +170,12 @@ namespace klbotlib.Modules
                 slkenc.BeginOutputReadLine();
                 slkenc.WaitForExit(15000);
                 //DeleteFile("tmp.pcm");      //用完删除 可以一定程度上指示运行结果
-                if (!FileExist("tmp.amr"))
+                if (!Cache.FileExist("tmp.amr"))
                     throw new Exception("编码转换失败。slkenc运行失败");
-                byte[] amr_bin = ReadFileAsBinary("tmp.amr");
+                byte[] amr_bin = Cache.ReadFileAsBinary("tmp.amr");
                 if (amr_bin.Length == 0)
                     throw new Exception("编码转换失败。FFmpeg运行失败");
-                DeleteFile("tmp.amr");  //同理
+                Cache.DeleteFile("tmp.amr");  //同理
                 return Convert.ToBase64String(amr_bin);
             }
             else

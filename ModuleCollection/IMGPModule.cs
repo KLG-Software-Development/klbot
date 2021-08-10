@@ -101,7 +101,7 @@ namespace klbotlib.Modules
             switch (filter_out)
             {
                 case "merge":
-                    HostBot.ReplyMessage(this, msg, "转换中...");
+                    Messaging.ReplyMessage(msg, "转换中...");
                     //HostBot.ReplyPlainMessage(this, msg, "正在下载父本并转换为base64...");
                     string b641 = img_helper.DownloadAsBase64(ipmsg.UrlList[0]);
                     //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
@@ -128,7 +128,7 @@ namespace klbotlib.Modules
                         return GetModule<FuckModule>().SingleSentence() + "，这个不会";
                     string type = type_by_word_recg[word];
                     string body = $"image&image_url={esc_url}&type={type}&show=true";
-                    HostBot.ReplyMessage(this, msg, "识别中...");
+                    Messaging.ReplyMessage(msg, "识别中...");
                     if (type == "landmark")
                     {
                         //只有一个result对象，用JReplySingle
@@ -169,14 +169,14 @@ namespace klbotlib.Modules
                     float beauty = reply_face.data.result.face_list[0].beauty;
                     return $"{age}岁，{beauty}分";
                 case "compress": //本地压缩
-                    HostBot.ReplyMessage(this, msg, $"正在下载图片...");
+                    Messaging.ReplyMessage(msg, $"正在下载图片...");
                     Bitmap bmp = img_helper.DownloadImage(ipmsg.UrlList[0], out int original_size);
                     MemoryStream ms = new MemoryStream();
-                    HostBot.ReplyMessage(this, msg, "本地压缩中...");
+                    Messaging.ReplyMessage(msg, "本地压缩中...");
                     bmp.Save(ms, ImageFormat.Jpeg);
                     byte[] bin = ms.ToArray();
                     string b64 = Convert.ToBase64String(bin);
-                    HostBot.ReplyMessage(this, msg, $"压缩完成。原始大小为{original_size.ToMemorySizeString(1)}，返图大小为{bin.Length.ToMemorySizeString(1)}");
+                    Messaging.ReplyMessage(msg, $"压缩完成。原始大小为{original_size.ToMemorySizeString(1)}，返图大小为{bin.Length.ToMemorySizeString(1)}");
                     return $@"\image:\base64:{b64}";
                 case "image process": //图像处理
                     word = ipmsg.Text.Trim();

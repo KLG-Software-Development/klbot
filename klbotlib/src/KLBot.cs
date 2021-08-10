@@ -7,7 +7,6 @@ using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -187,7 +186,7 @@ namespace klbotlib
         /// <param name="user_id">用户ID</param>
         /// <param name="group_id">群组ID</param>
         /// <param name="content">待编译MsgMarker文本</param>
-        public void SendMessage(Module module, MessageContext context, long user_id, long group_id, string content)
+        internal void SendMessage(Module module, MessageContext context, long user_id, long group_id, string content)
         {
             //编译MsgMarker文本到json消息链
             string chain_json;
@@ -218,12 +217,12 @@ namespace klbotlib
             }
         }
         /// <summary>
-        /// 回复消息接口。
+        /// 回复消息接口
         /// </summary>
         /// <param name="module">调用模块</param>
         /// <param name="origin_msg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        public void ReplyMessage(Module module, Message origin_msg, string content)
+        internal void ReplyMessage(Module module, Message origin_msg, string content)
         {
             switch (origin_msg.Context)
             {
@@ -242,7 +241,7 @@ namespace klbotlib
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="group_id">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        public void SendGroupMessage(Module module, long group_id, string content)
+        internal void SendGroupMessage(Module module, long group_id, string content)
             => SendMessage(module, MessageContext.Group, -1, group_id, content);
         /// <summary>
         /// 发送临时消息接口
@@ -251,7 +250,7 @@ namespace klbotlib
         /// <param name="user_id">目标用户ID</param>
         /// <param name="group_id">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        public void SendGroupMessage(Module module, long user_id, long group_id, string content)
+        internal void SendGroupMessage(Module module, long user_id, long group_id, string content)
             => SendMessage(module, MessageContext.Group, user_id, group_id, content);
         /// <summary>
         /// 发送私聊消息接口
@@ -259,7 +258,7 @@ namespace klbotlib
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="user_id">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        public void SendPrivateMessage(Module module, long user_id, string content)
+        internal void SendPrivateMessage(Module module, long user_id, string content)
             => SendMessage(module, MessageContext.Group,  user_id, -1, content);
 
 
