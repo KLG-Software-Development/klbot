@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules
 {
-    public class IMGPModule : Module
+    public class IMGPModule : SingleTypeModule<MessageImagePlain>
     {
         public sealed override bool UseSignature => false;
         public sealed override bool IsAsync => true;
@@ -70,12 +70,12 @@ namespace klbotlib.Modules
         private string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
         private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
 
-        public override string Filter(Message msg)
+        public override string Filter(MessageImagePlain msg)
         {
-            if (msg.TargetContains(HostBot.SelfID) && msg is MessageImagePlain ipmsg )  //图文消息
+            if (msg.TargetContains(HostBot.SelfID))  //图文消息
             {
-                string text = ipmsg.Text.Trim();
-                if (ipmsg.UrlList.Count == 1)   //单图文
+                string text = msg.Text.Trim();
+                if (msg.UrlList.Count == 1)   //单图文
                 {
                     if (text.StartsWith("什么") && text.Length != 2)
                         return "recogn";
@@ -87,25 +87,24 @@ namespace klbotlib.Modules
                         return "image process";
                 }
                 //多图文
-                else if (ipmsg.UrlList.Count == 2 && merge_keyword.Contains(text))
+                else if (msg.UrlList.Count == 2 && merge_keyword.Contains(text))
                     return "merge";
             }
             return null;
         }
-        public override string Processor(Message msg, string filter_out)
+        public override string Processor(MessageImagePlain msg, string filter_out)
         {
             StringBuilder sb = new StringBuilder();
             //之后都是图文消息，统一转换类型为MessageImagePlain
-            var ipmsg = (MessageImagePlain)msg;
             //多图文消息
             switch (filter_out)
             {
                 case "merge":
                     Messaging.ReplyMessage(msg, "转换中...");
                     //HostBot.ReplyPlainMessage(this, msg, "正在下载父本并转换为base64...");
-                    string b641 = img_helper.DownloadAsBase64(ipmsg.UrlList[0]);
+                    string b641 = img_helper.DownloadAsBase64(msg.UrlList[0]);
                     //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
-                    string b642 = img_helper.DownloadAsBase64(ipmsg.UrlList[1]);
+                    string b642 = img_helper.DownloadAsBase64(msg.UrlList[1]);
                     string query_string = "?type=merge&apiType=face";
                     string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
                     string json = http_helper.PostString(post_url + query_string, body);
@@ -119,11 +118,11 @@ namespace klbotlib.Modules
                     return $@"\image:\base64:{b64}";
             }
             //以下都是单图文消息 可以统一把图片Url拿出来做URL encode
-            string esc_url = Uri.EscapeDataString(ipmsg.UrlList[0]);
+            string esc_url = Uri.EscapeDataString(msg.UrlList[0]);
             switch (filter_out)
             {
                 case "recogn": //识别
-                    string word = ipmsg.Text.Trim().Substring(2);
+                    string word = msg.Text.Trim().Substring(2);
                     if (!type_by_word_recg.ContainsKey(word))
                         return ModuleAccess.GetModule<FuckModule>().SingleSentence() + "，这个不会";
                     string type = type_by_word_recg[word];
@@ -170,7 +169,7 @@ namespace klbotlib.Modules
                     return $"{age}岁，{beauty}分";
                 case "compress": //本地压缩
                     Messaging.ReplyMessage(msg, $"正在下载图片...");
-                    Bitmap bmp = img_helper.DownloadImage(ipmsg.UrlList[0], out int original_size);
+                    Bitmap bmp = img_helper.DownloadImage(msg.UrlList[0], out int original_size);
                     MemoryStream ms = new MemoryStream();
                     Messaging.ReplyMessage(msg, "本地压缩中...");
                     bmp.Save(ms, ImageFormat.Jpeg);
@@ -179,7 +178,7 @@ namespace klbotlib.Modules
                     Messaging.ReplyMessage(msg, $"压缩完成。原始大小为{original_size.ToMemorySizeString(1)}，返图大小为{bin.Length.ToMemorySizeString(1)}");
                     return $@"\image:\base64:{b64}";
                 case "image process": //图像处理
-                    word = ipmsg.Text.Trim();
+                    word = msg.Text.Trim();
                     type = Uri.EscapeDataString(type_by_word_proc[word]);
                     body = $"image&image_url={esc_url}&type={type}&show=true";
                     //HostBot.ReplyPlainMessage(this, msg, "处理中...");
