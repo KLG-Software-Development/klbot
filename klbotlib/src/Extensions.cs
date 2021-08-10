@@ -135,7 +135,7 @@ namespace klbotlib.Extensions
         public static Type GetRootBaseType(this Type type)
         {
             Type base_type = type;
-            while (base_type.BaseType != typeof(object))
+            while (base_type != null && base_type.BaseType != typeof(object))
             {
                 base_type = base_type.BaseType;
             }

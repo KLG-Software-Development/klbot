@@ -68,22 +68,31 @@
             此项为false时, 处理器仅在处理完上一条消息后才会开始处理下一条消息.
             </summary>
         </member>
+        <member name="P:klbotlib.Modules.Module.FriendlyName">
+            <summary>
+            模块的友好名称（别名）。仅用于打印模块链条信息/触发帮助信息，默认和ModuleName字段相同，即模块类名。
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.HelpInfo">
+            <summary>
+            模块的帮助信息。KLBot在接收到“[模块友好名称]帮助”时，会回复此字符串中的内容。
+            </summary>
+        </member>
         <member name="M:klbotlib.Modules.Module.Filter(klbotlib.Message)">
             <summary>
-            过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 
-            当模块总开关开启时，结果为true的消息会被处理，结果为false的函数会忽略.
+            过滤器(Message -> bool)。模块通过这个函数判断是否要处理某一条消息。
+            在模块总开关开启的情况下，如果传入一条消息时输出为空或null，这条消息会忽略，否则它将和输出一同被传送给处理器Processor(Message, string -> string)。
             </summary>
             <param name="msg">待判断消息</param>
-            <param name="filter_out">随过滤器判断完毕后返回的附加对象，最终会被传送给处理器。</param>
-            <returns>返回码。这个返回码会被处理器接收</returns>
+            <returns>过滤器输出的字符串</returns>
         </member>
-        <member name="M:klbotlib.Modules.Module.Processor(klbotlib.Message,System.Int32)">
+        <member name="M:klbotlib.Modules.Module.Processor(klbotlib.Message,System.String)">
             <summary>
-            处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
+            处理器(Message -> string)。模块通过这个函数处理所有(通过了过滤器的)消息。
             </summary>
             <param name="msg">待处理消息</param>
-            <param name="status_code">过滤器的附加输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
-            <returns>用字符串表示的处理结果。如果你的模块不输出处理结果，返回null或空字符串</returns>
+            <param name="filter_out">过滤器的输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
+            <returns>用字符串表示的处理结果。如果你的模块不打算输出/回复处理结果，应返回null或空字符串</returns>
         </member>
         <member name="P:klbotlib.Modules.Module.HostBot">
             <summary>
@@ -98,6 +107,21 @@
         <member name="P:klbotlib.Modules.Module.ModuleCacheDir">
             <summary>
             获取此模块的缓存目录。仅当模块已附加到宿主KLBot上时有效，否则会抛出异常。
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.Cache">
+            <summary>
+            缓存操作接口
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.Messaging">
+            <summary>
+            发送消息操作接口
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.Module.ModuleAccess">
+            <summary>
+            发送消息操作接口
             </summary>
         </member>
         <member name="P:klbotlib.Modules.Module.Enabled">
@@ -118,7 +142,7 @@
             <param name="msg_type">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
             <param name="prefix">要在消息类型标识前附上的内容</param>
         </member>
-        <member name="M:klbotlib.Modules.Module.GetModule``1(System.Int32)">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IModuleAccessAPI#GetModule``1(System.Int32)">
             <summary>
             获取宿主KLBot上其他模块的标准方法。根据模块类型和索引，从宿主KLBot处获取模块实例
             </summary>
@@ -126,43 +150,104 @@
             <param name="index">目标模块在同类型模块中的索引。默认为0</param>
             <returns>获取到的模块实例</returns>
         </member>
-        <member name="M:klbotlib.Modules.Module.FileExist(System.String)">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IModuleAccessAPI#TryGetFieldAndProperty``1(System.String,``0@)">
+            <summary>
+            尝试获取模块特定字段的值。只允许获取public字段
+            </summary>
+            <typeparam name="T">字段类型</typeparam>
+            <param name="name">字段名称</param>
+            <param name="value">输出字段的值</param>
+            <returns>是否获取成功</returns>
+        </member>
+        <member name="M:klbotlib.Modules.Module.TrySetFieldAndProperty``1(System.String,``0)">
+            <summary>
+            尝试设置模块特定字段的值。只允许设置public字段
+            </summary>
+            <typeparam name="T">字段类型</typeparam>
+            <param name="name">字段名称</param>
+            <param name="value">设置字段值</param>
+            <returns>设置字段是否成功</returns>
+        </member>
+        <member name="M:klbotlib.Modules.Module.klbotlib#IFileAPI#FileExist(System.String)">
             <summary>
             返回模块缓存目录中是否存在某个文件
             </summary>
             <param name="relative_path">对模块缓存目录的相对路径</param>
         </member>
-        <member name="M:klbotlib.Modules.Module.SaveFileAsString(System.String,System.String)">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IFileAPI#SaveFileAsString(System.String,System.String)">
             <summary>
             保存文本到模块缓存目录
             </summary>
             <param name="relative_path">对模块缓存目录的相对路径</param>
             <param name="text">保存的内容</param>
         </member>
-        <member name="M:klbotlib.Modules.Module.SaveFileAsBinary(System.String,System.Byte[])">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IFileAPI#SaveFileAsBinary(System.String,System.Byte[])">
             <summary>
             保存二进制到模块缓存目录
             </summary>
             <param name="relative_path">对模块缓存目录的相对路径</param>
             <param name="bin">保存的内容</param>
         </member>
-        <member name="M:klbotlib.Modules.Module.ReadFileAsString(System.String)">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IFileAPI#ReadFileAsString(System.String)">
             <summary>
             从模块缓存目录里读取文本
             </summary>
             <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
         </member>
-        <member name="M:klbotlib.Modules.Module.ReadFileAsBinary(System.String)">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IFileAPI#ReadFileAsBinary(System.String)">
             <summary>
             从模块缓存目录里读取二进制
             </summary>
             <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
         </member>
-        <member name="M:klbotlib.Modules.Module.DeleteFile(System.String)">
+        <member name="M:klbotlib.Modules.Module.klbotlib#IFileAPI#DeleteFile(System.String)">
             <summary>
             从模块缓存目录里删除文件
             </summary>
             <param name="relative_path">要删除的文件对模块缓存目录的相对路径</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.klbotlib#IMessagingAPI#SendMessage(klbotlib.MessageContext,System.Int64,System.Int64,System.String)">
+            <summary>
+            发送消息接口
+            </summary>
+            <param name="module">编译MsgMarker时使用的模块</param>
+            <param name="context">发送的消息上下文类型</param>
+            <param name="user_id">用户ID</param>
+            <param name="group_id">群组ID</param>
+            <param name="content">待编译MsgMarker文本</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.klbotlib#IMessagingAPI#ReplyMessage(klbotlib.Message,System.String)">
+            <summary>
+            回复消息接口
+            </summary>
+            <param name="module">调用模块</param>
+            <param name="origin_msg">待回复的原始消息</param>
+            <param name="content">回复内容</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.klbotlib#IMessagingAPI#SendGroupMessage(System.Int64,System.String)">
+            <summary>
+            发送群消息接口
+            </summary>
+            <param name="module">编译MsgMarker时使用的模块</param>
+            <param name="group_id">目标群组ID</param>
+            <param name="content">MsgMarker文本</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.klbotlib#IMessagingAPI#SendGroupMessage(System.Int64,System.Int64,System.String)">
+            <summary>
+            发送临时消息接口
+            </summary>
+            <param name="module">编译MsgMarker时使用的模块</param>
+            <param name="user_id">目标用户ID</param>
+            <param name="group_id">通过的群组的ID</param>
+            <param name="content">MsgMarker文本</param>
+        </member>
+        <member name="M:klbotlib.Modules.Module.klbotlib#IMessagingAPI#SendPrivateMessage(System.Int64,System.String)">
+            <summary>
+            发送私聊消息接口
+            </summary>
+            <param name="module">编译MsgMarker时使用的模块</param>
+            <param name="user_id">目标用户ID</param>
+            <param name="content">MsgMarker文本</param>
         </member>
         <member name="M:klbotlib.Modules.Module.RestoreType(System.Type,System.Object)">
             <summary>
@@ -184,24 +269,6 @@
             ToString()函数：未附加时返回模块名；已附加时返回模块ID
             </summary>
         </member>
-        <member name="M:klbotlib.Modules.Module.TryGetFieldAndProperty``1(System.String,``0@)">
-            <summary>
-            尝试获取模块特定字段的值。只允许获取public字段
-            </summary>
-            <typeparam name="T">字段类型</typeparam>
-            <param name="name">字段名称</param>
-            <param name="value">输出字段的值</param>
-            <returns>是否获取成功</returns>
-        </member>
-        <member name="M:klbotlib.Modules.Module.TrySetFieldAndProperty``1(System.String,``0)">
-            <summary>
-            尝试设置模块特定字段的值。只允许设置public字段
-            </summary>
-            <typeparam name="T">字段类型</typeparam>
-            <param name="name">字段名称</param>
-            <param name="value">设置字段值</param>
-            <returns>设置字段是否成功</returns>
-        </member>
         <member name="T:klbotlib.Modules.SingleTypeModule`1">
             <summary>
             方便实现只处理单个种类的Message的模块的基类
@@ -215,7 +282,7 @@
             </summary>
             <param name="msg">待判断消息</param>
         </member>
-        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(`0,System.Int32)">
+        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(`0,System.String)">
             <summary>
             处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
             </summary>
@@ -225,7 +292,7 @@
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(klbotlib.Message)">
             <Inheritdoc/>
         </member>
-        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(klbotlib.Message,System.Int32)">
+        <member name="M:klbotlib.Modules.SingleTypeModule`1.Processor(klbotlib.Message,System.String)">
             <Inheritdoc/>
         </member>
         <member name="T:klbotlib.Modules.CommandModuleNamespace.Commands.SimpleActionCommand">
@@ -469,6 +536,21 @@
             </summary>
             <param name="max_length">长度上限</param>
         </member>
+        <member name="T:klbotlib.IFileAPI">
+            <summary>
+            文件操作API
+            </summary>
+        </member>
+        <member name="T:klbotlib.IMessagingAPI">
+            <summary>
+            发送消息API
+            </summary>
+        </member>
+        <member name="T:klbotlib.IModuleAccessAPI">
+            <summary>
+            模块访问API
+            </summary>
+        </member>
         <member name="T:klbotlib.Internal.JMessage">
             <summary>
             直接从JSON解析的消息对象
@@ -606,7 +688,7 @@
         </member>
         <member name="M:klbotlib.KLBot.ReplyMessage(klbotlib.Modules.Module,klbotlib.Message,System.String)">
             <summary>
-            回复消息接口。
+            回复消息接口
             </summary>
             <param name="module">调用模块</param>
             <param name="origin_msg">待回复的原始消息</param>

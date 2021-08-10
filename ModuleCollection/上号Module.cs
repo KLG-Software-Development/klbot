@@ -13,11 +13,12 @@ namespace klbotlib.Modules
         /// <summary>
         /// 关闭模块签名
         /// </summary>
-        public override bool UseSignature => false;
+        public sealed override bool UseSignature => false;
+        public sealed override string FriendlyName => "上号模块";
         /// <summary>
         /// 过滤器：处理任何消息
         /// </summary>
-        public override string Filter(MessagePlain msg)
+        public sealed override string Filter(MessagePlain msg)
         {
             string msg_text = msg.Text.Trim();
             LastMsg = msg_text;
@@ -32,7 +33,7 @@ namespace klbotlib.Modules
         /// 处理器：内容包含上号且不长于五个字符，则复读内容；
         /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
         /// </summary>
-        public override string Processor(MessagePlain msg, string filter_out)
+        public sealed override string Processor(MessagePlain msg, string filter_out)
         {
             string msg_text = msg.Text.Trim();
             switch (filter_out)

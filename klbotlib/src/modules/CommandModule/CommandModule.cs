@@ -29,12 +29,14 @@ namespace klbotlib.Modules
 
         public CommandModule(KLBot host_bot, params Command[] cmds)
         {
-            host_bot.ObjectPrint(this, "正在加载命令...", ConsoleMessageType.Task);
+            host_bot.ObjectPrint(host_bot, "正在加载命令...", ConsoleMessageType.Task);
             //自动实例化并添加所有已经定义的、带有[DefaultCommand]标记的Command类
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
             {
-                if (type.GetRootBaseType() == typeof(Command) && Attribute.GetCustomAttribute(type, typeof(DefaultCommandAttribute)) != null)
+                if (type.Namespace == "klbotlib.Modules.CommandModuleNamespace.Commands" 
+                    && type.GetRootBaseType() == typeof(Command) 
+                    && Attribute.GetCustomAttribute(type, typeof(DefaultCommandAttribute)) != null)
                 {
                     var constructors = type.GetConstructors();
                     if (constructors.Length > 0)
