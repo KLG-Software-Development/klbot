@@ -74,7 +74,7 @@ namespace klbotlib.Modules
                         ToWaitForTextState(msg.SenderID, group_id);
                     return "准备好了，你说";
                 case 3:
-                    string body = $"type=tns&per={Person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
+                    string body = $"type=tns&per={Person}&spd=6&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
                     string json = http_helper.PostString(url, body);
                     JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                     if (reply.errno != 0)
