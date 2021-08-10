@@ -13,11 +13,12 @@ namespace klbotlib.Modules
         const string url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
         static readonly WebClient client = new WebClient();
 
-        public override bool IsTransparent => false;
-        public override bool UseSignature => false;
-        public override bool IsAsync => true;
-        public override string Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? "ok" : null;
-        public override string Processor(MessagePlain msg, string _)
+        public sealed override bool IsTransparent => false;
+        public sealed override bool UseSignature => false;
+        public sealed override bool IsAsync => true;
+        public sealed override string FriendlyName => "聊天模块";
+        public sealed override string Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? "ok" : null;
+        public sealed override string Processor(MessagePlain msg, string _)
         {
             Uri host = new Uri(url + msg.Text);
             string jreply = client.DownloadString(host);

@@ -101,7 +101,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
 
         public sealed override bool GetBotProperty(KLBot bot)
         {
-            if (!bot[TargetModuleID].TryGetFieldAndProperty<bool>(MemberName, out bool value))
+            if (!bot[TargetModuleID].ModuleAccess.TryGetFieldAndProperty<bool>(MemberName, out bool value))
                 throw new Exception($"找不到字段\"{MemberName}\"");
             return value;
         }
@@ -174,7 +174,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
 
         public sealed override T GetBotProperty(KLBot bot)
         {
-            if (!bot[TargetModuleID].TryGetFieldAndProperty<T>(MemberName, out T value))
+            if (!bot[TargetModuleID].ModuleAccess.TryGetFieldAndProperty<T>(MemberName, out T value))
                 throw new Exception($"找不到{type_name}字段\"{MemberName}\"");
             return value;
         }
@@ -200,7 +200,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             {
                 sb.AppendLine($"{cmd.Format}\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\n");
             }
-            return sb.AppendLine("\n提示：发送'##[命令]'以执行指令").ToString();
+            return sb.AppendLine("\n提示：发送“##status”可以查看当前模块链条；发送“[模块名]帮助”可以查看模块信息").ToString();
         }
     }
     [DefaultCommand]

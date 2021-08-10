@@ -14,7 +14,33 @@ namespace klbotlib.Modules
 {
     public class IMGPModule : Module
     {
-        public override bool UseSignature => false;
+        public sealed override bool UseSignature => false;
+        public sealed override bool IsAsync => true;
+        public sealed override string FriendlyName => "图像处理模块";
+        public sealed override string HelpInfo
+        { 
+            get {
+                StringBuilder sb = new StringBuilder();
+                //纯文本消息
+                sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
+                foreach (var key in type_by_word_proc.Keys)
+                {
+                    sb.Append(" " + key);
+                }
+                sb.AppendLine("；\n");
+                sb.AppendLine(("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有："));
+                foreach (var key in type_by_word_recg.Keys)
+                {
+                    sb.Append(" " + key);
+                }
+                sb.AppendLine("；\n");
+                sb.AppendLine("输入\"如何评价\"，可以让AI对附带照片中的人脸打分；\n");
+                sb.AppendLine("选择两张图并输入\"换脸/交配\"，可以把后一张图的脸换到前一张图片的脸上；\n");
+                sb.AppendLine("由于傻逼百度不允许处理大图片，一些图片可能处理不了。可以输入\"压缩\"让本模块手动压缩并返图。");
+                return sb.ToString();
+            }
+        }
+
         const string post_url = "https://ai.baidu.com/aidemo";
         static readonly Regex pattern = new Regex(@"什么(东西)");
         static readonly Dictionary<string, string> type_by_word_recg = new Dictionary<string, string> 
@@ -46,12 +72,6 @@ namespace klbotlib.Modules
 
         public override string Filter(Message msg)
         {
-            if (msg is MessagePlain pmsg)   //纯文本消息
-            {
-                if (pmsg.Text.Trim() == "图像处理模块帮助")
-                    return "help";
-            }
-            
             if (msg.TargetContains(HostBot.SelfID) && msg is MessageImagePlain ipmsg )  //图文消息
             {
                 string text = ipmsg.Text.Trim();
@@ -75,26 +95,6 @@ namespace klbotlib.Modules
         public override string Processor(Message msg, string filter_out)
         {
             StringBuilder sb = new StringBuilder();
-            //纯文本消息
-            if (filter_out == "help")
-            {
-                sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
-                foreach (var key in type_by_word_proc.Keys)
-                {
-                    sb.Append(" " + key);
-                }
-                sb.AppendLine("；\n");
-                sb.AppendLine(("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有："));
-                foreach (var key in type_by_word_recg.Keys)
-                {
-                    sb.Append(" " + key);
-                }
-                sb.AppendLine("；\n");
-                sb.AppendLine("输入\"如何评价\"，可以让AI对附带照片中的人脸打分；\n");
-                sb.AppendLine("选择两张图并输入\"换脸/交配\"，可以把后一张图的脸换到前一张图片的脸上；\n");
-                sb.AppendLine("由于傻逼百度不允许处理大图片，一些图片可能处理不了。可以输入\"压缩\"让本模块手动压缩并返图。");
-                return sb.ToString();
-            }
             //之后都是图文消息，统一转换类型为MessageImagePlain
             var ipmsg = (MessageImagePlain)msg;
             //多图文消息

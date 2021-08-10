@@ -18,8 +18,8 @@ namespace klbotlib.Modules
         [ModuleSetup]
         public Dictionary<long, AuthorType> Users { get; private set; }
 
-        public List<Command> Cmds = new List<Command>();
-        public AuthorType GetAuthorType(long id)
+        internal List<Command> Cmds = new List<Command>();
+        internal AuthorType GetAuthorType(long id)
         {
             if (!Users.ContainsKey(id))
                 return AuthorType.野人;
@@ -46,9 +46,11 @@ namespace klbotlib.Modules
             host_bot.ObjectPrint(this, $"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
         }
 
-        public override bool IsTransparent => false;
-        public override string Filter(MessagePlain msg) => cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
-        public override string Processor(MessagePlain msg, string _)
+        public sealed override bool IsTransparent => false;
+        public sealed override string FriendlyName => "命令模块";
+        public sealed override string HelpInfo => $"发送“{prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
+        public sealed override string Filter(MessagePlain msg) => cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
+        public sealed override string Processor(MessagePlain msg, string _)
         {
             string cmd_str = cmdPat.Match(msg.Text).Groups[1].Value.ToLower();
             //遍历命令模块中的命令列表，寻找第一个匹配

@@ -26,6 +26,7 @@ namespace klbotlib
         private bool IsBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee console = new Consoleee();       //扩展控制台对象
         private Task<bool> network_task;
+        private CmdLoopStatus CmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
 
         public ModuleChain ModuleChain { get; } = new ModuleChain();
         /// <summary>
@@ -265,7 +266,6 @@ namespace klbotlib
 
 
         //暴露给Module类的一些成员
-        internal CmdLoopStatus CmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
         /// <summary>
         /// 向控制台打印字符串。打印内容会自动包含消息源头的对象的名称
         /// </summary>
@@ -300,7 +300,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="context">指定发送的上下文</param>
         /// <param name="full_msg_json">回复消息json</param>
-        public bool TrySendMessage(MessageContext context, string full_msg_json)
+        private bool TrySendMessage(MessageContext context, string full_msg_json)
         {
             string url = NetworkHelper.GetSendMessageUrl(ServerURL, context);
             try
@@ -526,6 +526,20 @@ namespace klbotlib
         //注意 空消息的过滤已经在上一级ProcessMessages()完成，所以此处入参的所有消息均为非空消息
         private void ModulesProcessMessage(Message msg)
         {
+            //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
+            //另外，帮助消息不计入统计信息
+            if (msg is MessagePlain pmsg && pmsg.Text.Trim().EndsWith("帮助"))
+            {
+                foreach (var module in ModuleChain)
+                {
+                    if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
+                    {
+                        ReplyMessage(module, msg, module.HelpInfo);
+                        return;
+                    }
+                }
+            }
+            //非帮助信息 遍历尝试处理
             foreach (var module in ModuleChain)
             {
                 //模块会直接在一个单独的Task上依次处理并回复
@@ -622,7 +636,10 @@ namespace klbotlib
             int index = 0;
             ModuleChain.ForEach(module =>
             {
-                sb.AppendLine($"  [{index}] {module}");
+                if (module.ModuleName == module.FriendlyName)
+                    sb.AppendLine($"  [{index}] {module}");
+                else
+                    sb.AppendLine($"  [{index}] {module}（{module.FriendlyName}）");
                 index++;
             });
             return sb.ToString();

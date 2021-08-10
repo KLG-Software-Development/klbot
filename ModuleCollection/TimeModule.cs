@@ -7,6 +7,8 @@ namespace klbotlib.Modules
     /// </summary>
     public class TimeModule : SingleTypeModule<MessagePlain>
     {
+        public sealed override string FriendlyName => "报时模块";
+        public sealed override string HelpInfo => "发送“报时”获取当前时间\n发送“设置时区为[整数X]”将时区设为UTC+X";
         /// <inheritdoc/>
         public sealed override bool IsTransparent => true;
 

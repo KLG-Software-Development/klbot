@@ -60,7 +60,7 @@ namespace klbotlib.Modules
         /// </summary>
         public virtual bool IsAsync { get; } = false;
         /// <summary>
-        /// 模块的友好名称。仅用于打印模块链条信息和帮助，默认和ModuleName字段相同，即模块类名。
+        /// 模块的友好名称（别名）。仅用于打印模块链条信息/触发帮助信息，默认和ModuleName字段相同，即模块类名。
         /// </summary>
         public virtual string FriendlyName { get => ModuleName; }
         /// <summary>
@@ -494,10 +494,6 @@ namespace klbotlib.Modules
             else if (!expected && IsAttached)    //期望未附加但已经附加
                 throw new Exception("此模块已经附加到宿主KLBot上，无法完成指定操作");
         }
-        /// <summary>
-        /// ToString()函数：未附加时返回模块名；已附加时返回模块ID
-        /// </summary>
-        public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
         //处理并调用KLBot回复
         private void ProcessMessage(Message msg, string filter_out)
         {
@@ -536,6 +532,11 @@ namespace klbotlib.Modules
                 ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
             SaveModuleStatus(false);   //保存模块状态
         }
+
+        /// <summary>
+        /// ToString()函数：未附加时返回模块名；已附加时返回模块ID
+        /// </summary>
+        public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
     }
 
     /// <summary>

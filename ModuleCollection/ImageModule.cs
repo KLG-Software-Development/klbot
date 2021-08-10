@@ -30,6 +30,8 @@ namespace klbotlib.Modules
         [ModuleStatus]
         public int Fraction = 50;   //只在前n%的结果内随机
         public sealed override bool UseSignature => false;
+        public sealed override string FriendlyName => "搜图模块";
+        public sealed override string HelpInfo => "发送“[关键词]图来”或“来点[关键词]图”，在百度图片中搜索相关图片";
         public ImageModule()
         {
             _client.Encoding = Encoding.UTF8;

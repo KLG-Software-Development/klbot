@@ -13,8 +13,20 @@ namespace klbotlib.Modules
 {
     public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     {
-        public override bool UseSignature => false;
-        public override bool IsAsync => true;
+        public sealed override bool UseSignature => false;
+        public sealed override bool IsAsync => true;
+        public sealed override string FriendlyName => "匿名语音模块";
+        public sealed override string HelpInfo
+        {
+            get {
+                string re = "发起临时会话后发送\"说骚话\"激活功能，模块会把下一句话转换成语音发送到临时会话所通过的群里。\n" +
+                    "可以在群里发送\"设置音色[空格][音色名称]\"来修改生成的音色。目前支持的音色有：\n";
+                foreach (var key in per_by_name.Keys)
+                    re += "\t" + key;
+                return re;
+            }
+        }
+
         const string url = "https://ai.baidu.com/aidemo";
         const string prefix = "data:audio/x-mpeg;base64,";
         const string temp_mpeg_name = "tmp.mpeg";
@@ -58,8 +70,6 @@ namespace klbotlib.Modules
             }
             else if (text.StartsWith("设置音色 "))
                 return "set tone";
-            else if (text == "匿名语音模块帮助")
-                return "help";
             return null;
         }
         public override string Processor(MessagePlain msg, string filter_out)
@@ -93,12 +103,6 @@ namespace klbotlib.Modules
                         return "不支持这个音色";
                     Person = per;
                     return $"音色已设置为{Person}";
-                case "help":
-                    string re = "发起临时会话后发送\"说骚话\"激活功能，模块会把下一句话转换成语音发送到临时会话所通过的群里。\n" +
-                        "可以在群里发送\"设置音色[空格][音色名称]\"来修改生成的音色。目前支持的音色有：\n";
-                    foreach (var key in per_by_name.Keys)
-                        re += "\t" + key;
-                    return re;
                 default:
                     return "[匿名语音模块]意外遇到不应处理的消息，KLBot框架有大问题！";
             }
