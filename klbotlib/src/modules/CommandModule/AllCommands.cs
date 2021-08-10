@@ -302,9 +302,26 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
     [DefaultCommand]
     internal class StatusCmd : InfoCommand
     {
-        public override string CommandString => "status";
-        public override string InfoDescription => "KLBot详细状态";
-        public override string GetInfo(KLBot bot)
+        public sealed override string CommandString => "status";
+        public sealed override string InfoDescription => "KLBot状态";
+        public sealed override string GetInfo(KLBot bot)
+        {
+            Process process = Process.GetCurrentProcess();
+            StringBuilder sb = new StringBuilder($"[配置信息]\n");
+            sb.Append(bot.GetListeningGroupListString());
+            sb.AppendLine("\n[模块信息]");
+            sb.Append(bot.GetModuleChainString() + "\n");
+            sb.AppendLine("\n[统计信息]");
+            sb.Append(bot.DiagData.GetSummaryString());
+            return sb.ToString();
+        }
+    }
+    [DefaultCommand]
+    internal class StatusAllCmd : InfoCommand
+    {
+        public sealed override string CommandString => "status all";
+        public sealed override string InfoDescription => "KLBot详细状态";
+        public sealed override string GetInfo(KLBot bot)
         {
             Process process = Process.GetCurrentProcess();
             StringBuilder sb = new StringBuilder($"[配置信息]\n");
