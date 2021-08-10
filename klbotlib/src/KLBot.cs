@@ -639,7 +639,7 @@ namespace klbotlib
                 if (module.ModuleName == module.FriendlyName)
                     sb.AppendLine($"  [{index}] {module}");
                 else
-                    sb.AppendLine($"  [{index}] {module}({module.FriendlyName})");
+                    sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
                 index++;
             });
             return sb.ToString();
