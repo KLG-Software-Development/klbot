@@ -44,12 +44,12 @@ namespace klbotlib.Modules
         private string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
         private string GetFuck() => GetModule<FuckModule>().SingleSentence();
 
-        public override int Filter(Message msg)
+        public override string Filter(Message msg)
         {
             if (msg is MessagePlain pmsg)   //纯文本消息
             {
                 if (pmsg.Text.Trim() == "图像处理模块帮助")
-                    return 1;
+                    return "help";
             }
             
             if (msg.TargetContains(HostBot.SelfID) && msg is MessageImagePlain ipmsg )  //图文消息
@@ -58,24 +58,25 @@ namespace klbotlib.Modules
                 if (ipmsg.UrlList.Count == 1)   //单图文
                 {
                     if (text.StartsWith("什么") && text.Length != 2)
-                        return 3;
+                        return "recogn";
                     else if (text == "如何评价")
-                        return 4;
+                        return "face";
                     else if (text == "压缩")
-                        return 5;
+                        return "compress";
                     else if (type_by_word_proc.ContainsKey(text))
-                        return 6;
+                        return "image process";
                 }
                 //多图文
                 else if (ipmsg.UrlList.Count == 2 && merge_keyword.Contains(text))
-                    return 2;
+                    return "merge";
             }
-            return 0;
+            return null;
         }
-        public override string Processor(Message msg, int status_code)
+        public override string Processor(Message msg, string filter_out)
         {
             StringBuilder sb = new StringBuilder();
-            if (status_code == 1)   //唯一处理纯文本的情况，单独拎出来
+            //纯文本消息
+            if (filter_out == "help")
             {
                 sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
                 foreach (var key in type_by_word_proc.Keys)
@@ -94,33 +95,34 @@ namespace klbotlib.Modules
                 sb.AppendLine("由于傻逼百度不允许处理大图片，一些图片可能处理不了。可以输入\"压缩\"让本模块手动压缩并返图。");
                 return sb.ToString();
             }
-            //剩余情况都是图文消息，可以统一转换
-            var ipmsg = (MessageImagePlain) msg;
+            //之后都是图文消息，统一转换类型为MessageImagePlain
+            var ipmsg = (MessageImagePlain)msg;
             //多图文消息
-            if (status_code == 2)
+            switch (filter_out)
             {
-                HostBot.ReplyMessage(this, msg, "转换中...");
-                //HostBot.ReplyPlainMessage(this, msg, "正在下载父本并转换为base64...");
-                string b641 = img_helper.DownloadAsBase64(ipmsg.UrlList[0]);
-                //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
-                string b642 = img_helper.DownloadAsBase64(ipmsg.UrlList[1]);
-                string query_string = "?type=merge&apiType=face";
-                string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
-                string json = http_helper.PostString(post_url + query_string, body);
-                JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
-                //错误检查
-                if (reply.errno != 0)
-                    return ErrorString(reply.errno, reply.msg);
-                if (reply.data.error_code != 0)
-                    return ErrorString(reply.data.error_code, reply.data.error_msg);
-                string b64 = reply.data.result.merge_image;
-                return $@"\image:\base64:{b64}";
+                case "merge":
+                    HostBot.ReplyMessage(this, msg, "转换中...");
+                    //HostBot.ReplyPlainMessage(this, msg, "正在下载父本并转换为base64...");
+                    string b641 = img_helper.DownloadAsBase64(ipmsg.UrlList[0]);
+                    //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
+                    string b642 = img_helper.DownloadAsBase64(ipmsg.UrlList[1]);
+                    string query_string = "?type=merge&apiType=face";
+                    string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
+                    string json = http_helper.PostString(post_url + query_string, body);
+                    JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+                    //错误检查
+                    if (reply.errno != 0)
+                        return ErrorString(reply.errno, reply.msg);
+                    if (reply.data.error_code != 0)
+                        return ErrorString(reply.data.error_code, reply.data.error_msg);
+                    string b64 = reply.data.result.merge_image;
+                    return $@"\image:\base64:{b64}";
             }
+            //以下都是单图文消息 可以统一把图片Url拿出来做URL encode
             string esc_url = Uri.EscapeDataString(ipmsg.UrlList[0]);
-            //单图文消息
-            switch (status_code)
+            switch (filter_out)
             {
-                case 3: //识别
+                case "recogn": //识别
                     string word = ipmsg.Text.Trim().Substring(2);
                     if (!type_by_word_recg.ContainsKey(word))
                         return GetModule<FuckModule>().SingleSentence() + "，这个不会";
@@ -154,7 +156,7 @@ namespace klbotlib.Modules
                             reply.data.result.ForEach(x => sb.AppendLine($"有{x.score * 100:f1}%的概率是{x.name}"));
                     }
                     return sb.ToString();
-                case 4: //人脸评分
+                case "face": //人脸评分
                     body = $"image&image_url={esc_url}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
                     JFaceReply reply_face = JsonConvert.DeserializeObject<JFaceReply>(http_helper.PostString(post_url, body));
                     if (reply_face.errno != 0 || reply_face.msg.Trim().ToLower() != "success")
@@ -166,7 +168,7 @@ namespace klbotlib.Modules
                     int age = reply_face.data.result.face_list[0].age;
                     float beauty = reply_face.data.result.face_list[0].beauty;
                     return $"{age}岁，{beauty}分";
-                case 5: //本地压缩
+                case "compress": //本地压缩
                     HostBot.ReplyMessage(this, msg, $"正在下载图片...");
                     Bitmap bmp = img_helper.DownloadImage(ipmsg.UrlList[0], out int original_size);
                     MemoryStream ms = new MemoryStream();
@@ -176,7 +178,7 @@ namespace klbotlib.Modules
                     string b64 = Convert.ToBase64String(bin);
                     HostBot.ReplyMessage(this, msg, $"压缩完成。原始大小为{original_size.ToMemorySizeString(1)}，返图大小为{bin.Length.ToMemorySizeString(1)}");
                     return $@"\image:\base64:{b64}";
-                case 6: //图像处理
+                case "image process": //图像处理
                     word = ipmsg.Text.Trim();
                     type = Uri.EscapeDataString(type_by_word_proc[word]);
                     body = $"image&image_url={esc_url}&type={type}&show=true";

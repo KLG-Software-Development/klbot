@@ -47,8 +47,8 @@ namespace klbotlib.Modules
         }
 
         public override bool IsTransparent => false;
-        public override int Filter(MessagePlain msg) => cmdPat.IsMatch(msg.Text.Trim()) ? 1 : 0;
-        public override string Processor(MessagePlain msg, int _)
+        public override string Filter(MessagePlain msg) => cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
+        public override string Processor(MessagePlain msg, string _)
         {
             string cmd_str = cmdPat.Match(msg.Text).Groups[1].Value.ToLower();
             //遍历命令模块中的命令列表，寻找第一个匹配

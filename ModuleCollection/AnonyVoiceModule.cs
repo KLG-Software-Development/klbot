@@ -39,7 +39,7 @@ namespace klbotlib.Modules
         Dictionary<long, long> target_groups = new Dictionary<long, long>();
         HttpHelper http_helper = new HttpHelper();
 
-        public override int Filter(MessagePlain msg)
+        public override string Filter(MessagePlain msg)
         {
             string text = msg.Text.Trim();
             if ((msg.Context == MessageContext.Temp || msg.Context == MessageContext.Private))
@@ -48,32 +48,32 @@ namespace klbotlib.Modules
                 if (IsNewOrIdleUser(msg.SenderID))
                 {
                     if (msg.Context == MessageContext.Temp && text == "说骚话")
-                        return 1;
+                        return "request";
                     else if (msg.Context == MessageContext.Private && pri_req_pat.IsMatch(text))
-                        return 2;
+                        return "private request";
                 }
                 //转语音请求
                 else if (user_stat.TryGetValue(msg.SenderID, out UserStatus value) && value == UserStatus.ReadyToSendVoice)
-                    return 3;
+                    return "content";
             }
             else if (text.StartsWith("设置音色 "))
-                return 4;
+                return "set tone";
             else if (text == "匿名语音模块帮助")
-                return 5;
-            return 0;
+                return "help";
+            return null;
         }
-        public override string Processor(MessagePlain msg, int status_code)
+        public override string Processor(MessagePlain msg, string filter_out)
         {
-            switch (status_code)
+            switch (filter_out)
             {
-                case 1:     //临时会话 发起请求
+                case "request":     //临时会话 发起请求
                     ToWaitForTextState(msg.SenderID, msg.GroupID);
                     return "准备好了，你说";
-                case 2:     //私聊会话 发起请求。这种情况需要额外解析一个群号
+                case "private request":     //私聊会话 发起请求。这种情况需要额外解析一个群号
                     if (long.TryParse(pri_req_pat.Match(msg.Text).Groups[1].Value, out long group_id))
                         ToWaitForTextState(msg.SenderID, group_id);
                     return "准备好了，你说";
-                case 3:
+                case "content":
                     string body = $"type=tns&per={Person}&spd=6&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
                     string json = http_helper.PostString(url, body);
                     JReply reply = JsonConvert.DeserializeObject<JReply>(json);
@@ -87,20 +87,21 @@ namespace klbotlib.Modules
                     //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
                     //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
                     return "已发送";
-                case 4:
+                case "set tone":
                     string tone = msg.Text.Trim().Substring(5);
                     if (!per_by_name.TryGetValue(tone, out string per))
                         return "不支持这个音色";
                     Person = per;
                     return $"音色已设置为{Person}";
-                case 5:
+                case "help":
                     string re = "发起临时会话后发送\"说骚话\"激活功能，模块会把下一句话转换成语音发送到临时会话所通过的群里。\n" +
                         "可以在群里发送\"设置音色[空格][音色名称]\"来修改生成的音色。目前支持的音色有：\n";
                     foreach (var key in per_by_name.Keys)
                         re += "\t" + key;
                     return re;
+                default:
+                    return "[匿名语音模块]意外遇到不应处理的消息，KLBot框架有大问题！";
             }
-            return null;
         }
 
         bool IsNewOrIdleUser(long id) => !user_stat.ContainsKey(id) || user_stat[id] == UserStatus.Idle;

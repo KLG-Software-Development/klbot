@@ -1,4 +1,6 @@
-﻿namespace klbotlib.Modules
+﻿using System;
+
+namespace klbotlib.Modules
 {
     /// <summary>
     /// 上号模块
@@ -15,20 +17,33 @@
         /// <summary>
         /// 过滤器：处理任何消息
         /// </summary>
-        public override int Filter(MessagePlain msg) => 1;
+        public override string Filter(MessagePlain msg)
+        {
+            string msg_text = msg.Text.Trim();
+            LastMsg = msg_text;
+            if (Is上号(msg_text) && !Is上号(LastMsg))
+                return "上号";
+            else if (msg_text.Contains("蛤儿"))
+                return "蛤儿";
+            else 
+                return null;
+        }
         /// <summary>
         /// 处理器：内容包含上号且不长于五个字符，则复读内容；
         /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
         /// </summary>
-        public override string Processor(MessagePlain msg, int _)
+        public override string Processor(MessagePlain msg, string filter_out)
         {
-            string msg_text = msg.Text.Trim(), output = string.Empty;
-            if (Is上号(msg_text) && !Is上号(LastMsg))
-                output = msg_text;
-            else if (msg_text.Contains("蛤儿"))
-                output = @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}";
-            LastMsg = msg_text;
-            return output;  
+            string msg_text = msg.Text.Trim();
+            switch (filter_out)
+            {
+                case "上号":
+                    return msg_text;
+                case "蛤儿":
+                    return @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}";
+                default:
+                    throw new Exception($"意外遇到未实现的过滤器输出\"{filter_out}\"");
+            }
         }
     }
 }
