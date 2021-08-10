@@ -45,7 +45,7 @@ namespace klbotlib.Modules
             }
             int default_cmd_count = Cmds.Count;
             Cmds.AddRange(cmds);
-            host_bot.ObjectPrint(this, $"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
+            host_bot.ObjectPrint(host_bot, $"成功加载{Cmds.Count}条命令（{default_cmd_count}条默认命令, {Cmds.Count - default_cmd_count}条自定义命令).");
         }
 
         public sealed override bool IsTransparent => false;

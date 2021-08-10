@@ -66,7 +66,7 @@ namespace klbotlib.Modules
         /// <summary>
         /// 模块的帮助信息。KLBot在接收到“[模块友好名称]帮助”时，会回复此字符串中的内容。
         /// </summary>
-        public virtual string HelpInfo { get => "模块没有内置帮助信息"; }
+        public virtual string HelpInfo { get => $"[{FriendlyName}]的开发者很懒，没有提供任何帮助信息"; }
         /// <summary>
         /// 过滤器(Message -> bool)。模块通过这个函数判断是否要处理某一条消息。
         /// 在模块总开关开启的情况下，如果传入一条消息时输出为空或null，这条消息会忽略，否则它将和输出一同被传送给处理器Processor(Message, string -> string)。
