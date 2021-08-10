@@ -42,7 +42,7 @@ namespace klbotlib.Modules
         static readonly HttpHelper http_helper = new HttpHelper();
         static readonly ImageHelper img_helper = new ImageHelper();
         private string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
-        private string GetFuck() => GetModule<FuckModule>().SingleSentence();
+        private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
 
         public override string Filter(Message msg)
         {
@@ -125,7 +125,7 @@ namespace klbotlib.Modules
                 case "recogn": //识别
                     string word = ipmsg.Text.Trim().Substring(2);
                     if (!type_by_word_recg.ContainsKey(word))
-                        return GetModule<FuckModule>().SingleSentence() + "，这个不会";
+                        return ModuleAccess.GetModule<FuckModule>().SingleSentence() + "，这个不会";
                     string type = type_by_word_recg[word];
                     string body = $"image&image_url={esc_url}&type={type}&show=true";
                     Messaging.ReplyMessage(msg, "识别中...");

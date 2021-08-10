@@ -1,4 +1,5 @@
-﻿using Gleee.Consoleee;
+﻿#pragma warning disable CS1066 
+using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Internal;
@@ -20,7 +21,7 @@ namespace klbotlib.Modules
     /// 消息处理模块基类.
     /// 这是KLBot功能实现的基本单位
     /// </summary>
-    public abstract class Module : IFileAPI, ISendMessageAPI
+    public abstract class Module : IFileAPI, IMessagingAPI, IModuleAccessAPI
     {
         //后台变量
         private KLBot _host_bot;
@@ -103,7 +104,11 @@ namespace klbotlib.Modules
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public ISendMessageAPI Messaging { get => (ISendMessageAPI)this; }
+        public IMessagingAPI Messaging { get => (IMessagingAPI)this; }
+        /// <summary>
+        /// 发送消息操作接口
+        /// </summary>
+        public IModuleAccessAPI ModuleAccess { get => (IModuleAccessAPI)this; }
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -135,7 +140,74 @@ namespace klbotlib.Modules
         /// <typeparam name="T">目标模块的类型</typeparam>
         /// <param name="index">目标模块在同类型模块中的索引。默认为0</param>
         /// <returns>获取到的模块实例</returns>
-        public T GetModule<T>(int index = 0) where T : Module => HostBot.GetModule<T>(index);
+        T IModuleAccessAPI.GetModule<T>(int index = 0) => HostBot.GetModule<T>(index);
+        /// <summary>
+        /// 尝试获取模块特定字段的值。只允许获取public字段
+        /// </summary>
+        /// <typeparam name="T">字段类型</typeparam>
+        /// <param name="name">字段名称</param>
+        /// <param name="value">输出字段的值</param>
+        /// <returns>是否获取成功</returns>
+        bool IModuleAccessAPI.TryGetFieldAndProperty<T>(string name, out T value)
+        {
+            value = default(T);
+            Type type = GetType();
+            var p = type.GetProperty(name);
+            if (p != null)
+            {
+                if (p.PropertyType == typeof(T))
+                {
+                    value = (T)p.GetValue(this);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            var f = type.GetField(name);
+            if (f != null)
+            {
+                if (f.FieldType == typeof(T))
+                {
+                    value = (T)f.GetValue(this);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            return false;
+        }
+        /// <summary>
+        /// 尝试设置模块特定字段的值。只允许设置public字段
+        /// </summary>
+        /// <typeparam name="T">字段类型</typeparam>
+        /// <param name="name">字段名称</param>
+        /// <param name="value">设置字段值</param>
+        /// <returns>设置字段是否成功</returns>
+        internal bool TrySetFieldAndProperty<T>(string name, T value)
+        {
+            Type type = GetType();
+            var p = type.GetProperty(name);
+            if (p != null)
+            {
+                if (p.PropertyType == typeof(T) && p.CanWrite)
+                {
+                    p.SetValue(this, value);
+                    return true;
+                }
+                else return false;
+            }
+            var f = type.GetField(name);
+            if (f != null)
+            {
+                if (f.FieldType == typeof(T) && !f.IsInitOnly)
+                {
+                    f.SetValue(this, value);
+                    return true;
+                }
+                else return false;
+            }
+            return false;
+        }
         /// <summary>
         /// 返回模块缓存目录中是否存在某个文件
         /// </summary>
@@ -218,7 +290,7 @@ namespace klbotlib.Modules
         /// <param name="user_id">用户ID</param>
         /// <param name="group_id">群组ID</param>
         /// <param name="content">待编译MsgMarker文本</param>
-        void ISendMessageAPI.SendMessage(MessageContext context, long user_id, long group_id, string content)
+        void IMessagingAPI.SendMessage(MessageContext context, long user_id, long group_id, string content)
             => HostBot.SendMessage(this, context, user_id, group_id, content);
         /// <summary>
         /// 回复消息接口
@@ -226,7 +298,7 @@ namespace klbotlib.Modules
         /// <param name="module">调用模块</param>
         /// <param name="origin_msg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        void ISendMessageAPI.ReplyMessage(Message origin_msg, string content)
+        void IMessagingAPI.ReplyMessage(Message origin_msg, string content)
         {
             //统一Assert
             AssertAttachedStatus(true);
@@ -247,7 +319,7 @@ namespace klbotlib.Modules
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="group_id">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void ISendMessageAPI.SendGroupMessage(long group_id, string content)
+        void IMessagingAPI.SendGroupMessage(long group_id, string content)
             => HostBot.SendMessage(this, MessageContext.Group, -1, group_id, content);
         /// <summary>
         /// 发送临时消息接口
@@ -256,7 +328,7 @@ namespace klbotlib.Modules
         /// <param name="user_id">目标用户ID</param>
         /// <param name="group_id">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void ISendMessageAPI.SendGroupMessage(long user_id, long group_id, string content)
+        void IMessagingAPI.SendGroupMessage(long user_id, long group_id, string content)
             => HostBot.SendMessage(this, MessageContext.Group, user_id, group_id, content);
         /// <summary>
         /// 发送私聊消息接口
@@ -264,7 +336,7 @@ namespace klbotlib.Modules
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="user_id">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void ISendMessageAPI.SendPrivateMessage(long user_id, string content)
+        void IMessagingAPI.SendPrivateMessage(long user_id, string content)
             => HostBot.SendMessage(this, MessageContext.Group, user_id, -1, content);
 
 
@@ -426,73 +498,6 @@ namespace klbotlib.Modules
         /// ToString()函数：未附加时返回模块名；已附加时返回模块ID
         /// </summary>
         public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
-        /// <summary>
-        /// 尝试获取模块特定字段的值。只允许获取public字段
-        /// </summary>
-        /// <typeparam name="T">字段类型</typeparam>
-        /// <param name="name">字段名称</param>
-        /// <param name="value">输出字段的值</param>
-        /// <returns>是否获取成功</returns>
-        public bool TryGetFieldAndProperty<T>(string name, out T value)
-        {
-            value = default(T);
-            Type type = GetType();
-            var p = type.GetProperty(name);
-            if (p != null )
-            {
-                if (p.PropertyType == typeof(T))
-                {
-                    value = (T)p.GetValue(this);
-                    return true;
-                }
-                else
-                    return false;
-            }
-            var f = type.GetField(name);
-            if (f != null )
-            {
-                if (f.FieldType == typeof(T))
-                {
-                    value = (T)f.GetValue(this);
-                    return true;
-                }
-                else
-                    return false;
-            }
-            return false;
-        }
-        /// <summary>
-        /// 尝试设置模块特定字段的值。只允许设置public字段
-        /// </summary>
-        /// <typeparam name="T">字段类型</typeparam>
-        /// <param name="name">字段名称</param>
-        /// <param name="value">设置字段值</param>
-        /// <returns>设置字段是否成功</returns>
-        internal bool TrySetFieldAndProperty<T>(string name, T value)
-        {
-            Type type = GetType();
-            var p = type.GetProperty(name);
-            if (p != null)
-            {
-                if (p.PropertyType == typeof(T) && p.CanWrite)
-                {
-                    p.SetValue(this, value);
-                    return true;
-                }
-                else return false;
-            }
-            var f = type.GetField(name);
-            if (f != null)
-            {
-                if (f.FieldType == typeof(T) && !f.IsInitOnly)
-                {
-                    f.SetValue(this, value);
-                    return true;
-                }
-                else return false;
-            }
-            return false;
-        }
         //处理并调用KLBot回复
         private void ProcessMessage(Message msg, string filter_out)
         {

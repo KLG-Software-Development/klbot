@@ -1,4 +1,5 @@
-﻿using System;
+﻿using klbotlib.Modules;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,12 +20,20 @@ namespace klbotlib
     /// <summary>
     /// 发送消息API
     /// </summary>
-    public interface ISendMessageAPI
+    public interface IMessagingAPI
     {
         void SendMessage(MessageContext context, long user_id, long group_id, string content);
         void ReplyMessage(Message origin_msg, string content);
         void SendGroupMessage(long group_id, string content);
         void SendGroupMessage(long user_id, long group_id, string content);
         void SendPrivateMessage(long user_id, string content);
+    }
+    /// <summary>
+    /// 模块访问API
+    /// </summary>
+    public interface IModuleAccessAPI
+    {
+        T GetModule<T>(int index = 0) where T : Module;
+        bool TryGetFieldAndProperty<T>(string name, out T value);
     }
 }

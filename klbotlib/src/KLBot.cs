@@ -178,6 +178,8 @@ namespace klbotlib
                 console.WriteLn($"已添加{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
             }
         }
+
+        //消息发送内部API
         /// <summary>
         /// 发送消息接口
         /// </summary>
