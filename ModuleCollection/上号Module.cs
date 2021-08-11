@@ -21,13 +21,13 @@ namespace klbotlib.Modules
         public sealed override string Filter(MessagePlain msg)
         {
             string msg_text = msg.Text.Trim();
-            LastMsg = msg_text;
+            string output = null;
             if (Is上号(msg_text) && !Is上号(LastMsg))
-                return "上号";
+                output = "上号";
             else if (msg_text.Contains("蛤儿"))
-                return "蛤儿";
-            else 
-                return null;
+                output = "蛤儿";
+            LastMsg = msg_text;
+            return output;
         }
         /// <summary>
         /// 处理器：内容包含上号且不长于五个字符，则复读内容；
