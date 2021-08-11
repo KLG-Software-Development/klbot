@@ -14,12 +14,14 @@ namespace klbot
         {
             Console.ResetColor();
             Version exe_version = Assembly.GetExecutingAssembly().GetName().Version;
-            Version lib_version = klbotlib.Info.LibInfo.GetLibVersion();
+            Version lib_version = klbotlib.Info.CoreLibInfo.GetLibVersion();
+            Version mc_version = ModuleCollection.Info.CollectionInfo.GetLibVersion();
             long query_counter_cache = 0;
             int fatal_failure_counter = 0;
             Console.WriteLine($"KLBot via mirai");
             Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor} Build {exe_version.ToKLGBuildString()}");
             Console.WriteLine($"corelib version: {lib_version.Major}.{lib_version.Minor} Build {lib_version.ToKLGBuildString()}\n");
+            Console.WriteLine($"MC version: {mc_version.Major}.{mc_version.Minor} Build {mc_version.ToKLGBuildString()}\n");
         start:
             KLBot klg = null;
             try

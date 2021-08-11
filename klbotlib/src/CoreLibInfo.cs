@@ -6,7 +6,7 @@ namespace klbotlib.Info
     /// <summary>
     /// klbotlib的程序集信息
     /// </summary>
-    public static class LibInfo
+    public static class CoreLibInfo
     {
         /// <summary>
         /// 获取程序集版本
