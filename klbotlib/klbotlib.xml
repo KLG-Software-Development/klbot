@@ -4,6 +4,17 @@
         <name>klbotlib</name>
     </assembly>
     <members>
+        <member name="T:klbotlib.Info.CoreLibInfo">
+            <summary>
+            klbotlib的程序集信息
+            </summary>
+        </member>
+        <member name="M:klbotlib.Info.CoreLibInfo.GetLibVersion">
+            <summary>
+            获取程序集版本
+            </summary>
+            <returns>程序集版本</returns>
+        </member>
         <member name="T:klbotlib.Modules.ModuleStatusAttribute">
             <summary>
             模块状态Attribute，用来标记模块属性。
@@ -819,17 +830,6 @@
             <summary>
             获取KLBot的统计信息
             </summary>
-        </member>
-        <member name="T:klbotlib.Info.LibInfo">
-            <summary>
-            klbotlib的程序集信息
-            </summary>
-        </member>
-        <member name="M:klbotlib.Info.LibInfo.GetLibVersion">
-            <summary>
-            获取程序集版本
-            </summary>
-            <returns>程序集版本</returns>
         </member>
         <member name="T:klbotlib.Message">
             <summary>

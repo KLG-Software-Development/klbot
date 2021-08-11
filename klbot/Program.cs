@@ -20,7 +20,7 @@ namespace klbot
             int fatal_failure_counter = 0;
             Console.WriteLine($"KLBot via mirai");
             Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor} Build {exe_version.ToKLGBuildString()}");
-            Console.WriteLine($"corelib version: {lib_version.Major}.{lib_version.Minor} Build {lib_version.ToKLGBuildString()}\n");
+            Console.WriteLine($"corelib version: {lib_version.Major}.{lib_version.Minor} Build {lib_version.ToKLGBuildString()}");
             Console.WriteLine($"MC version: {mc_version.Major}.{mc_version.Minor} Build {mc_version.ToKLGBuildString()}\n");
         start:
             KLBot klg = null;
