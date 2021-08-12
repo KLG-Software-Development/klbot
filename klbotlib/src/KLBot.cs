@@ -27,7 +27,9 @@ namespace klbotlib
         private readonly Consoleee console = new Consoleee();       //扩展控制台对象
         private Task<bool> network_task;
         private CmdLoopStatus CmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
-
+        /// <summary>
+        /// KLBot的模块链条。这个类可以被枚举
+        /// </summary>
         public ModuleChain ModuleChain { get; } = new ModuleChain();
         /// <summary>
         /// 当前模块总数，即模块链条的长度
@@ -111,7 +113,8 @@ namespace klbotlib
         /// <summary>
         /// 公开构造函数。基本构造后添加默认核心模块
         /// </summary>
-        /// <param name="config_path"></param>
+        /// <param name="config_path">配置文件路径</param>
+        /// <param name="load_core_module">是否加载核心模块</param>
         public KLBot(string config_path = "config/config.json", bool load_core_module = true) : this(config_path)
         {
             if (load_core_module)
@@ -150,7 +153,6 @@ namespace klbotlib
         /// 根据模块类型获取模块
         /// </summary>
         /// <typeparam name="T">目标模块类型</typeparam>
-        /// <param name="source">来源对象</param>
         /// <param name="index">目标模块的索引</param>
         /// <returns>目标模块实例</returns>
         public T GetModule<T>(int index = 0) where T : Module => ModuleChain.GetModule<T>(index);
@@ -162,7 +164,6 @@ namespace klbotlib
         /// <summary>
         /// 在当前模块链条的末尾手动添加一个或多个新模块
         /// </summary>
-        /// <param name="module_id">要添加的模块（一个或多个）</param>
         public void AddModule(params Module[] modules)
         {
             foreach (var m in modules)

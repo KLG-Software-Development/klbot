@@ -4,6 +4,9 @@ using System.Text;
 
 namespace klbotlib
 {
+    /// <summary>
+    /// 语音消息
+    /// </summary>
     public class MessageVoice : Message
     {
         /// <summary>
@@ -11,7 +14,7 @@ namespace klbotlib
         /// </summary>
         public string Url { get; internal set; }
 
-        public MessageVoice(long sender_id, long group_id, string url = "") : base(sender_id, group_id)
+        internal MessageVoice(long sender_id, long group_id, string url = "") : base(sender_id, group_id)
         {
             Url = url;
         }
