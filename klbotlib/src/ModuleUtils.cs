@@ -16,6 +16,10 @@ namespace klbotlib.Modules.ModuleUtils
     public class HttpHelper
     {
         /// <summary>
+        /// 进行所有请求时的超时时间（秒）。默认为30。
+        /// </summary>
+        public int Timeout { get; set; } = 30;
+        /// <summary>
         /// 进行所有请求时使用的UA标识
         /// </summary>
         public string UA { get; set; } = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0";
@@ -70,6 +74,7 @@ namespace klbotlib.Modules.ModuleUtils
             request.Method = "POST";
             request.UserAgent = UA;
             request.ContentType = ContentType;
+            request.Timeout = Timeout;
             foreach (var kvp in Headers)
             {
                 request.Headers.Add(kvp.Key, kvp.Value);

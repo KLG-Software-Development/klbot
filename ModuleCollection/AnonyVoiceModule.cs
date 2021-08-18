@@ -84,14 +84,15 @@ namespace klbotlib.Modules
                         ToWaitForTextState(msg.SenderID, group_id);
                     return "准备好了，你说";
                 case "content":
-                    string body = $"type=tns&per={Person}&spd=6&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
+                    user_stat[msg.SenderID] = UserStatus.Idle;
+                    Messaging.ReplyMessage(msg, "正在薅羊毛...");
+                    string body = $"type=tns&per={Person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
                     string json = http_helper.PostString(url, body);
                     JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                     if (reply.errno != 0)
                         return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
                     string mpeg_b64 = reply.data.Substring(prefix.Length); 
                     //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
-                    user_stat[msg.SenderID] = UserStatus.Idle;
                     //string b64_amr = ConvertToAmr();
                     Messaging.SendGroupMessage(target_groups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
                     //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
