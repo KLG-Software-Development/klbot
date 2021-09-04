@@ -295,7 +295,7 @@ namespace klbotlib
         // 获取模块的ModuleSetup配置文件路径
         internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleID + "_setup.json");
 
-        //网络相关
+        //消息获取和处理相关
         /// <summary>
         /// 发送给定消息.
         /// </summary>
@@ -316,15 +316,16 @@ namespace klbotlib
             }
         }
         /// <summary>
-        /// 从服务器获取新消息并进行初步过滤
+        /// 从JSON中构建消息列表并初步过滤空消息
+        /// 这个东西必须独立成单独的方法 以便测试专用API（SimulateFetchMessage()）和实际场景下的公共API（FetchMessage()）能统一使用
+        /// 这是为了保证测试的实现和实际场景的实现始终一致
         /// </summary>
-        private List<Message> FetchMessages()
+        private List<Message> GetMessageListFromJSON(string response_str, bool loop)
         {
             List<Message> msgs = new List<Message>();
             JFetchMessageResponse obj;
             do
             {
-                string response_str = NetworkHelper.FetchMessageListJSON(ServerURL);
                 //构建直接JSON对象
                 obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
                 //初步过滤
@@ -338,23 +339,33 @@ namespace klbotlib
                 }).ToList();
                 jmsgs.ForEach(jmsg => msgs.Add(MessageFactory.BuildMessage(jmsg)));
             }
-            while (obj.data.Count != 0);   //无限轮询直到拿下所有消息
+            while (loop && obj.data.Count != 0);   //无限轮询直到拿下所有消息
             DiagData.ReceivedMessageCount += msgs.Count;
-            return msgs.Where( x => !(x is MessageEmpty)).ToList(); //提前过滤空消息
+            return msgs.Where(x => !(x is MessageEmpty)).ToList(); //提前过滤空消息
         }
+        /// <summary>
+        /// 从服务器获取新消息并进行初步过滤
+        /// </summary>
+        public List<Message> FetchMessages()
+            => GetMessageListFromJSON(NetworkHelper.FetchMessageListJSON(ServerURL), true);
+        /// <summary>
+        /// 模拟从服务器获取新消息并进行初步过滤。原始JSON字符串可以自定义。主要用于测试环境
+        /// </summary>
+        public List<Message> SimulateFetchMessages(string json)
+            => GetMessageListFromJSON(json, false);
         /// <summary>
         /// 用默认消息处理函数依次处理消息列表
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <returns>已处理的消息数量</returns>
-        private void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
+        public void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
         /// <summary>
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <param name="main_processor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        private void ProcessMessages(List<Message> msgs, Action<Message> main_processor)
+        public void ProcessMessages(List<Message> msgs, Action<Message> main_processor)
         {
             if (IsBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
@@ -423,7 +434,7 @@ namespace klbotlib
         /// <summary>
         /// 总循环。包括消息循环和命令循环
         /// </summary>
-        public void MainLoop()
+        public void DefaultLoop()
         {
             object _sync = new object();
             var wait_for_pause_msgLoop_signal = new ManualResetEvent(true);

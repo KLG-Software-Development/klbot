@@ -5,15 +5,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace KLBotUnitTest
 {
     [TestClass]
-    public class TestClass002_KLBot
+    public class TestKLBot
     {
         /// <summary>
         /// 测试模块数量是否返回预期值
         /// </summary>
         [TestMethod]
-        public void TestMethod000_ModuleCount()
+        public void TestModuleCount()
         {
-            KLBot bot = new();
+            KLBot bot = new("config/unit_test_config.json");
             Assert.AreEqual(TestConst.CoreModuleCount, bot.ModuleCount);
             bot.AddModule(new TimeModule());
             Assert.AreEqual(TestConst.CoreModuleCount + 1, bot.ModuleCount);

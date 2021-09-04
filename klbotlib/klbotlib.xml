@@ -155,7 +155,7 @@
         </member>
         <member name="M:klbotlib.Modules.Module.TrySetFieldAndProperty``1(System.String,``0)">
             <summary>
-            尝试设置模块特定字段的值。只允许设置public字段
+            尝试设置模块特定字段的值。只允许设置public字段。此方法为internal方法，可以保证非核心模块不能通过常规手段修改其他模块
             </summary>
             <typeparam name="T">字段类型</typeparam>
             <param name="name">字段名称</param>
@@ -292,6 +292,11 @@
         <member name="T:klbotlib.Modules.ModuleUtils.HttpHelper">
             <summary>
             为模块准备的Http帮助类
+            </summary>
+        </member>
+        <member name="P:klbotlib.Modules.ModuleUtils.HttpHelper.Timeout">
+            <summary>
+            进行所有请求时的超时时间（秒）。默认为30。
             </summary>
         </member>
         <member name="P:klbotlib.Modules.ModuleUtils.HttpHelper.UA">
@@ -751,9 +756,21 @@
             <param name="context">指定发送的上下文</param>
             <param name="full_msg_json">回复消息json</param>
         </member>
+        <member name="M:klbotlib.KLBot.GetMessageListFromJSON(System.String,System.Boolean)">
+            <summary>
+            从JSON中构建消息列表并初步过滤空消息
+            这个东西必须独立成单独的方法 以便测试专用API（SimulateFetchMessage()）和实际场景下的公共API（FetchMessage()）能统一使用
+            这是为了保证测试的实现和实际场景的实现始终一致
+            </summary>
+        </member>
         <member name="M:klbotlib.KLBot.FetchMessages">
             <summary>
             从服务器获取新消息并进行初步过滤
+            </summary>
+        </member>
+        <member name="M:klbotlib.KLBot.SimulateFetchMessages(System.String)">
+            <summary>
+            模拟从服务器获取新消息并进行初步过滤。原始JSON字符串可以自定义。主要用于测试环境
             </summary>
         </member>
         <member name="M:klbotlib.KLBot.ProcessMessages(System.Collections.Generic.List{klbotlib.Message})">
@@ -771,7 +788,7 @@
             <param name="main_processor">消息处理函数</param>
             <returns>已处理的消息数量</returns>
         </member>
-        <member name="M:klbotlib.KLBot.MainLoop">
+        <member name="M:klbotlib.KLBot.DefaultLoop">
             <summary>
             总循环。包括消息循环和命令循环
             </summary>

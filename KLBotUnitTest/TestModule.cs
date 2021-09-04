@@ -5,13 +5,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace KLBotUnitTest
 {
     [TestClass]
-    public class TestClass001_Module
+    public class TestModule
     {
         // 测试模块IsAttach属性
         [TestMethod]
-        public void TestMethod000_IsAttach()
+        public void TestIsAttach()
         {
-            KLBot test_bot = new();
+            KLBot test_bot = new("config/unit_test_config.json");
             var tm = new TimeModule();
             Assert.AreEqual(false, tm.IsAttached, "模块初始情况下模块应处于未附加状态（IsAttach=false）");
             test_bot.AddModule(tm);

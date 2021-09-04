@@ -37,6 +37,7 @@ namespace klbotlib
             RefineContext(msg_package, ret);
             return ret;
         }
+        //直接从mirai JSON生成Message对象列表
 
         //给定一条消息链，统计并判断应该生成的消息类型，并顺便输出@的ID
         private static Type CalcMessageType(JMessagePackage msg_package, out List<long> targets)

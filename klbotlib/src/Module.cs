@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -123,6 +124,8 @@ namespace klbotlib.Modules
         {
             ModuleName = GetType().Name;
             _process_worker = Task.Run(() => { });
+            //绑定Enable通知
+
         }
 
         /*** 公共API ***/
@@ -164,7 +167,7 @@ namespace klbotlib.Modules
             return false;
         }
         /// <summary>
-        /// 尝试设置模块特定字段的值。只允许设置public字段
+        /// 尝试设置模块特定字段的值。只允许设置public字段。此方法为internal方法，可以保证非核心模块不能通过常规手段修改其他模块
         /// </summary>
         /// <typeparam name="T">字段类型</typeparam>
         /// <param name="name">字段名称</param>
@@ -459,7 +462,12 @@ namespace klbotlib.Modules
             }
             else
                 ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
-            SaveModuleStatus(false);   //保存模块状态
+            //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
+            if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
+                _host_bot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
+            //否则可以假设模块只修改自身 所以只需保存自己
+            else
+                SaveModuleStatus(false);
         }
 
         /// <summary>

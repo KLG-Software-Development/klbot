@@ -38,7 +38,7 @@ namespace klbot
                 klg.AddModule(new ChatQYKModule());
                 klg.AddModule(new FuckModule());
                 Console.WriteLine(klg.GetModuleChainString());
-                klg.MainLoop();
+                klg.DefaultLoop();
             }
             catch (Exception ex)
             {
