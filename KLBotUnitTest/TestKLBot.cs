@@ -21,5 +21,24 @@ namespace KLBotUnitTest
             bot.AddModule(tm);
             Assert.AreEqual(TestConst.CoreModuleCount + 2, bot.ModuleCount);
         }
+        /// <summary>
+        /// 测试模块统计结果是否符合预期
+        /// </summary>
+        [TestMethod]
+        public void TestKLBotDiagData()
+        {
+            KLBot bot = new("config/unit_test_config.json");
+            Assert.AreEqual(0, bot.DiagData.ReceivedMessageCount);
+            Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
+            Assert.AreEqual(0, bot.DiagData.SuccessPackageCount);
+            bot.SimulateMessagePlainInput(MessageContext.Group, -1, -1, "some non-sense");
+            Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
+            Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
+            Assert.AreEqual(1, bot.DiagData.SuccessPackageCount);
+            bot.SimulateMessagePlainInput(MessageContext.Group, -1, -1, "##help");
+            Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
+            Assert.AreEqual(1, bot.DiagData.ProcessedMessageCount);
+            Assert.AreEqual(2, bot.DiagData.SuccessPackageCount);
+        }
     }
 }

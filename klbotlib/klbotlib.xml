@@ -458,6 +458,7 @@
             <summary>
             将超过指定长度限制的字符串的中间部分省略
             </summary>
+            /// <param name="s">原始字符串</param>
             <param name="max_length">长度上限</param>
         </member>
         <member name="T:klbotlib.IFileAPI">
@@ -949,6 +950,11 @@
             语音的url
             </summary>
         </member>
+        <member name="T:klbotlib.ModuleChain">
+            <summary>
+            模块链条类。实现了IEnumerable接口
+            </summary>
+        </member>
         <member name="M:klbotlib.ModuleChain.AddModule(klbotlib.Modules.Module[])">
             <summary>
             向模块链条中添加模块
@@ -978,6 +984,7 @@
             成功时会返回true，失败时会返回false。
             </summary>
             <param name="module_id">模块ID</param>
+            <param name="module">获取到的模块对象。失败时为null</param>
         </member>
         <member name="M:klbotlib.ModuleChain.TryGetModule``1(System.Int32,``0@)">
             <summary>
@@ -985,7 +992,8 @@
             成功时会返回true，失败时会返回false。
             </summary>
             <typeparam name="T">目标模块的类型</typeparam>
-            <param name="module_index">目标模块的索引。默认为0</param>
+            <param name="index">目标模块的索引。默认为0</param>
+            <param name="module">目标模块对象。失败时为null</param>
         </member>
         <member name="M:klbotlib.ModuleChain.GetModule(System.String)">
             <summary>

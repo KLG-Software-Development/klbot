@@ -338,6 +338,7 @@ namespace klbotlib
                     else return false;
                 }).ToList();
                 jmsgs.ForEach(jmsg => msgs.Add(MessageFactory.BuildMessage(jmsg)));
+                DiagData.SuccessPackageCount++;
             }
             while (loop && obj.data.Count != 0);   //无限轮询直到拿下所有消息
             DiagData.ReceivedMessageCount += msgs.Count;
@@ -386,8 +387,6 @@ namespace klbotlib
                 while (IsLoopOn)
                 {
                     ProcessMessages(FetchMessages());
-                    DiagData.SuccessPackageCount++;
-
                     Thread.Sleep(PollingTimeInterval);
                     wait_for_pause_msgLoop_signal.WaitOne();
                 }
