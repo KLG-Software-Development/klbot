@@ -320,14 +320,14 @@ namespace klbotlib
         /// 这个东西必须独立成单独的方法 以便测试专用API（SimulateFetchMessage()）和实际场景下的公共API（FetchMessage()）能统一使用
         /// 这是为了保证测试的实现和实际场景的实现始终一致
         /// </summary>
-        private List<Message> GetMessageListFromJSON(string response_str, bool loop)
+        private List<Message> GetMessageListFromJSON(Func<string> get_response, bool loop)
         {
             List<Message> msgs = new List<Message>();
             JFetchMessageResponse obj;
             do
             {
                 //构建直接JSON对象
-                obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(response_str);
+                obj = JsonConvert.DeserializeObject<JFetchMessageResponse>(get_response.Invoke());
                 //初步过滤
                 var jmsgs = obj.data.Where(x =>
                 {
@@ -348,12 +348,12 @@ namespace klbotlib
         /// 从服务器获取新消息并进行初步过滤
         /// </summary>
         public List<Message> FetchMessages()
-            => GetMessageListFromJSON(NetworkHelper.FetchMessageListJSON(ServerURL), true);
+            => GetMessageListFromJSON(() => NetworkHelper.FetchMessageListJSON(ServerURL), true);
         /// <summary>
         /// 模拟从服务器获取新消息并进行初步过滤。原始JSON字符串可以自定义。主要用于测试环境
         /// </summary>
         public List<Message> SimulateFetchMessages(string json)
-            => GetMessageListFromJSON(json, false);
+            => GetMessageListFromJSON(() => json, false);
         /// <summary>
         /// 用默认消息处理函数依次处理消息列表
         /// </summary>
