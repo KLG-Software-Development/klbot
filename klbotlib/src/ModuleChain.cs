@@ -9,6 +9,9 @@ using System.Runtime.CompilerServices;
 
 namespace klbotlib
 {
+    /// <summary>
+    /// 模块链条类。实现了IEnumerable接口
+    /// </summary>
     public class ModuleChain : IEnumerable<Module>
     {
         private readonly Dictionary<string, int> index_by_id = new Dictionary<string, int>();
@@ -84,6 +87,7 @@ namespace klbotlib
         /// 成功时会返回true，失败时会返回false。
         /// </summary>
         /// <param name="module_id">模块ID</param>
+        /// <param name="module">获取到的模块对象。失败时为null</param>
         public bool TryGetModule(string module_id, out Module module)
         {
             if (!index_by_id.ContainsKey(module_id))
@@ -102,7 +106,8 @@ namespace klbotlib
         /// 成功时会返回true，失败时会返回false。
         /// </summary>
         /// <typeparam name="T">目标模块的类型</typeparam>
-        /// <param name="module_index">目标模块的索引。默认为0</param>
+        /// <param name="index">目标模块的索引。默认为0</param>
+        /// <param name="module">目标模块对象。失败时为null</param>
         public bool TryGetModule<T>(int index, out T module) where T : Module
         {
             string module_id = CalcModuleID(typeof(T).Name, index);
