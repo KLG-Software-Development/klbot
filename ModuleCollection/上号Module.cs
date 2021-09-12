@@ -9,6 +9,9 @@ namespace klbotlib.Modules
     {
         [ModuleStatus(IsHidden = true)]
         private string LastMsg = "";
+        [ModuleStatus(IsHidden = true)]
+        private string Last2Msg = "";
+
         private bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");
         /// <summary>
         /// 关闭模块签名
@@ -26,6 +29,9 @@ namespace klbotlib.Modules
                 output = "上号";
             else if (msg_text.Contains("蛤儿"))
                 output = "蛤儿";
+            else if (!Is上号(LastMsg) && msg_text == LastMsg && LastMsg != Last2Msg)
+                output = "跟风";
+            Last2Msg = LastMsg;
             LastMsg = msg_text;
             return output;
         }
@@ -42,6 +48,8 @@ namespace klbotlib.Modules
                     return msg_text;
                 case "蛤儿":
                     return @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}";
+                case "跟风":
+                    return msg_text;
                 default:
                     throw new Exception($"意外遇到未实现的过滤器输出\"{filter_out}\"");
             }

@@ -4,6 +4,9 @@ using System.Web;
 
 namespace KLBotUnitTest
 {
+    /// <summary>
+    /// 测试用扩展类
+    /// </summary>
     static class KLBotTestExtension
     {
         private static string GenerateSimulatedResponse(MessageContext context, long sender_id, long group_id, string chain)

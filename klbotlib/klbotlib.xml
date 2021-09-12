@@ -757,7 +757,7 @@
             <param name="context">指定发送的上下文</param>
             <param name="full_msg_json">回复消息json</param>
         </member>
-        <member name="M:klbotlib.KLBot.GetMessageListFromJSON(System.String,System.Boolean)">
+        <member name="M:klbotlib.KLBot.GetMessageListFromJSON(System.Func{System.String},System.Boolean)">
             <summary>
             从JSON中构建消息列表并初步过滤空消息
             这个东西必须独立成单独的方法 以便测试专用API（SimulateFetchMessage()）和实际场景下的公共API（FetchMessage()）能统一使用
