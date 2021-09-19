@@ -11,6 +11,11 @@ namespace klbotlib.Modules
         private string LastMsg = "";
         [ModuleStatus(IsHidden = true)]
         private string Last2Msg = "";
+        [ModuleStatus(IsHidden = true)]
+        private DateTime LastHal = new DateTime();
+        [ModuleSetup]
+        private TimeSpan CoolDownTime = new TimeSpan(0, 0, 60);
+
 
         private bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");
         /// <summary>
@@ -27,8 +32,12 @@ namespace klbotlib.Modules
             string output = null;
             if (Is上号(msg_text) && !Is上号(LastMsg))
                 output = "上号";
-            else if (msg_text.Contains("蛤儿"))
+            else if (msg_text.Contains("蛤儿") && DateTime.Now - LastHal > CoolDownTime)
+            {
                 output = "蛤儿";
+                //刷新冷却时间
+                LastHal = DateTime.Now;
+            }
             else if (!Is上号(LastMsg) && msg_text == LastMsg && LastMsg != Last2Msg)
                 output = "跟风";
             Last2Msg = LastMsg;
