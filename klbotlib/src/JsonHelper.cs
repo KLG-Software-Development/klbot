@@ -21,7 +21,6 @@ namespace klbotlib.Json
                 Formatting = Formatting.None,
             };
         }
-
         //构建完整消息
         internal static class MessageJsonBuilder
         {

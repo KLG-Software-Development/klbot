@@ -167,16 +167,6 @@
             返回当前模块的缓存目录绝对路径
             </summary>
         </member>
-        <member name="M:klbotlib.Modules.Module.RestoreType(System.Type,System.Object)">
-            <summary>
-            NewtonSoft.JsonConvert会把一切整数变成int64，一切浮点数变成double
-            丫这么整虽然源码赋值没事(会自动转换)，但反射赋值时会出问题，所以需要手动恢复原本的类型
-            v0.5更新：加入自动用泛型反序列化进一步处理其他未知类型的功能
-            </summary>
-            <param name="original_type">原始类型</param>
-            <param name="value">待处理对象</param>
-            <returns>转换为原始类型后的对象（如果无需转换则原样返回）</returns>
-        </member>
         <member name="M:klbotlib.Modules.Module.ExportMemberWithAttribute(System.Type)">
             <summary>
             把模块中的所有含有attribute_type标记的成员导出到字典
@@ -376,6 +366,11 @@
         <member name="T:klbotlib.Exceptions.ModuleSetupException">
             <summary>
             模块配置异常
+            </summary>
+        </member>
+        <member name="T:klbotlib.Exceptions.ModuleStatusException">
+            <summary>
+            模块状态异常
             </summary>
         </member>
         <member name="T:klbotlib.Exceptions.ModuleMissingException">
@@ -1045,6 +1040,21 @@
             <summary>
             获取此模块的统计信息
             </summary>
+        </member>
+        <member name="T:klbotlib.Reflection.ReflectionHelper.PrefetchMethods">
+            <summary>
+            预存需要通过反射遍历查找的方法
+            </summary>
+        </member>
+        <member name="M:klbotlib.Reflection.ReflectionHelper.RestoreType(System.Type,System.Object)">
+            <summary>
+            NewtonSoft.JsonConvert会把一切整数变成int64，一切浮点数变成double
+            丫这么整虽然源码赋值没事(会自动转换)，但反射赋值时会出问题，所以需要手动恢复原本的类型
+            v0.5更新：加入自动用泛型反序列化进一步处理其他未知类型的功能
+            </summary>
+            <param name="original_type">原始类型</param>
+            <param name="value">待处理对象</param>
+            <returns>转换为原始类型后的对象（如果无需转换则原样返回）</returns>
         </member>
     </members>
 </doc>

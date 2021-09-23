@@ -448,86 +448,94 @@ namespace klbotlib
                 CmdStat = CmdLoopStatus.ReadLn;
                 string cmd = console.BufferedReadLn().Trim();
                 CmdStat = CmdLoopStatus.Output;
-                if (cmd == "")
-                    continue;
-                else if (cmd == "start")
+                try
                 {
-                    if (!msg_loop.IsCompleted)
-                        console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
-                    else
+                    if (cmd == "")
+                        continue;  //不执行操作
+                    else if (cmd == "start")
                     {
-                        msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
-                        console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
+                        if (!msg_loop.IsCompleted)
+                            console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
+                        else
+                        {
+                            msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
+                            console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
+                        }
                     }
-                }
-                else if (cmd == "pause")
-                {
-                    wait_for_pause_msgLoop_signal.Reset();
-                    console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
-                }
-                else if (cmd == "resume")
-                {
-                    IsBooting = true;   //为暂停继续情形引入重启忽略机制
-                    wait_for_pause_msgLoop_signal.Set();
-                    console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
-                }
-                else if (cmd == "quit")
-                    exit_flag = true;
-                else if (cmd == "status")
-                {
-                    console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
-                    console.WriteLn(DiagData.GetSummaryString(), ConsoleMessageType.Info);
-                }
-                else if (cmd.StartsWith("status "))
-                {
-                    string id = cmd.Substring(7);
-                    if (!ModuleChain.ContainsModule(id))
-                        console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
-                    else
-                        console.WriteLn(ModuleChain[id].DiagData.GetSummaryString(), ConsoleMessageType.Info);
-                }
-                else if (cmd.StartsWith("enable "))
-                {
-                    string id = cmd.Substring(7);
-                    if (!ModuleChain.ContainsModule(id))
-                        console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
-                    else
+                    else if (cmd == "pause")
                     {
-                        ModuleChain[id].Enabled = true;
-                        console.WriteLn($"成功启用{id}", ConsoleMessageType.Info);
+                        wait_for_pause_msgLoop_signal.Reset();
+                        console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
                     }
-                }
-                else if (cmd.StartsWith("disable "))
-                {
-                    string id = cmd.Substring(8);
-                    if (!ModuleChain.ContainsModule(id))
-                        console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
-                    else
+                    else if (cmd == "resume")
                     {
-                        ModuleChain[id].Enabled = false;
-                        console.WriteLn($"成功禁用{id}", ConsoleMessageType.Info);
+                        IsBooting = true;   //为暂停继续情形引入重启忽略机制
+                        wait_for_pause_msgLoop_signal.Set();
+                        console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }
-                }
-                else if (cmd == "save")
-                {
-                    console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
-                    ModuleChain.ForEach(x =>
+                    else if (cmd == "quit")
+                        exit_flag = true;
+                    else if (cmd == "status")
                     {
-                        SaveModuleStatus(x);
-                        #pragma warning disable CS0618
-                        SaveModuleSetup(x);
-                        #pragma warning restore CS0618
-                    });
+                        console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
+                        console.WriteLn(DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                    }
+                    else if (cmd.StartsWith("status "))
+                    {
+                        string id = cmd.Substring(7);
+                        if (!ModuleChain.ContainsModule(id))
+                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                        else
+                            console.WriteLn(ModuleChain[id].DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                    }
+                    else if (cmd.StartsWith("enable "))
+                    {
+                        string id = cmd.Substring(7);
+                        if (!ModuleChain.ContainsModule(id))
+                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                        else
+                        {
+                            ModuleChain[id].Enabled = true;
+                            console.WriteLn($"成功启用{id}", ConsoleMessageType.Info);
+                        }
+                    }
+                    else if (cmd.StartsWith("disable "))
+                    {
+                        string id = cmd.Substring(8);
+                        if (!ModuleChain.ContainsModule(id))
+                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                        else
+                        {
+                            ModuleChain[id].Enabled = false;
+                            console.WriteLn($"成功禁用{id}", ConsoleMessageType.Info);
+                        }
+                    }
+                    else if (cmd == "save")
+                    {
+                        console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
+                        ModuleChain.ForEach(x =>
+                        {
+                            SaveModuleStatus(x);
+#pragma warning disable CS0618
+                            SaveModuleSetup(x);
+#pragma warning restore CS0618
+                        });
+                    }
+                    else if (cmd == "reload")
+                    {
+                        console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
+                        ReloadAllModules();
+                        console.WriteLn("重载已完成", ConsoleMessageType.Info);
+                    }
+                    else if (cmd == "lasterror")
+                        console.WriteLn($"最近一次错误信息：\n{DiagData.LastException}", ConsoleMessageType.Info);
+                    else
+                        console.WriteLn($"未知命令：\"{cmd}\"", ConsoleMessageType.Error);
                 }
-                else if (cmd == "reload")
+                catch (Exception ex)
                 {
-                    console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
-                    ReloadAllModules();
+                    console.WriteLn($"命令执行意外终止：{ex.Message}", ConsoleMessageType.Error);
                 }
-                else if (cmd == "lasterror")
-                    console.WriteLn($"最近一次错误信息：\n{DiagData.LastException}", ConsoleMessageType.Info);
-                else
-                    console.WriteLn($"未知命令：\"{cmd}\"", ConsoleMessageType.Error);
             }
             //从容退出
             OnExit();
@@ -604,28 +612,42 @@ namespace klbotlib
         //载入模块的状态
         private void LoadModuleStatus(Module module, bool print_info = true)
         {
-            string file_path = GetModuleStatusPath(module);
-            if (File.Exists(file_path))
+            try
             {
-                if (print_info)
-                    console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
-                var status_dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting);
-                if (status_dict != null)
-                    module.ImportDict(status_dict);
+                string file_path = GetModuleStatusPath(module);
+                if (File.Exists(file_path))
+                {
+                    if (print_info)
+                        console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
+                    var status_dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting);
+                    if (status_dict != null)
+                        module.ImportDict(status_dict);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ModuleStatusException(module, ex.Message);
             }
         }
         //载入所有模块配置
         private void LoadModuleSetup(Module module, bool print_info = true)
         {
-            string file_path = GetModuleSetupPath(module);
-            if (File.Exists(file_path))
+            try
             {
-                if (print_info)
-                    console.WriteLnWithLock($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
-                module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
+                string file_path = GetModuleSetupPath(module);
+                if (File.Exists(file_path))
+                {
+                    if (print_info)
+                        console.WriteLnWithLock($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
+                    module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
+                }
+                else
+                    ObjectPrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
             }
-            else
-                ObjectPrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
+            catch (Exception ex)
+            {
+                throw new ModuleSetupException(module, ex.Message);
+            }
         }
 
         /// <summary>

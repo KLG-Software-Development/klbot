@@ -15,6 +15,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using klbotlib.Reflection;
 
 namespace klbotlib.Modules
 {
@@ -325,7 +326,7 @@ namespace klbotlib.Modules
                         ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
                         throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                     }
-                    property.SetValue(this, RestoreType(property.PropertyType, kvp.Value));
+                    property.SetValue(this, ReflectionHelper.RestoreType(property.PropertyType, kvp.Value));
                     continue;
                 }
                 else
@@ -338,7 +339,7 @@ namespace klbotlib.Modules
                             ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
                             throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                         }
-                        field.SetValue(this, RestoreType(field.FieldType, kvp.Value));
+                        field.SetValue(this, ReflectionHelper.RestoreType(field.FieldType, kvp.Value));
                         continue;
                     }
                     else
@@ -361,40 +362,6 @@ namespace klbotlib.Modules
         }
 
         //helper 
-        /// <summary>
-        /// NewtonSoft.JsonConvert会把一切整数变成int64，一切浮点数变成double
-        /// 丫这么整虽然源码赋值没事(会自动转换)，但反射赋值时会出问题，所以需要手动恢复原本的类型
-        /// v0.5更新：加入自动用泛型反序列化进一步处理其他未知类型的功能
-        /// </summary>
-        /// <param name="original_type">原始类型</param>
-        /// <param name="value">待处理对象</param>
-        /// <returns>转换为原始类型后的对象（如果无需转换则原样返回）</returns>
-        private object RestoreType(Type original_type, object value)
-        {
-            if (value.GetType() == original_type)
-                return value;
-            else if (original_type == typeof(byte) ||
-                original_type == typeof(short) ||
-                original_type == typeof(int) ||
-                original_type == typeof(float))
-                return Convert.ChangeType(value, original_type);
-            else if (value is JObject)
-            {
-                MethodInfo[] methods = typeof(JsonConvert).GetMethods();
-                foreach (var method in methods)
-                {
-                    if (method.Name == "DeserializeObject" && method.IsGenericMethod)
-                    {
-                        var deserialize = method.MakeGenericMethod(original_type);
-                        string json = value.ToString();
-                        return deserialize.Invoke(null, new object[] { json });
-                    }
-                }
-                throw new Exception("意外遇到反射异常：无法找到相应的方法。Newtonsoft.Json的API是否有所更改？");
-            }
-            else
-                throw new Exception("遇到无法自动匹配转换的结果");
-        }
         /// <summary>
         /// 把模块中的所有含有attribute_type标记的成员导出到字典
         /// </summary>

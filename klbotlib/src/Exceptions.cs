@@ -18,6 +18,13 @@ namespace klbotlib.Exceptions
         internal ModuleSetupException(Module source, string msg) : base($"{source}模块配置异常：{msg}") { }
     }
     /// <summary>
+    /// 模块状态异常
+    /// </summary>
+    public class ModuleStatusException : Exception
+    {
+        internal ModuleStatusException(Module source, string msg) : base($"{source}模块状态异常：{msg}") { }
+    }
+    /// <summary>
     /// 找不到模块异常
     /// </summary>
     public class ModuleMissingException : Exception

@@ -52,12 +52,17 @@ namespace klbot
                 else if (ex is ModuleSetupException)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine(ex.Message);
                     Console.WriteLine($"模块配置异常。检查模块的配置文件是否正确，以及该模块是否恰当遵守了模块开发规范");
                     Console.WriteLine("退出中...");
                     Console.ResetColor();
                 }
                 else  //无法处理的未知情况
                 {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine($"意外异常：{ex.Message}\n调用栈：\n{ex.StackTrace}\n");
+                    Console.ResetColor();
                     if (query_counter_cache == klg.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                         fatal_failure_counter++;
                     else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
