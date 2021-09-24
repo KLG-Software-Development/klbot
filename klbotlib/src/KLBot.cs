@@ -115,7 +115,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="config_path">配置文件路径</param>
         /// <param name="load_core_module">是否加载核心模块</param>
-        public KLBot(string config_path = "config/config.json", bool load_core_module = true) : this(config_path)
+        public KLBot(string config_path = "config/config.json", bool load_core_module = true, Assembly module_collection = null) : this(config_path)
         {
             if (load_core_module)
             {
@@ -131,6 +131,8 @@ namespace klbotlib
                     throw new KLBotInitializationException($"核心模块加载失败异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
                 }
             }
+            if (module_collection != null)
+                Info.ModuleCollectionInfo.SetMCVersion(module_collection);
         }
 
         /// <summary>

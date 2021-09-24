@@ -4,17 +4,6 @@
         <name>klbotlib</name>
     </assembly>
     <members>
-        <member name="T:klbotlib.Info.CoreLibInfo">
-            <summary>
-            klbotlib的程序集信息
-            </summary>
-        </member>
-        <member name="M:klbotlib.Info.CoreLibInfo.GetLibVersion">
-            <summary>
-            获取程序集版本
-            </summary>
-            <returns>程序集版本</returns>
-        </member>
         <member name="T:klbotlib.Modules.ModuleStatusAttribute">
             <summary>
             模块状态Attribute，用来标记模块属性。
@@ -456,6 +445,38 @@
             /// <param name="s">原始字符串</param>
             <param name="max_length">长度上限</param>
         </member>
+        <member name="T:klbotlib.Info.CoreLibInfo">
+            <summary>
+            klbotlib的程序集信息
+            </summary>
+        </member>
+        <member name="M:klbotlib.Info.CoreLibInfo.GetLibVersion">
+            <summary>
+            获取程序集版本
+            </summary>
+            <returns>程序集版本</returns>
+        </member>
+        <member name="T:klbotlib.Info.ModuleCollectionInfo">
+            <summary>
+            模块合集程序集信息
+            </summary>
+        </member>
+        <member name="M:klbotlib.Info.ModuleCollectionInfo.SetMCVersion(System.Reflection.Assembly)">
+            <summary>
+            保存模块合集版本
+            </summary>
+        </member>
+        <member name="M:klbotlib.Info.ModuleCollectionInfo.SetMCVersion(System.Type)">
+            <summary>
+            保存模块合集版本
+            </summary>
+        </member>
+        <member name="M:klbotlib.Info.ModuleCollectionInfo.GetMCVersion">
+            <summary>
+            获取模块合集版本
+            </summary>
+            <returns>模块合集版本</returns>
+        </member>
         <member name="T:klbotlib.IFileAPI">
             <summary>
             文件操作API
@@ -650,7 +671,7 @@
             </summary>
             <param name="config_path">配置文件路径"</param>
         </member>
-        <member name="M:klbotlib.KLBot.#ctor(System.String,System.Boolean)">
+        <member name="M:klbotlib.KLBot.#ctor(System.String,System.Boolean,System.Reflection.Assembly)">
             <summary>
             公开构造函数。基本构造后添加默认核心模块
             </summary>

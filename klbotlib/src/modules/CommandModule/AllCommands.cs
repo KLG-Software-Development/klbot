@@ -280,11 +280,15 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
             Process process = Process.GetCurrentProcess();
             Version exe_version = Assembly.GetEntryAssembly().GetName().Version;
             Version lib_version = Info.CoreLibInfo.GetLibVersion();
+            Version mc_version = Info.ModuleCollectionInfo.GetMCVersion();
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"KLBot via mirai");
             sb.AppendLine($"主函数版本: v{exe_version.Major}.{exe_version.Minor}-{exe_version.ToKLGBuildString()}");
             sb.AppendLine($"核心库版本: v{lib_version.Major}.{lib_version.Minor}-{lib_version.ToKLGBuildString()}");
-
+            if (mc_version != null)
+                sb.AppendLine($"模块合集版本: v{mc_version.Major}.{mc_version.Minor}-{mc_version.ToKLGBuildString()}");
+            else
+                sb.AppendLine($"模块合集版本: 未注册任何模块合集");
             sb.AppendLine($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
             sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
             sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");

@@ -27,9 +27,9 @@ namespace klbot
             try
             {
                 if (args.Length != 0)
-                    klg = new(args[0]);
+                    klg = new(args[0], module_collection: Assembly.GetAssembly(typeof(ImageModule)));
                 else
-                    klg = new KLBot();
+                    klg = new KLBot(module_collection: Assembly.GetAssembly(typeof(ImageModule)));
                 klg.AddModule(new ImageModule());
                 klg.AddModule(new IMGPModule());
                 klg.AddModule(new AnonyVoiceModule());
