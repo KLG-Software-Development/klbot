@@ -23,13 +23,13 @@ namespace klbotlib.Modules
                 StringBuilder sb = new StringBuilder();
                 //纯文本消息
                 sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
-                foreach (var key in type_by_word_proc.Keys)
+                foreach (var key in _type_by_word_proc.Keys)
                 {
                     sb.Append(" " + key);
                 }
                 sb.AppendLine("；\n");
                 sb.AppendLine(("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有："));
-                foreach (var key in type_by_word_recg.Keys)
+                foreach (var key in _type_by_word_recg.Keys)
                 {
                     sb.Append(" " + key);
                 }
@@ -41,9 +41,9 @@ namespace klbotlib.Modules
             }
         }
 
-        const string post_url = "https://ai.baidu.com/aidemo";
-        static readonly Regex pattern = new Regex(@"什么(东西)");
-        static readonly Dictionary<string, string> type_by_word_recg = new Dictionary<string, string> 
+        private const string _post_url = "https://ai.baidu.com/aidemo";
+        private static readonly Regex _pattern = new Regex(@"什么(东西)");
+        private static readonly Dictionary<string, string> _type_by_word_recg = new Dictionary<string, string> 
         {
             { "东西", "advanced_general"},
             { "玩意", "advanced_general"},
@@ -56,7 +56,7 @@ namespace klbotlib.Modules
             { "地方", "landmark"},
             { "车", "car"}
         };
-        static readonly Dictionary<string, string> type_by_word_proc = new Dictionary<string, string> 
+        private static readonly Dictionary<string, string> _type_by_word_proc = new Dictionary<string, string> 
         {
             { "清晰增强", "https://aip.baidubce.com/rest/2.0/image-process/v1/image_definition_enhance"},
             { "色彩增强", "https://aip.baidubce.com/rest/2.0/image-process/v1/color_enhance"},
@@ -64,9 +64,9 @@ namespace klbotlib.Modules
             { "上色", "colourize"},
             { "动漫化", "https://aip.baidubce.com/rest/2.0/image-process/v1/selfie_anime"}
         };
-        static readonly List<string> merge_keyword = new List<string> { "换脸", "囍", "杂交", "交配" };
-        static readonly HttpHelper http_helper = new HttpHelper();
-        static readonly ImageHelper img_helper = new ImageHelper();
+        private static readonly List<string> _merge_keyword = new List<string> { "换脸", "囍", "杂交", "交配" };
+        private static readonly HttpHelper _http_helper = new HttpHelper();
+        private static readonly ImageHelper _img_helper = new ImageHelper();
         private string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
         private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
 
@@ -83,11 +83,11 @@ namespace klbotlib.Modules
                         return "face";
                     else if (text == "压缩")
                         return "compress";
-                    else if (type_by_word_proc.ContainsKey(text))
+                    else if (_type_by_word_proc.ContainsKey(text))
                         return "image process";
                 }
                 //多图文
-                else if (msg.UrlList.Count == 2 && merge_keyword.Contains(text))
+                else if (msg.UrlList.Count == 2 && _merge_keyword.Contains(text))
                     return "merge";
             }
             return null;
@@ -102,12 +102,12 @@ namespace klbotlib.Modules
                 case "merge":
                     Messaging.ReplyMessage(msg, "转换中...");
                     //HostBot.ReplyPlainMessage(this, msg, "正在下载父本并转换为base64...");
-                    string b641 = img_helper.DownloadAsBase64(msg.UrlList[0]);
+                    string b641 = _img_helper.DownloadAsBase64(msg.UrlList[0]);
                     //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
-                    string b642 = img_helper.DownloadAsBase64(msg.UrlList[1]);
+                    string b642 = _img_helper.DownloadAsBase64(msg.UrlList[1]);
                     string query_string = "?type=merge&apiType=face";
                     string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
-                    string json = http_helper.PostString(post_url + query_string, body);
+                    string json = _http_helper.PostString(_post_url + query_string, body);
                     JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
                     //错误检查
                     if (reply.errno != 0)
@@ -123,15 +123,15 @@ namespace klbotlib.Modules
             {
                 case "recogn": //识别
                     string word = msg.Text.Trim().Substring(2);
-                    if (!type_by_word_recg.ContainsKey(word))
+                    if (!_type_by_word_recg.ContainsKey(word))
                         return ModuleAccess.GetModule<FuckModule>().SingleSentence() + "，这个不会";
-                    string type = type_by_word_recg[word];
+                    string type = _type_by_word_recg[word];
                     string body = $"image&image_url={esc_url}&type={type}&show=true";
                     Messaging.ReplyMessage(msg, "识别中...");
                     if (type == "landmark")
                     {
                         //只有一个result对象，用JReplySingle
-                        JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(http_helper.PostString(post_url, body));
+                        JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(_http_helper.PostString(_post_url, body));
                         //错误检查
                         if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                             return ErrorString(reply.errno, reply.msg);
@@ -143,7 +143,7 @@ namespace klbotlib.Modules
                     }
                     else
                     {
-                        string json = http_helper.PostString(post_url, body);
+                        string json = _http_helper.PostString(_post_url, body);
                         JReplyMulti reply = JsonConvert.DeserializeObject<JReplyMulti>(json);
                         if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                             return ErrorString(reply.errno, reply.msg);
@@ -157,7 +157,7 @@ namespace klbotlib.Modules
                     return sb.ToString();
                 case "face": //人脸评分
                     body = $"image&image_url={esc_url}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
-                    JFaceReply reply_face = JsonConvert.DeserializeObject<JFaceReply>(http_helper.PostString(post_url, body));
+                    JFaceReply reply_face = JsonConvert.DeserializeObject<JFaceReply>(_http_helper.PostString(_post_url, body));
                     if (reply_face.errno != 0 || reply_face.msg.Trim().ToLower() != "success")
                         return ErrorString(reply_face.errno, reply_face.msg);
                     if (reply_face.data.result.face_num == 0)
@@ -169,7 +169,7 @@ namespace klbotlib.Modules
                     return $"{age}岁，{beauty}分";
                 case "compress": //本地压缩
                     Messaging.ReplyMessage(msg, $"正在下载图片...");
-                    Bitmap bmp = img_helper.DownloadImage(msg.UrlList[0], out int original_size);
+                    Bitmap bmp = _img_helper.DownloadImage(msg.UrlList[0], out int original_size);
                     MemoryStream ms = new MemoryStream();
                     Messaging.ReplyMessage(msg, "本地压缩中...");
                     bmp.Save(ms, ImageFormat.Jpeg);
@@ -179,10 +179,10 @@ namespace klbotlib.Modules
                     return $@"\image:\base64:{b64}";
                 case "image process": //图像处理
                     word = msg.Text.Trim();
-                    type = Uri.EscapeDataString(type_by_word_proc[word]);
+                    type = Uri.EscapeDataString(_type_by_word_proc[word]);
                     body = $"image&image_url={esc_url}&type={type}&show=true";
                     //HostBot.ReplyPlainMessage(this, msg, "处理中...");
-                    JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(http_helper.PostString(post_url, body));
+                    JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(_http_helper.PostString(_post_url, body));
                     //错误检查
                     if (reply_proc.errno != 0 || reply_proc.msg.Trim().ToLower() != "success")
                         return ErrorString(reply_proc.errno, reply_proc.msg);

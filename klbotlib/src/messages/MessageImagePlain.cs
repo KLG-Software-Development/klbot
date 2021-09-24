@@ -9,12 +9,12 @@ namespace klbotlib
     /// </summary>
     public class MessageImagePlain : Message
     {
-        private List<string> url_list = new List<string>();
+        private readonly List<string> _url_list = new List<string>();
 
         /// <summary>
         /// 图像的Url
         /// </summary>
-        public IReadOnlyList<string> UrlList { get => url_list; }
+        public IReadOnlyList<string> UrlList { get => _url_list; }
         /// <summary>
         /// 随图像一同发送的文字
         /// </summary>
@@ -30,7 +30,7 @@ namespace klbotlib
             AddRange(url_list);
         }
 
-        internal void Add(params string[] url) => url_list.AddRange(url);
-        internal void AddRange(IEnumerable<string> url) => url_list.AddRange(url);
+        internal void Add(params string[] url) => _url_list.AddRange(url);
+        internal void AddRange(IEnumerable<string> url) => _url_list.AddRange(url);
     }
 }

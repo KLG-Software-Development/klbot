@@ -11,18 +11,18 @@ namespace klbotlib.Internal
     // 用来解析MessageMarker文本
     internal static class MsgMarker
     {
-        static Exception ParseMessageMarkerException = new Exception("解析MsgMarker文本时发生错误");
-        static Regex prefix_pattern = new Regex(@"\\(\w+?):(.+)");
-        static Regex code_pat = new Regex(@"{([^{\\]*(?:\\.[^}\\]*)*)}");   //匹配{} 但是排除转义\{\}
-        static Regex face_pat = new Regex(@"face:(\w+)");
-        static Regex proto_pat = new Regex(@"^\w+://");
+        private static readonly Exception ParseMessageMarkerException = new Exception("解析MsgMarker文本时发生错误");
+        private static readonly Regex _prefix_pattern = new Regex(@"\\(\w+?):(.+)");
+        private static readonly Regex _code_pat = new Regex(@"{([^{\\]*(?:\\.[^}\\]*)*)}");   //匹配{} 但是排除转义\{\}
+        private static readonly Regex _face_pat = new Regex(@"face:(\w+)");
+        private static readonly Regex _proto_pat = new Regex(@"^\w+://");
         private static bool TryParsePrefix(string content, out string prefix, out string body, bool start_only = false)
         {
             prefix = "";
             body = content;
-            if (!prefix_pattern.IsMatch(content))
+            if (!_prefix_pattern.IsMatch(content))
                 return false;
-            var groups = prefix_pattern.Match(content).Groups;
+            var groups = _prefix_pattern.Match(content).Groups;
             if (start_only && groups[0].Index != 0)
                 return false;
             prefix = groups[1].Value.ToLower(); //prefix不区分大小写
@@ -35,7 +35,7 @@ namespace klbotlib.Internal
         private static string CompilePlainChainJson(string content)
         {
             List<string> elements = new List<string>();
-            var matches = code_pat.Matches(content);
+            var matches = _code_pat.Matches(content);
             int lhs_start = 0;
             foreach (Match match in matches)
             {

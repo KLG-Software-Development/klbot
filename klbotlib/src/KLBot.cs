@@ -23,10 +23,10 @@ namespace klbotlib
     /// </summary>
     public class KLBot
     {
-        private bool IsBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
-        private readonly Consoleee console = new Consoleee();       //扩展控制台对象
-        private Task<bool> network_task;
-        private CmdLoopStatus CmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
+        private bool _is_booting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
+        private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
+        private Task<bool> _network_task;
+        private CmdLoopStatus _cmd_stat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
         /// <summary>
         /// KLBot的模块链条。这个类可以被枚举
         /// </summary>
@@ -75,24 +75,24 @@ namespace klbotlib
         /// <param name="config_path">配置文件路径"</param>
         private KLBot(string config_path)
         {
-            IsBooting = true;
-            network_task = Task<bool>.Run(() => true);
-            console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
-            console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
+            _is_booting = true;
+            _network_task = Task<bool>.Run(() => true);
+            _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
+            _console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
             try
             {
                 if (!File.Exists(config_path))
                 {
-                    console.WriteLn($"KLBot配置文件{config_path}不存在", ConsoleMessageType.Error);
+                    _console.WriteLn($"KLBot配置文件{config_path}不存在", ConsoleMessageType.Error);
                     throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件不存在");
                 }
                 JKLBotConfig Config = JsonConvert.DeserializeObject<JKLBotConfig>(File.ReadAllText(config_path));
                 if (Config.HasNull(out string field_name))
                 {
-                    console.WriteLn($"KLBot配置文件解析结果中的{field_name}字段为null。请检查配置文件", ConsoleMessageType.Error);
+                    _console.WriteLn($"KLBot配置文件解析结果中的{field_name}字段为null。请检查配置文件", ConsoleMessageType.Error);
                     throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件中含有null");
                 }
-                console.WriteLn($"加载配置...", ConsoleMessageType.Info);
+                _console.WriteLn($"加载配置...", ConsoleMessageType.Info);
                 //导出Config
                 SelfID = Config.QQ.SelfID;
                 TargetGroupIDList = Config.QQ.TargetGroupIDList;
@@ -101,9 +101,9 @@ namespace klbotlib
                 ModulesSaveDir = Config.Pathes.ModulesSaveDir;
                 //创建模块存档目录（如果不存在）
                 CreateDirectoryIfNotExist(Config.Pathes.ModulesSaveDir, "模块存档目录");
-                console.WriteLn($"成功初始化KLBot: ");
-                console.WriteLn($"Url: {Config.Network.ServerURL}");
-                console.WriteLn(GetListeningGroupListString());
+                _console.WriteLn($"成功初始化KLBot: ");
+                _console.WriteLn($"Url: {Config.Network.ServerURL}");
+                _console.WriteLn(GetListeningGroupListString());
             }
             catch (Exception ex)
             {
@@ -122,9 +122,9 @@ namespace klbotlib
                 try
                 {
                     //加载核心模块
-                    console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
+                    _console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
                     AddModule(new CommandModule(this));
-                    console.WriteLn(GetModuleChainString());
+                    _console.WriteLn(GetModuleChainString());
                 }
                 catch (Exception ex)
                 {
@@ -148,7 +148,7 @@ namespace klbotlib
         /// <summary>
         /// 在控制台列出并打印模块链条
         /// </summary>
-        public void ListModules() => console.WriteLn(GetModuleChainString(), ConsoleMessageType.Info);
+        public void ListModules() => _console.WriteLn(GetModuleChainString(), ConsoleMessageType.Info);
         /// <summary>
         /// 根据模块类型获取模块
         /// </summary>
@@ -177,7 +177,7 @@ namespace klbotlib
                 //载入模块配置
                 LoadModuleSetup(m);
                 LoadModuleStatus(m);
-                console.WriteLn($"已添加{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
+                _console.WriteLn($"已添加{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
             }
         }
 
@@ -206,9 +206,9 @@ namespace klbotlib
             //创建完整JSON字符串
             string full_json = JsonHelper.MessageJsonBuilder.BuildMessageJson(user_id, group_id, context, chain_json);
             //发送
-            if (!network_task.IsCompleted)
+            if (!_network_task.IsCompleted)
             {
-                network_task.ContinueWith((x) =>
+                _network_task.ContinueWith((x) =>
                 {
                     CheckNetworkTaskResult(x.Result);
                     TrySendMessage(context, full_json);
@@ -216,8 +216,8 @@ namespace klbotlib
             }
             else
             {
-                network_task = Task.Run(() => TrySendMessage(context, full_json));
-                network_task.ContinueWith(x => CheckNetworkTaskResult(x.Result));
+                _network_task = Task.Run(() => TrySendMessage(context, full_json));
+                _network_task.ContinueWith(x => CheckNetworkTaskResult(x.Result));
             }
         }
         /// <summary>
@@ -276,17 +276,17 @@ namespace klbotlib
         /// <param name="prefix">要在消息类别标识前附加的内容</param>
         public void ObjectPrint(object source, string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "")
         {
-            while (CmdStat == CmdLoopStatus.Output)
+            while (_cmd_stat == CmdLoopStatus.Output)
             { Thread.Sleep(1); }
 
             string source_name = source is Module m ? m.ModuleID : source.GetType().Name;
-            if (CmdStat == CmdLoopStatus.ReadLn)
+            if (_cmd_stat == CmdLoopStatus.ReadLn)
             {
-                console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
-                console.Write("> ", ConsoleColor.DarkYellow);
+                _console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
+                _console.Write("> ", ConsoleColor.DarkYellow);
             }
             else
-                console.WriteLn($"[{source_name}] {message}", msg_type, prefix);
+                _console.WriteLn($"[{source_name}] {message}", msg_type, prefix);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
@@ -368,10 +368,10 @@ namespace klbotlib
         /// <returns>已处理的消息数量</returns>
         public void ProcessMessages(List<Message> msgs, Action<Message> main_processor)
         {
-            if (IsBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
+            if (_is_booting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
-                IsBooting = false;
+                _is_booting = false;
             }
             msgs.ForEach(msg => { main_processor(msg); });
         }
@@ -394,12 +394,12 @@ namespace klbotlib
             catch (Exception ex)
             {
                 DiagData.LastException = ex;
-                lock (console)  //防止和命令循环线程输出混淆
+                lock (_console)  //防止和命令循环线程输出混淆
                 {
-                    console.WriteLn($"消息循环线程错误: {ex.Message}", ConsoleMessageType.Error, "\n");
+                    _console.WriteLn($"消息循环线程错误: {ex.Message}", ConsoleMessageType.Error, "\n");
                     if (ex is WebException)
                     {
-                        console.WriteLn("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行。六秒后将重试", ConsoleMessageType.Error);
+                        _console.WriteLn("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行。六秒后将重试", ConsoleMessageType.Error);
                         Thread.Sleep(6000);
                         goto start;
                     }
@@ -411,22 +411,22 @@ namespace klbotlib
                             continuous_error_counter = 0;
                         if (continuous_error_counter > 3)
                         {
-                            console.WriteLn("连续3次发生致命错误，停止重试", ConsoleColor.DarkYellow);
+                            _console.WriteLn("连续3次发生致命错误，停止重试", ConsoleColor.DarkYellow);
                             goto quit;
                         }
                         else
                         {
                             success_counter_cache = DiagData.SuccessPackageCount;    //记录此次错误的位置
-                            console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
-                            console.ClearInputBuffer();
-                            console.Write("> ", ConsoleColor.DarkYellow);
+                            _console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
+                            _console.ClearInputBuffer();
+                            _console.Write("> ", ConsoleColor.DarkYellow);
                             goto start;
                         }
                     }
                 quit:
-                    console.WriteLn("[Error]消息循环线程已退出。排查问题后可使用\"start\"命令尝试重启", ConsoleColor.Red);
-                    console.ClearInputBuffer();
-                    console.Write("> ", ConsoleColor.DarkYellow);
+                    _console.WriteLn("[Error]消息循环线程已退出。排查问题后可使用\"start\"命令尝试重启", ConsoleColor.Red);
+                    _console.ClearInputBuffer();
+                    _console.Write("> ", ConsoleColor.DarkYellow);
                 }
             }
         }
@@ -444,10 +444,10 @@ namespace klbotlib
             //命令循环线程
             while (!exit_flag)
             {
-                console.Write("> ", ConsoleColor.DarkYellow);
-                CmdStat = CmdLoopStatus.ReadLn;
-                string cmd = console.BufferedReadLn().Trim();
-                CmdStat = CmdLoopStatus.Output;
+                _console.Write("> ", ConsoleColor.DarkYellow);
+                _cmd_stat = CmdLoopStatus.ReadLn;
+                string cmd = _console.BufferedReadLn().Trim();
+                _cmd_stat = CmdLoopStatus.Output;
                 try
                 {
                     if (cmd == "")
@@ -455,64 +455,64 @@ namespace klbotlib
                     else if (cmd == "start")
                     {
                         if (!msg_loop.IsCompleted)
-                            console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
+                            _console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
                         else
                         {
                             msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
-                            console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
+                            _console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
                         }
                     }
                     else if (cmd == "pause")
                     {
                         wait_for_pause_msgLoop_signal.Reset();
-                        console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
+                        _console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
                     }
                     else if (cmd == "resume")
                     {
-                        IsBooting = true;   //为暂停继续情形引入重启忽略机制
+                        _is_booting = true;   //为暂停继续情形引入重启忽略机制
                         wait_for_pause_msgLoop_signal.Set();
-                        console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
+                        _console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }
                     else if (cmd == "quit")
                         exit_flag = true;
                     else if (cmd == "status")
                     {
-                        console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
-                        console.WriteLn(DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                        _console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
+                        _console.WriteLn(DiagData.GetSummaryString(), ConsoleMessageType.Info);
                     }
                     else if (cmd.StartsWith("status "))
                     {
                         string id = cmd.Substring(7);
                         if (!ModuleChain.ContainsModule(id))
-                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                            _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
-                            console.WriteLn(ModuleChain[id].DiagData.GetSummaryString(), ConsoleMessageType.Info);
+                            _console.WriteLn(ModuleChain[id].DiagData.GetSummaryString(), ConsoleMessageType.Info);
                     }
                     else if (cmd.StartsWith("enable "))
                     {
                         string id = cmd.Substring(7);
                         if (!ModuleChain.ContainsModule(id))
-                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                            _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
                         {
                             ModuleChain[id].Enabled = true;
-                            console.WriteLn($"成功启用{id}", ConsoleMessageType.Info);
+                            _console.WriteLn($"成功启用{id}", ConsoleMessageType.Info);
                         }
                     }
                     else if (cmd.StartsWith("disable "))
                     {
                         string id = cmd.Substring(8);
                         if (!ModuleChain.ContainsModule(id))
-                            console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
+                            _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
                         {
                             ModuleChain[id].Enabled = false;
-                            console.WriteLn($"成功禁用{id}", ConsoleMessageType.Info);
+                            _console.WriteLn($"成功禁用{id}", ConsoleMessageType.Info);
                         }
                     }
                     else if (cmd == "save")
                     {
-                        console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
+                        _console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
                         ModuleChain.ForEach(x =>
                         {
                             SaveModuleStatus(x);
@@ -523,18 +523,18 @@ namespace klbotlib
                     }
                     else if (cmd == "reload")
                     {
-                        console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
+                        _console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
                         ReloadAllModules();
-                        console.WriteLn("重载已完成", ConsoleMessageType.Info);
+                        _console.WriteLn("重载已完成", ConsoleMessageType.Info);
                     }
                     else if (cmd == "lasterror")
-                        console.WriteLn($"最近一次错误信息：\n{DiagData.LastException}", ConsoleMessageType.Info);
+                        _console.WriteLn($"最近一次错误信息：\n{DiagData.LastException}", ConsoleMessageType.Info);
                     else
-                        console.WriteLn($"未知命令：\"{cmd}\"", ConsoleMessageType.Error);
+                        _console.WriteLn($"未知命令：\"{cmd}\"", ConsoleMessageType.Error);
                 }
                 catch (Exception ex)
                 {
-                    console.WriteLn($"命令执行意外终止：{ex.Message}", ConsoleMessageType.Error);
+                    _console.WriteLn($"命令执行意外终止：{ex.Message}", ConsoleMessageType.Error);
                 }
             }
             //从容退出
@@ -594,7 +594,7 @@ namespace klbotlib
             string json = JsonConvert.SerializeObject(module.ExportSetupDict(), JsonHelper.JsonSettings.FileSetting);
             string file_path = GetModuleSetupPath(module);
             if (print_info)
-                console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
+                _console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
             File.WriteAllText(file_path, json);
         }
         //保存模块的状态
@@ -605,7 +605,7 @@ namespace klbotlib
             if (print_info)
             {
                 //由于涉及并行处理 需要加锁输出
-                console.WriteLn($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
+                _console.WriteLn($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
             }
             File.WriteAllText(file_path, json);
         }
@@ -618,7 +618,7 @@ namespace klbotlib
                 if (File.Exists(file_path))
                 {
                     if (print_info)
-                        console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
+                        _console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
                     var status_dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting);
                     if (status_dict != null)
                         module.ImportDict(status_dict);
@@ -638,7 +638,7 @@ namespace klbotlib
                 if (File.Exists(file_path))
                 {
                     if (print_info)
-                        console.WriteLnWithLock($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
+                        _console.WriteLnWithLock($"正在从\"{file_path}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
                     module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting));
                 }
                 else
@@ -656,7 +656,7 @@ namespace klbotlib
         public void OnExit()
         {
             ModuleChain.ForEach( m => SaveModuleStatus(m));
-            console.WriteLn("有序退出完成", ConsoleMessageType.Info);
+            _console.WriteLn("有序退出完成", ConsoleMessageType.Info);
         }
 
         //信息输出相关
@@ -720,7 +720,7 @@ namespace klbotlib
         {
             if (!Directory.Exists(path))
             {
-                console.WriteLn($"{dir_description}\"{path}\"不存在。正在自动创建...", ConsoleMessageType.Warning);
+                _console.WriteLn($"{dir_description}\"{path}\"不存在。正在自动创建...", ConsoleMessageType.Warning);
                 Directory.CreateDirectory(path);
             }
         }
@@ -729,7 +729,7 @@ namespace klbotlib
             if (!result)   //检查上个发送任务是否正确完成
             {
                 ObjectPrint(this, $"消息回复失败：{DiagData.LastException}", ConsoleMessageType.Error, "\b\b");
-                console.Write("> ", ConsoleColor.DarkYellow);
+                _console.Write("> ", ConsoleColor.DarkYellow);
             }
         }
 

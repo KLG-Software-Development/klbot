@@ -9,7 +9,7 @@ namespace klbotlib
     /// </summary>
     public abstract class Message
     {
-        private List<long> target_id = new List<long>();
+        private readonly List<long> _target_id = new List<long>();
         /// <summary>
         /// 发送者的ID（QQ号）。如果没有则为-1
         /// </summary>
@@ -17,7 +17,7 @@ namespace klbotlib
         /// <summary>
         /// 此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
         /// </summary>
-        public IEnumerable<long> TargetID { get => target_id; }
+        public IEnumerable<long> TargetID { get => _target_id; }
         /// <summary>
         /// 此消息来源的群组的ID（群号）。如果消息来源是私聊则为-1；如果消息来源是群组则为群号；如果消息来源是临时会话则为“临时会话所通过的群”的群号。
         /// </summary>
@@ -30,7 +30,7 @@ namespace klbotlib
         /// 返回此消息是否@了某个ID
         /// </summary>
         /// <param name="id">待判断ID</param>
-        public bool TargetContains(long id) => target_id.Contains(id);
+        public bool TargetContains(long id) => _target_id.Contains(id);
         internal static MessageEmpty Empty = new MessageEmpty();
 
         internal Message(long sender_id, long group_id)
@@ -40,11 +40,11 @@ namespace klbotlib
         }
         internal void AddTargetID(params long[] ids)
         {
-            target_id.AddRange(ids);
+            _target_id.AddRange(ids);
         }
         internal void AddTargetID(IEnumerable<long> ids)
         {
-            target_id.AddRange(ids);
+            _target_id.AddRange(ids);
         }
         internal string BuildReplyMessageJson(string chain)
         {

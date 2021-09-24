@@ -10,8 +10,8 @@ namespace klbotlib.Modules
     //聊天bot模块
     public class ChatQYKModule : SingleTypeModule<MessagePlain>
     {
-        const string url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
-        static readonly WebClient client = new WebClient();
+        private const string _url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
+        private static readonly WebClient _client = new WebClient();
 
         public sealed override bool IsTransparent => false;
         public sealed override bool UseSignature => false;
@@ -20,8 +20,8 @@ namespace klbotlib.Modules
         public sealed override string Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? "ok" : null;
         public sealed override string Processor(MessagePlain msg, string _)
         {
-            Uri host = new Uri(url + msg.Text);
-            string jreply = client.DownloadString(host);
+            Uri host = new Uri(_url + msg.Text);
+            string jreply = _client.DownloadString(host);
             return JsonConvert.DeserializeObject<ChatterBotReply>(jreply).FormattedContent();
         }
     }

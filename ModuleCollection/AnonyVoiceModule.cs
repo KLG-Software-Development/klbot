@@ -27,10 +27,10 @@ namespace klbotlib.Modules
             }
         }
 
-        const string url = "https://ai.baidu.com/aidemo";
-        const string prefix = "data:audio/x-mpeg;base64,";
-        const string temp_mpeg_name = "tmp.mpeg";
-        private Regex pri_req_pat = new Regex(@"^说骚话 (\d{9,11})$");
+        private const string _url = "https://ai.baidu.com/aidemo";
+        private const string _prefix = "data:audio/x-mpeg;base64,";
+        private const string _temp_mpeg_name = "tmp.mpeg";
+        private Regex _pri_req_pat = new Regex(@"^说骚话 (\d{9,11})$");
         Dictionary<string, string> per_by_name = new Dictionary<string, string> 
         {
             { "可爱女童", "4103"},
@@ -44,12 +44,12 @@ namespace klbotlib.Modules
         };
 
         [ModuleStatus]
-        string Person = "磁性男声";
+        private string Person = "磁性男声";
         [ModuleStatus(IsHidden = true)]
-        Dictionary<long, UserStatus> user_stat = new Dictionary<long, UserStatus>();
+        private readonly Dictionary<long, UserStatus> user_stat = new Dictionary<long, UserStatus>();
         [ModuleStatus(IsHidden = true)]
-        Dictionary<long, long> target_groups = new Dictionary<long, long>();
-        HttpHelper http_helper = new HttpHelper();
+        private readonly Dictionary<long, long> target_groups = new Dictionary<long, long>();
+        private readonly HttpHelper http_helper = new HttpHelper();
 
         public override string Filter(MessagePlain msg)
         {
@@ -61,7 +61,7 @@ namespace klbotlib.Modules
                 {
                     if (msg.Context == MessageContext.Temp && text == "说骚话")
                         return "request";
-                    else if (msg.Context == MessageContext.Private && pri_req_pat.IsMatch(text))
+                    else if (msg.Context == MessageContext.Private && _pri_req_pat.IsMatch(text))
                         return "private request";
                 }
                 //转语音请求
@@ -80,18 +80,18 @@ namespace klbotlib.Modules
                     ToWaitForTextState(msg.SenderID, msg.GroupID);
                     return "准备好了，你说";
                 case "private request":     //私聊会话 发起请求。这种情况需要额外解析一个群号
-                    if (long.TryParse(pri_req_pat.Match(msg.Text).Groups[1].Value, out long group_id))
+                    if (long.TryParse(_pri_req_pat.Match(msg.Text).Groups[1].Value, out long group_id))
                         ToWaitForTextState(msg.SenderID, group_id);
                     return "准备好了，你说";
                 case "content":
                     user_stat[msg.SenderID] = UserStatus.Idle;
                     Messaging.ReplyMessage(msg, "正在薅羊毛...");
                     string body = $"type=tns&per={Person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
-                    string json = http_helper.PostString(url, body);
+                    string json = http_helper.PostString(_url, body);
                     JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                     if (reply.errno != 0)
                         return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
-                    string mpeg_b64 = reply.data.Substring(prefix.Length); 
+                    string mpeg_b64 = reply.data.Substring(_prefix.Length); 
                     //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                     //string b64_amr = ConvertToAmr();
                     Messaging.SendGroupMessage(target_groups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
@@ -109,8 +109,8 @@ namespace klbotlib.Modules
             }
         }
 
-        bool IsNewOrIdleUser(long id) => !user_stat.ContainsKey(id) || user_stat[id] == UserStatus.Idle;
-        void ToWaitForTextState(long user_id, long group_id)    //转移至等待输入文本状态
+        private bool IsNewOrIdleUser(long id) => !user_stat.ContainsKey(id) || user_stat[id] == UserStatus.Idle;
+        private void ToWaitForTextState(long user_id, long group_id)    //转移至等待输入文本状态
         {
             if (!user_stat.ContainsKey(user_id))
                 user_stat.Add(user_id, UserStatus.ReadyToSendVoice);
@@ -122,14 +122,16 @@ namespace klbotlib.Modules
                 target_groups[user_id]= group_id;
 
         }
-        string ConvertToAmr()
+        [Obsolete]
+#pragma warning disable IDE0051
+        private string ConvertToAmr()
         {
             Process p = new Process();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 p.StartInfo.FileName = "ffmpeg";
                 p.StartInfo.WorkingDirectory = ModuleCacheDir;
-                p.StartInfo.Arguments = $"-i {temp_mpeg_name} -ar 8000 tmp.amr -y";
+                p.StartInfo.Arguments = $"-i {_temp_mpeg_name} -ar 8000 tmp.amr -y";
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
@@ -145,7 +147,8 @@ namespace klbotlib.Modules
             else
                 return $"KLBot暂时不支持在此运行平台下转换";
         }
-        string ConvertToSlk()
+        [Obsolete]
+        private string ConvertToSlk()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -153,7 +156,7 @@ namespace klbotlib.Modules
                 Process ffmpeg = new Process();
                 ffmpeg.StartInfo.FileName = "ffmpeg";
                 ffmpeg.StartInfo.WorkingDirectory = ModuleCacheDir;
-                ffmpeg.StartInfo.Arguments = $"-i {temp_mpeg_name} -ar 16000 -ac 1 -f s16le -acodec pcm_s16be tmp.pcm -y";  //16000Hz 16bit
+                ffmpeg.StartInfo.Arguments = $"-i {_temp_mpeg_name} -ar 16000 -ac 1 -f s16le -acodec pcm_s16be tmp.pcm -y";  //16000Hz 16bit
                 ffmpeg.StartInfo.UseShellExecute = false;
                 ffmpeg.StartInfo.RedirectStandardOutput = true;
                 ffmpeg.StartInfo.RedirectStandardError = true;
@@ -186,6 +189,7 @@ namespace klbotlib.Modules
             else
                 return $"KLBot暂时不支持在此运行平台下转换";
         }
+#pragma warning restore IDE0051
     }
 }
 

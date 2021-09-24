@@ -8,7 +8,7 @@ namespace klbotlib
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型
     internal static class MessageFactory
     {
-        static Dictionary<string, int> IndexOf = new Dictionary<string, int>
+        private static readonly Dictionary<string, int> _index_of = new Dictionary<string, int>
         {
             { "Plain", 0 },
             { "Image", 1 },
@@ -48,14 +48,14 @@ namespace klbotlib
             //遍历消息链，统计每种类型子消息的数量。如果遇到At，添加目标ID到输出
             foreach (var sub_msg in msg_package.messageChain)
             {
-                if (IndexOf.ContainsKey(sub_msg.type))
-                    count[IndexOf[sub_msg.type]]++;
+                if (_index_of.ContainsKey(sub_msg.type))
+                    count[_index_of[sub_msg.type]]++;
                 else if (sub_msg.type == "At")
                     targets.Add(sub_msg.target);
             }
-            bool has_plain = count[IndexOf["Plain"]] != 0;
-            bool has_img = count[IndexOf["Image"]] != 0;
-            bool has_voice = count[IndexOf["Voice"]] != 0;
+            bool has_plain = count[_index_of["Plain"]] != 0;
+            bool has_img = count[_index_of["Image"]] != 0;
+            bool has_voice = count[_index_of["Voice"]] != 0;
 
             //根据统计结果判断消息类型
             if (has_plain)

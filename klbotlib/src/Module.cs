@@ -16,6 +16,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using klbotlib.Reflection;
+using System.Net;
 
 namespace klbotlib.Modules
 {
@@ -410,9 +411,13 @@ namespace klbotlib.Modules
             }
             catch (Exception ex)
             {
-                DiagData.LastException = ex;
-                output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
                 has_error = true;
+                DiagData.LastException = ex;
+                //网络错误统一处理
+                if (ex is WebException)
+                    output = $"{this.ModuleID}模块表示自己不幸遭遇了网络错误：{ex.Message}";
+                else
+                    output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
             }
             if (!string.IsNullOrEmpty(output))  //处理器输出不为空时
             {

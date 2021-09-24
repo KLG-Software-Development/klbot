@@ -97,7 +97,7 @@ namespace klbotlib.Modules.ModuleUtils
     /// </summary>
     public class ImageHelper
     {
-        WebClient client = new WebClient();
+        private WebClient _client = new WebClient();
         /// <summary>
         /// 下载一张图片，并解析为Bitmap对象。默认使用伪装的Firefox UserAgent
         /// </summary>
@@ -106,7 +106,7 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="ua">下载时使用的UserAgent</param>
         public Bitmap DownloadImage(string url, out int size, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
         {
-            byte[] bin = client.DownloadData(url);
+            byte[] bin = _client.DownloadData(url);
             size = bin.Length;
             using (var ms = new MemoryStream(bin))
             {
@@ -119,7 +119,7 @@ namespace klbotlib.Modules.ModuleUtils
         /// 下载图片为Base64字符串
         /// </summary>
         /// <param name="url">图像地址</param>
-        public string DownloadAsBase64(string url) => Convert.ToBase64String(client.DownloadData(url));
+        public string DownloadAsBase64(string url) => Convert.ToBase64String(_client.DownloadData(url));
         /// <summary>
         /// 缩放一张图片到指定分辨率
         /// </summary>

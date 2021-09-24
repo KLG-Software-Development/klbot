@@ -14,12 +14,12 @@ namespace klbotlib
     /// </summary>
     public class ModuleChain : IEnumerable<Module>
     {
-        private readonly Dictionary<string, int> index_by_id = new Dictionary<string, int>();
-        private readonly Dictionary<string, int> module_count_by_name = new Dictionary<string, int>();
-        private readonly List<Module> modules = new List<Module>();
+        private readonly Dictionary<string, int> _index_by_id = new Dictionary<string, int>();
+        private readonly Dictionary<string, int> _module_count_by_name = new Dictionary<string, int>();
+        private readonly List<Module> _modules = new List<Module>();
 
-        IEnumerator<Module> IEnumerable<Module>.GetEnumerator() => modules.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => modules.GetEnumerator();
+        IEnumerator<Module> IEnumerable<Module>.GetEnumerator() => _modules.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _modules.GetEnumerator();
         //计算模块ID
         internal string CalcModuleID(string module_name, int module_index)
         {
@@ -32,7 +32,7 @@ namespace klbotlib
         internal string CalcModuleID(Module module)
         {
             string name = module.ModuleName;
-            if (!module_count_by_name.TryGetValue(name, out int count))
+            if (!_module_count_by_name.TryGetValue(name, out int count))
                 count = 0;
             return CalcModuleID(name, count);
         }
@@ -45,12 +45,12 @@ namespace klbotlib
         {
             foreach (var m in modules)
             {
-                index_by_id.Add(m.ModuleID, this.modules.Count);      //添加ID到ID-索引字典
-                if (!module_count_by_name.ContainsKey(m.ModuleName))    //递增模块类型-数量字典
-                    module_count_by_name.Add(m.ModuleName, 1);
+                _index_by_id.Add(m.ModuleID, this._modules.Count);      //添加ID到ID-索引字典
+                if (!_module_count_by_name.ContainsKey(m.ModuleName))    //递增模块类型-数量字典
+                    _module_count_by_name.Add(m.ModuleName, 1);
                 else
-                    module_count_by_name[m.ModuleName]++;
-                this.modules.Add(m);
+                    _module_count_by_name[m.ModuleName]++;
+                this._modules.Add(m);
             }
         }
 
@@ -58,11 +58,11 @@ namespace klbotlib
         /// 返回模块链条中是否含有某个ID的模块
         /// </summary>
         /// <param name="module_id">模块ID</param>
-        public bool ContainsModule(string module_id) => module_count_by_name.ContainsKey(module_id);
+        public bool ContainsModule(string module_id) => _module_count_by_name.ContainsKey(module_id);
         /// <summary>
         /// 模块链条中模块的数量
         /// </summary>
-        public int Count { get => modules.Count; }
+        public int Count { get => _modules.Count; }
         /// <summary>
         /// 获取模块实例
         /// </summary>
@@ -71,15 +71,15 @@ namespace klbotlib
         {
             get
             {
-                if (!index_by_id.ContainsKey(module_id))
+                if (!_index_by_id.ContainsKey(module_id))
                     throw new ModuleMissingException($"在模块链条中不存在模块\"{module_id}\"");
-                return modules[index_by_id[module_id]];
+                return _modules[_index_by_id[module_id]];
             }
             set
             {
-                if (!index_by_id.ContainsKey(module_id))
+                if (!_index_by_id.ContainsKey(module_id))
                     throw new ModuleMissingException($"在模块链条中不存在模块\"{module_id}\"");
-                modules[module_count_by_name[module_id]] = value;
+                _modules[_module_count_by_name[module_id]] = value;
             }
         }
         /// <summary>
@@ -90,14 +90,14 @@ namespace klbotlib
         /// <param name="module">获取到的模块对象。失败时为null</param>
         public bool TryGetModule(string module_id, out Module module)
         {
-            if (!index_by_id.ContainsKey(module_id))
+            if (!_index_by_id.ContainsKey(module_id))
             {
                 module = null;
                 return false;
             }
             else
             {
-                module = modules[index_by_id[module_id]];
+                module = _modules[_index_by_id[module_id]];
                 return true;
             }
         }
@@ -111,12 +111,12 @@ namespace klbotlib
         public bool TryGetModule<T>(int index, out T module) where T : Module
         {
             string module_id = CalcModuleID(typeof(T).Name, index);
-            if (!index_by_id.ContainsKey(module_id))
+            if (!_index_by_id.ContainsKey(module_id))
             {
                 module = null;
                 return false;
             }
-            else if (modules[index_by_id[module_id]] is T tmodule)
+            else if (_modules[_index_by_id[module_id]] is T tmodule)
             {
                 module = tmodule;
                 return true;
@@ -142,6 +142,6 @@ namespace klbotlib
             return (T)this[CalcModuleID(typeof(T).Name, module_index)];
         }
         ///<inheritdoc/>
-        public void ForEach(Action<Module> action) => modules.ForEach(action);
+        public void ForEach(Action<Module> action) => _modules.ForEach(action);
     }
 }

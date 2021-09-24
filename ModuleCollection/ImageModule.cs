@@ -14,19 +14,19 @@ namespace klbotlib.Modules
     // 图像模块的demo
     public class ImageModule : SingleTypeModule<MessagePlain>
     {
-        readonly static Regex _pattern = new Regex(@"来点(\S+?)图");
-        readonly static Random _ro = new Random();
-        readonly WebClient _client = new WebClient();
-        readonly Stopwatch _sw = new Stopwatch();
+        private readonly static Regex _pattern = new Regex(@"来点(\S+?)图");
+        private readonly static Random _ro = new Random();
+        private readonly WebClient _client = new WebClient();
+        private readonly Stopwatch _sw = new Stopwatch();
 
         [ModuleStatus(IsHidden = true)]
-        Dictionary<string, int> ListNumCache = new Dictionary<string, int>();  //缓存每个搜索词的结果数量
+        private readonly Dictionary<string, int> ListNumCache = new Dictionary<string, int>();  //缓存每个搜索词的结果数量
         [ModuleStatus]
-        int CacheCount = 0;
+        private int CacheCount = 0;
         [ModuleStatus]
-        string LastDownloadTime = "N/A";
+        private string LastDownloadTime = "N/A";
         [ModuleStatus]
-        string LastParseTime = "N/A";
+        private string LastParseTime = "N/A";
         [ModuleStatus]
         public int Fraction = 50;   //只在前n%的结果内随机
         public sealed override bool UseSignature => false;

@@ -14,7 +14,7 @@ namespace klbotlib.Modules
         [ModuleStatus(IsHidden = true)]
         private DateTime LastHal = new DateTime();
         [ModuleSetup]
-        private TimeSpan CoolDownTime = new TimeSpan(0, 0, 60);
+        private readonly TimeSpan CoolDownTime = new TimeSpan(0, 0, 60);
 
 
         private bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");
