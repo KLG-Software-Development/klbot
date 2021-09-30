@@ -1,11 +1,6 @@
-﻿using klbotlib;
-using klbotlib.Modules;
+﻿using klbotlib.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.IO;
-using System.Threading;
-using klbotlib.Reflection;
 using System;
 using System.Text.RegularExpressions;
 
