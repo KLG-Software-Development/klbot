@@ -297,7 +297,15 @@ namespace klbotlib.Modules
         {
             if (!Enabled)
                 return false;
-            string filter_out = Filter(msg);
+            string filter_out = null;
+            try
+            {
+                filter_out = Filter(msg);
+            }
+            catch (Exception ex)    //过滤器存在问题
+            {
+                throw new ModuleException(this, $"模块过滤器产生异常：{ex.Message}");
+            }
             if (string.IsNullOrEmpty(filter_out))
                 return false;
             if (IsAsync)
