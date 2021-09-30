@@ -1,5 +1,6 @@
 ﻿using klbotlib.Extensions;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -83,6 +84,7 @@ namespace klbotlib.Modules
             else
                 return null;
         }
-        public sealed override string Processor(MessagePlain msg, string _) => GenerateFuck();
+        public sealed override string Processor(MessagePlain msg, string _)
+            => ModuleAccess.GetModule<AnonyVoiceModule>().TextToSpeech(GenerateFuck());
     }
 }
