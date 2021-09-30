@@ -47,6 +47,7 @@ namespace klbotlib.Reflection
             else if (original_type == typeof(byte) ||
                 original_type == typeof(short) ||
                 original_type == typeof(int) ||
+                original_type == typeof(long) ||
                 original_type == typeof(float))
                 return Convert.ChangeType(value, original_type);
             else if (original_type == typeof(TimeSpan))

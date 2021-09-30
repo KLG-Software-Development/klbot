@@ -27,7 +27,7 @@ namespace KLBotUnitTest
             Assert.IsTrue((byte)ReflectionHelper.RestoreType(typeof(byte), "42") == 42);
             Assert.IsTrue((short)ReflectionHelper.RestoreType(typeof(short), "42") == 42);
             Assert.IsTrue((int)ReflectionHelper.RestoreType(typeof(int), "42") == 42);
-            Assert.IsTrue((long)ReflectionHelper.RestoreType(typeof(long), "42L") == 42L);
+            Assert.IsTrue((long)ReflectionHelper.RestoreType(typeof(long), "42") == 42L);
             //还原TimeSpan
             Assert.IsTrue(((TimeSpan)ReflectionHelper.RestoreType(typeof(TimeSpan), "01:00:00")).TotalMilliseconds == new TimeSpan(1,0,0).TotalMilliseconds);
             //还原Regex
