@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace klbotlib.Reflection
 {
-    static class ReflectionHelper
+    public static class ReflectionHelper
     {
         private static TimeSpanConverter _timespan_converter = new TimeSpanConverter();
         /// <summary>
