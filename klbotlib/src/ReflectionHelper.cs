@@ -61,7 +61,7 @@ namespace klbotlib.Reflection
                 object output = null;
                 try    //尝试用Newtonsoft.Json自动转换
                 {
-                    deserialize.Invoke(null, new object[] { json });
+                    output = deserialize.Invoke(null, new object[] { json });
                 }
                 catch
                 {
