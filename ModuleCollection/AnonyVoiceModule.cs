@@ -109,6 +109,16 @@ namespace klbotlib.Modules
             }
         }
 
+        public string TextToSpeech(string text)
+        {
+            string body = $"type=tns&per={Person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(text.Trim())}";
+            string json = http_helper.PostString(_url, body);
+            JReply reply = JsonConvert.DeserializeObject<JReply>(json);
+            if (reply.errno != 0)
+                return $"匿名语音模块TTS API错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
+            string mpeg_b64 = reply.data.Substring(_prefix.Length);
+            return @"\voice:\base64:" + mpeg_b64;
+        }
         private bool IsNewOrIdleUser(long id) => !user_stat.ContainsKey(id) || user_stat[id] == UserStatus.Idle;
         private void ToWaitForTextState(long user_id, long group_id)    //转移至等待输入文本状态
         {
