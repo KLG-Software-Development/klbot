@@ -3,17 +3,30 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
-    <TargetFramework>net5.0</TargetFramework>
-    <AssemblyVersion>1.5.*</AssemblyVersion>
-    <FileVersion>1.5</FileVersion>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyVersion>1.6.*</AssemblyVersion>
+    <FileVersion>1.6</FileVersion>
     <Deterministic>false</Deterministic>
     <Copyright>KLG Science</Copyright>
     <Authors>Deleeete</Authors>
     <Company>KLG Science</Company>
-    <Version>1.5</Version>
+    <Version>1.6</Version>
     <Platforms>AnyCPU;ARM32;x64</Platforms>
     <Configurations>Debug;Release;Ref_Only</Configurations>
     <PackageId>KLG.PaleMutant</PackageId>
+    <PlatformTarget>ARM64</PlatformTarget>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|ARM32'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|x64'">
+    <Optimize>True</Optimize>
   </PropertyGroup>
   
   <ItemGroup>

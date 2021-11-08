@@ -20,7 +20,7 @@
     <Description>KLBot机器人核心库。可用于KLBot机器人模块开发和其他可执行程序开发。</Description>
     <RepositoryUrl></RepositoryUrl>
     <NeutralLanguage>zh-Hans</NeutralLanguage>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
   </PropertyGroup>
   

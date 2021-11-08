@@ -115,6 +115,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="config_path">配置文件路径</param>
         /// <param name="load_core_module">是否加载核心模块</param>
+        /// <param name="module_collection">模块合集程序集</param>
         public KLBot(string config_path = "config/config.json", bool load_core_module = true, Assembly module_collection = null) : this(config_path)
         {
             if (load_core_module)

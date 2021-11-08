@@ -298,6 +298,13 @@
             其他自定义Header
             </summary>
         </member>
+        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.GetString(System.String)">
+            <summary>
+            从指定地址GET一条字符串
+            </summary>
+            <param name="url">地址</param>
+            <param name="body">内容</param>
+        </member>
         <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.PostString(System.String,System.String)">
             <summary>
             向指定地址POST一条字符串
@@ -677,6 +684,7 @@
             </summary>
             <param name="config_path">配置文件路径</param>
             <param name="load_core_module">是否加载核心模块</param>
+            <param name="module_collection">模块合集程序集</param>
         </member>
         <member name="M:klbotlib.KLBot.AddTarget(System.Int64[])">
             <summary>

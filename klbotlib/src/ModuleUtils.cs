@@ -36,6 +36,27 @@ namespace klbotlib.Modules.ModuleUtils
         /// </summary>
         public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
         /// <summary>
+        /// 从指定地址GET一条字符串
+        /// </summary>
+        /// <param name="url">地址</param>
+        /// <param name="body">内容</param>
+        public string GetString(string url)
+        {
+            HttpWebRequest request = WebRequest.CreateHttp(url);
+            request.Method = "GET";
+            request.UserAgent = UA;
+            request.ContentType = ContentType;
+            foreach (var kvp in Headers)
+            {
+                request.Headers.Add(kvp.Key, kvp.Value);
+            }
+            using (var stream = request.GetResponse().GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+                return reader.ReadToEnd();
+            }
+        }
+        /// <summary>
         /// 向指定地址POST一条字符串
         /// </summary>
         /// <param name="url">地址</param>

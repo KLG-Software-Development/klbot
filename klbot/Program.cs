@@ -2,6 +2,7 @@
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Modules;
+using ModuleCollection;
 using System;
 using System.Reflection;
 
@@ -30,6 +31,7 @@ namespace klbot
                     klg = new(args[0], module_collection: Assembly.GetAssembly(typeof(ImageModule)));
                 else
                     klg = new KLBot(module_collection: Assembly.GetAssembly(typeof(ImageModule)));
+                klg.AddModule(new CollapseModule());
                 klg.AddModule(new ImageModule());
                 klg.AddModule(new IMGPModule());
                 klg.AddModule(new AnonyVoiceModule());
