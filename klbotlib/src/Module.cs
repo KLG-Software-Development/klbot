@@ -27,9 +27,9 @@ namespace klbotlib.Modules
     public abstract class Module : IFileAPI, IMessagingAPI, IModuleAccessAPI
     {
         //后台变量
-        private KLBot _host_bot;
+        private KLBot _hostBot;
         //消息处理Task
-        private Task _process_worker;
+        private Task _processWorker;
 
         /// <summary>
         /// 模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名。
@@ -89,8 +89,8 @@ namespace klbotlib.Modules
         /// </summary>
         public KLBot HostBot 
         { 
-            get { AssertAttachedStatus(true); return _host_bot; }
-            private set => _host_bot = value;
+            get { AssertAttachedStatus(true); return _hostBot; }
+            private set => _hostBot = value;
         }
         /// <summary>
         /// 模块统计和诊断信息
@@ -125,7 +125,7 @@ namespace klbotlib.Modules
         public Module()
         {
             ModuleName = GetType().Name;
-            _process_worker = Task.Run(() => { });
+            _processWorker = Task.Run(() => { });
             //绑定Enable通知
 
         }
@@ -257,11 +257,11 @@ namespace klbotlib.Modules
             switch (origin_msg.Context)
             {
                 case MessageContext.Group:
-                    _host_bot.SendMessage(this, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
+                    _hostBot.SendMessage(this, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
                     break;
                 case MessageContext.Temp:
                 case MessageContext.Private:
-                    _host_bot.SendMessage(this, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
+                    _hostBot.SendMessage(this, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
                     break;
             }
         }
@@ -312,10 +312,10 @@ namespace klbotlib.Modules
                 Task.Run(() => ProcessMessage(msg, filter_out));
             else
             {
-                if (!_process_worker.IsCompleted)
-                    _process_worker.ContinueWith(x => ProcessMessage(msg, filter_out));    //若未完成 则排队
+                if (!_processWorker.IsCompleted)
+                    _processWorker.ContinueWith(x => ProcessMessage(msg, filter_out));    //若未完成 则排队
                 else
-                    _process_worker = Task.Run(() => ProcessMessage(msg, filter_out));      //已完成则取而代之直接开始
+                    _processWorker = Task.Run(() => ProcessMessage(msg, filter_out));      //已完成则取而代之直接开始
             }
             return true;
         }
@@ -437,14 +437,14 @@ namespace klbotlib.Modules
                 }
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
-                _host_bot.ReplyMessage(this, msg, signature + output);
+                _hostBot.ReplyMessage(this, msg, signature + output);
                 ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else
                 ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
             //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
             if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
-                _host_bot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
+                _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
             //否则可以假设模块只修改自身 所以只需保存自己
             else
                 SaveModuleStatus(false);

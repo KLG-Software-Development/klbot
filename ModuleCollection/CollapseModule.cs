@@ -11,10 +11,10 @@ namespace ModuleCollection
 {
     public class CollapseModule : SingleTypeModule<MessagePlain>
     {
-        private readonly Regex collapsePat = new Regex(@"塌\s+(.+)");
-        private readonly Regex stepPat = new Regex(@"过程\s+(.+)");
+        private readonly Regex _collapsePat = new Regex(@"塌\s+(.+)");
+        private readonly Regex _stepPat = new Regex(@"过程\s+(.+)");
         private readonly HttpHelper _helper = new HttpHelper();
-        private readonly XmlDocument _xml_loader = new XmlDocument();
+        private readonly XmlDocument _xmlLoader = new XmlDocument();
 
         public CollapseModule()
         {
@@ -33,24 +33,22 @@ namespace ModuleCollection
             if (!msg.TargetID.Contains(HostBot.SelfID))
                 return null;
             string text = msg.Text.Trim();
-            if (collapsePat.IsMatch(text))
-                return "答案";
-            else if (stepPat.IsMatch(text))
-                return "过程";
-            else
-                return null;
+            return _collapsePat.IsMatch(text)
+                ? "答案"
+                : _stepPat.IsMatch(text)
+                    ? "过程"
+                    : null;
         }
-
         public override string Processor(MessagePlain msg, string filter_out)
         {
             switch (filter_out)
             {
                 case "答案":
-                    string input = collapsePat.Match(msg.Text.Trim()).Groups[1].Value;
+                    string input = _collapsePat.Match(msg.Text.Trim()).Groups[1].Value;
                     string xml = _helper.GetString(GetResultUrl(input));
                     return ProcessXML(msg, xml);
                 case "过程":
-                    input = stepPat.Match(msg.Text.Trim()).Groups[1].Value;
+                    input = _stepPat.Match(msg.Text.Trim()).Groups[1].Value;
                     xml = _helper.GetString(GetResultUrl(input));
                     return ProcessXMLStepByStep(msg, xml, input);
             }
@@ -64,13 +62,10 @@ namespace ModuleCollection
 
         private bool TryGetResultRoot(string xml, out XmlNode queryresult)
         {
-            _xml_loader.LoadXml(xml);
-            queryresult = _xml_loader.GetElementsByTagName("queryresult")[0];
+            _xmlLoader.LoadXml(xml);
+            queryresult = _xmlLoader.GetElementsByTagName("queryresult")[0];
             //查询失败
-            if (queryresult.Attributes["success"].Value != "true")
-                return false;
-            else
-                return true;
+            return queryresult.Attributes["success"].Value == "true";
         }
         //尝试获取primary pod
         private bool TryGetPrimaryPod(XmlNodeList childs, out XmlNode output)

@@ -10,7 +10,7 @@ namespace klbotlib.Reflection
     /// </summary>
     public static class ReflectionHelper
     {
-        private static TimeSpanConverter _timespan_converter = new TimeSpanConverter();
+        private static TimeSpanConverter _timespanConverter = new TimeSpanConverter();
         /// <summary>
         /// 预存需要通过反射遍历查找的方法
         /// </summary>
@@ -37,7 +37,6 @@ namespace klbotlib.Reflection
                     throw new Exception("意外遇到反射异常：无法找到相应的方法。Newtonsoft.Json的API是否有所更改？");
             }
         }
-
         /// <summary>
         /// NewtonSoft.JsonConvert会把一切整数变成int64，一切浮点数变成double
         /// 丫这么整虽然源码赋值没事(会自动转换)，但反射赋值时会出问题，所以需要手动恢复原本的类型
@@ -58,7 +57,7 @@ namespace klbotlib.Reflection
                 original_type == typeof(float))
                 return Convert.ChangeType(value, original_type);
             else if (original_type == typeof(TimeSpan))
-                return _timespan_converter.ConvertFromString(value.ToString());
+                return _timespanConverter.ConvertFromString(value.ToString());
             else
             {
                 MethodInfo method = PrefetchMethods.JsonConvert_DeserializeObject_T;

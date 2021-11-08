@@ -9,11 +9,13 @@ namespace klbotlib.Modules
     // 嘴臭模块
     public class FuckModule : SingleTypeModule<MessagePlain>
     {
-        private readonly RNGCryptoServiceProvider ro = new RNGCryptoServiceProvider();
+        private readonly RNGCryptoServiceProvider _ro = new RNGCryptoServiceProvider();
+#pragma warning disable IDE1006 // 命名样式
         [ModuleSetup]
         private readonly Regex pattern;
         [ModuleSetup]
         private readonly string[] sub, you, v, human, organ, subfix, adj_of_organ, adv, connector, combine, stuff, status;
+#pragma warning restore IDE1006 // 命名样式
 
         // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
         [ModuleStatus]
@@ -27,10 +29,10 @@ namespace klbotlib.Modules
         [ModuleStatus]
         public int MaxLength { get; set; } = 20;
 
-        private string Pick(string[] a) => a[ro.Next(a.Length)];
+        private string Pick(string[] a) => a[_ro.Next(a.Length)];
         public string SingleSentence()
         {
-            int mode = ro.Next(20);
+            int mode = _ro.Next(20);
             switch (mode)
             {
                 case 0: return Pick(sub) + Pick(v) + Pick(human);//(主)谓宾 (我)操你妈
@@ -65,23 +67,23 @@ namespace klbotlib.Modules
             if (IsCascade)
             {
                 StringBuilder builder = new StringBuilder(SingleSentence());
-                while (ro.Next(100) > TermProb && builder.Length <= MaxLength)
+                while (_ro.Next(100) > TermProb && builder.Length <= MaxLength)
                 {
                     builder.AppendFormat(" {0}", SingleSentence());
                 }
                 return builder.ToString();
             }
-            else return SingleSentence();
+            else 
+                return SingleSentence();
         }
 
         public sealed override bool UseSignature => false; //隐藏返回消息中的模块签名
         public sealed override string FriendlyName => "嘴臭模块";
         public sealed override string Filter(MessagePlain msg)
         {
-            if (pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfID)))
-                return "ok";
-            else
-                return null;
+            return pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfID)) 
+                ? "ok" 
+                : null;
         }
         public sealed override string Processor(MessagePlain msg, string _)
             => ModuleAccess.GetModule<AnonyVoiceModule>().TextToSpeech(GenerateFuck());

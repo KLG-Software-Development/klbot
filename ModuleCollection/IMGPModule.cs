@@ -137,10 +137,9 @@ namespace klbotlib.Modules
                         if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                             return ErrorString(reply.errno, reply.msg);
                         string landmark = reply.data.result.landmark;
-                        if (string.IsNullOrEmpty(landmark))
-                            return GetFuck() + "，看不出来";
-                        else
-                            return landmark;
+                        return string.IsNullOrEmpty(landmark) 
+                            ? GetFuck() + "，看不出来" 
+                            : landmark;
                     }
                     else
                     {

@@ -118,6 +118,7 @@ namespace klbotlib.Modules.ModuleUtils
     public class ImageHelper
     {
         private WebClient _client = new WebClient();
+
         /// <summary>
         /// 下载一张图片，并解析为Bitmap对象。默认使用伪装的Firefox UserAgent
         /// </summary>

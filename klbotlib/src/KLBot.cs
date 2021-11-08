@@ -23,10 +23,11 @@ namespace klbotlib
     /// </summary>
     public class KLBot
     {
-        private bool _is_booting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
+        private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
-        private Task<bool> _network_task;
-        private CmdLoopStatus _cmd_stat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
+        private Task<bool> _networkTask;
+        private CmdLoopStatus _cmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
+
         /// <summary>
         /// KLBot的模块链条。这个类可以被枚举
         /// </summary>
@@ -75,8 +76,8 @@ namespace klbotlib
         /// <param name="config_path">配置文件路径"</param>
         private KLBot(string config_path)
         {
-            _is_booting = true;
-            _network_task = Task<bool>.Run(() => true);
+            _isBooting = true;
+            _networkTask = Task<bool>.Run(() => true);
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
             try
@@ -209,9 +210,9 @@ namespace klbotlib
             //创建完整JSON字符串
             string full_json = JsonHelper.MessageJsonBuilder.BuildMessageJson(user_id, group_id, context, chain_json);
             //发送
-            if (!_network_task.IsCompleted)
+            if (!_networkTask.IsCompleted)
             {
-                _network_task.ContinueWith((x) =>
+                _networkTask.ContinueWith((x) =>
                 {
                     CheckNetworkTaskResult(x.Result);
                     TrySendMessage(context, full_json);
@@ -219,8 +220,8 @@ namespace klbotlib
             }
             else
             {
-                _network_task = Task.Run(() => TrySendMessage(context, full_json));
-                _network_task.ContinueWith(x => CheckNetworkTaskResult(x.Result));
+                _networkTask = Task.Run(() => TrySendMessage(context, full_json));
+                _networkTask.ContinueWith(x => CheckNetworkTaskResult(x.Result));
             }
         }
         /// <summary>
@@ -279,11 +280,11 @@ namespace klbotlib
         /// <param name="prefix">要在消息类别标识前附加的内容</param>
         public void ObjectPrint(object source, string message, ConsoleMessageType msg_type = ConsoleMessageType.Info, string prefix = "")
         {
-            while (_cmd_stat == CmdLoopStatus.Output)
+            while (_cmdStat == CmdLoopStatus.Output)
             { Thread.Sleep(1); }
 
             string source_name = source is Module m ? m.ModuleID : source.GetType().Name;
-            if (_cmd_stat == CmdLoopStatus.ReadLn)
+            if (_cmdStat == CmdLoopStatus.ReadLn)
             {
                 _console.WriteLn($"[{source_name}] {message}", msg_type, "\b" + prefix);
                 _console.Write("> ", ConsoleColor.DarkYellow);
@@ -371,10 +372,10 @@ namespace klbotlib
         /// <returns>已处理的消息数量</returns>
         public void ProcessMessages(List<Message> msgs, Action<Message> main_processor)
         {
-            if (_is_booting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
+            if (_isBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
-                _is_booting = false;
+                _isBooting = false;
             }
             msgs.ForEach(msg => { main_processor(msg); });
         }
@@ -448,9 +449,9 @@ namespace klbotlib
             while (!exit_flag)
             {
                 _console.Write("> ", ConsoleColor.DarkYellow);
-                _cmd_stat = CmdLoopStatus.ReadLn;
+                _cmdStat = CmdLoopStatus.ReadLn;
                 string cmd = _console.BufferedReadLn().Trim();
-                _cmd_stat = CmdLoopStatus.Output;
+                _cmdStat = CmdLoopStatus.Output;
                 try
                 {
                     if (cmd == "")
@@ -472,7 +473,7 @@ namespace klbotlib
                     }
                     else if (cmd == "resume")
                     {
-                        _is_booting = true;   //为暂停继续情形引入重启忽略机制
+                        _isBooting = true;   //为暂停继续情形引入重启忽略机制
                         wait_for_pause_msgLoop_signal.Set();
                         _console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }

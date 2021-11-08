@@ -12,18 +12,19 @@ namespace klbotlib.Modules
         /// <inheritdoc/>
         public sealed override bool IsTransparent => true;
 
+#pragma warning disable IDE1006
         [ModuleStatus]
         private int TimeZone = 8; //默认是UTC+8
+#pragma warning restore IDE1006
 
         /// <inheritdoc/>
         public override string Filter(MessagePlain msg)
         {
-            if (msg.Text == "报时")
-                return "报时";
-            else if (msg.Text.StartsWith("设置时区为"))
-                return "设置";
-            else
-                return null;
+            return msg.Text == "报时" 
+                ? "报时" 
+                : msg.Text.StartsWith("设置时区为") 
+                    ? "设置" 
+                    : null;
         }
 
         /// <inheritdoc/>

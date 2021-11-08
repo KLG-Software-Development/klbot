@@ -19,26 +19,26 @@ namespace klbotlib.Info
     /// </summary>
     public static class ModuleCollectionInfo
     {
-        private static Version _mc_version = null;
+        private static Version _mcVersion = null;
 
         /// <summary>
         /// 保存模块合集版本
         /// </summary>
         public static void SetMCVersion(Assembly mc_assembly)
         {
-            _mc_version = mc_assembly.GetName().Version;
+            _mcVersion = mc_assembly.GetName().Version;
         }
         /// <summary>
         /// 保存模块合集版本
         /// </summary>
         public static void SetMCVersion(Type mc_type)
         {
-            _mc_version = Assembly.GetAssembly(mc_type).GetName().Version;
+            _mcVersion = Assembly.GetAssembly(mc_type).GetName().Version;
         }
         /// <summary>
         /// 获取模块合集版本
         /// </summary>
         /// <returns>模块合集版本</returns>
-        public static Version GetMCVersion() => _mc_version;
+        public static Version GetMCVersion() => _mcVersion;
     }
 }

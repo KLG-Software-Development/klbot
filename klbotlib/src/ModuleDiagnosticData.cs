@@ -10,18 +10,7 @@ namespace klbotlib
     public class ModuleDiagnosticData
     {
         private Stopwatch _stopwatch = new Stopwatch();
-        /// <summary>
-        /// 最后一次处理消息消耗的时间
-        /// </summary>
-        public string LastProcessTime { get; internal set; } = "N/A";
-        /// <summary>
-        /// 经过该模块实例处理的消息总数
-        /// </summary>
-        public long ProcessedMessageCount { get; internal set; }
-        /// <summary>
-        /// 最近一次异常的调用栈
-        /// </summary>
-        public Exception LastException { get; internal set; }
+
         /// <summary>
         /// 重新开始处理计时
         /// </summary>
@@ -34,6 +23,19 @@ namespace klbotlib
             _stopwatch.Stop();
             LastProcessTime = _stopwatch.Elapsed.ToMsString();
         }
+
+        /// <summary>
+        /// 最后一次处理消息消耗的时间
+        /// </summary>
+        public string LastProcessTime { get; internal set; } = "N/A";
+        /// <summary>
+        /// 经过该模块实例处理的消息总数
+        /// </summary>
+        public long ProcessedMessageCount { get; internal set; }
+        /// <summary>
+        /// 最近一次异常的调用栈
+        /// </summary>
+        public Exception LastException { get; internal set; }
         /// <summary>
         /// 获取此模块的统计信息
         /// </summary>

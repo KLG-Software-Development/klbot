@@ -19,6 +19,7 @@ namespace klbotlib.Modules
         private readonly WebClient _client = new WebClient();
         private readonly Stopwatch _sw = new Stopwatch();
 
+#pragma warning disable IDE1006 // 命名样式
         [ModuleStatus(IsHidden = true)]
         private readonly Dictionary<string, int> ListNumCache = new Dictionary<string, int>();  //缓存每个搜索词的结果数量
         [ModuleStatus]
@@ -29,6 +30,7 @@ namespace klbotlib.Modules
         private string LastParseTime = "N/A";
         [ModuleStatus]
         public int Fraction = 50;   //只在前n%的结果内随机
+#pragma warning restore IDE1006 // 命名样式
         public sealed override bool UseSignature => false;
         public sealed override string FriendlyName => "搜图模块";
         public sealed override string HelpInfo => "发送“[关键词]图来”或“来点[关键词]图”，在百度图片中搜索相关图片";
@@ -58,12 +60,11 @@ namespace klbotlib.Modules
         public override string Filter(MessagePlain msg)
         {
             string text = msg.Text.Trim();
-            if (text.EndsWith("图来") && text.Length != 2)
-                return "X图来";
-            else if (_pattern.IsMatch(text))
-                return "来点X图";
-            else
-                return null;
+            return text.EndsWith("图来") && text.Length != 2
+                ? "X图来"
+                : _pattern.IsMatch(text)
+                    ? "来点X图"
+                    : null;
         }
         public override string Processor(MessagePlain msg, string filter_out)
         {
