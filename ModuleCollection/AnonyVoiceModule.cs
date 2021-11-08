@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
@@ -18,7 +17,8 @@ namespace klbotlib.Modules
         public sealed override string FriendlyName => "匿名语音模块";
         public sealed override string HelpInfo
         {
-            get {
+            get
+            {
                 string re = "发起临时会话后发送\"说骚话\"激活功能，模块会把下一句话转换成语音发送到临时会话所通过的群里。\n" +
                     "可以在群里发送\"设置音色[空格][音色名称]\"来修改生成的音色。目前支持的音色有：\n";
                 foreach (var key in per_by_name.Keys)
@@ -31,7 +31,7 @@ namespace klbotlib.Modules
         private const string _prefix = "data:audio/x-mpeg;base64,";
         private const string _temp_mpeg_name = "tmp.mpeg";
         private Regex _pri_req_pat = new Regex(@"^说骚话 (\d{9,11})$");
-        Dictionary<string, string> per_by_name = new Dictionary<string, string> 
+        Dictionary<string, string> per_by_name = new Dictionary<string, string>
         {
             { "可爱女童", "4103"},
             { "磁性男声", "4003" },
@@ -91,7 +91,7 @@ namespace klbotlib.Modules
                     JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                     if (reply.errno != 0)
                         return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
-                    string mpeg_b64 = reply.data.Substring(_prefix.Length); 
+                    string mpeg_b64 = reply.data.Substring(_prefix.Length);
                     //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                     //string b64_amr = ConvertToAmr();
                     Messaging.SendGroupMessage(target_groups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
@@ -129,7 +129,7 @@ namespace klbotlib.Modules
             if (!target_groups.ContainsKey(user_id))
                 target_groups.Add(user_id, group_id);
             else
-                target_groups[user_id]= group_id;
+                target_groups[user_id] = group_id;
 
         }
         [Obsolete]

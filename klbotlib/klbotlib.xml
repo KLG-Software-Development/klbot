@@ -303,7 +303,6 @@
             从指定地址GET一条字符串
             </summary>
             <param name="url">地址</param>
-            <param name="body">内容</param>
         </member>
         <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.PostString(System.String,System.String)">
             <summary>
@@ -1070,9 +1069,19 @@
             获取此模块的统计信息
             </summary>
         </member>
+        <member name="T:klbotlib.Reflection.ReflectionHelper">
+            <summary>
+            反射帮助类
+            </summary>
+        </member>
         <member name="T:klbotlib.Reflection.ReflectionHelper.PrefetchMethods">
             <summary>
             预存需要通过反射遍历查找的方法
+            </summary>
+        </member>
+        <member name="F:klbotlib.Reflection.ReflectionHelper.PrefetchMethods.JsonConvert_DeserializeObject_T">
+            <summary>
+            对应JsonConvert.DeserializeObject&lt;T&gt;()的方法对象
             </summary>
         </member>
         <member name="M:klbotlib.Reflection.ReflectionHelper.RestoreType(System.Type,System.Object)">

@@ -112,7 +112,7 @@ namespace klbotlib.Modules
                 goto not_found;
             else
                 return $@"\image:\url:{url}";
-            not_found:
+not_found:
             return $"{HostBot.GetModule<FuckModule>().SingleSentence()}，找不到";
         }
 

@@ -18,8 +18,9 @@ namespace klbotlib.Modules
         public sealed override bool IsAsync => true;
         public sealed override string FriendlyName => "图像处理模块";
         public sealed override string HelpInfo
-        { 
-            get {
+        {
+            get
+            {
                 StringBuilder sb = new StringBuilder();
                 //纯文本消息
                 sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
@@ -43,7 +44,7 @@ namespace klbotlib.Modules
 
         private const string _post_url = "https://ai.baidu.com/aidemo";
         private static readonly Regex _pattern = new Regex(@"什么(东西)");
-        private static readonly Dictionary<string, string> _type_by_word_recg = new Dictionary<string, string> 
+        private static readonly Dictionary<string, string> _type_by_word_recg = new Dictionary<string, string>
         {
             { "东西", "advanced_general"},
             { "玩意", "advanced_general"},
@@ -56,7 +57,7 @@ namespace klbotlib.Modules
             { "地方", "landmark"},
             { "车", "car"}
         };
-        private static readonly Dictionary<string, string> _type_by_word_proc = new Dictionary<string, string> 
+        private static readonly Dictionary<string, string> _type_by_word_proc = new Dictionary<string, string>
         {
             { "清晰增强", "https://aip.baidubce.com/rest/2.0/image-process/v1/image_definition_enhance"},
             { "色彩增强", "https://aip.baidubce.com/rest/2.0/image-process/v1/color_enhance"},

@@ -3,8 +3,6 @@ using klbotlib.Extensions;
 using klbotlib.Modules;
 using klbotlib.Modules.ModuleUtils;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;

@@ -5,6 +5,9 @@ using System.Reflection;
 
 namespace klbotlib.Reflection
 {
+    /// <summary>
+    /// 反射帮助类
+    /// </summary>
     public static class ReflectionHelper
     {
         private static TimeSpanConverter _timespan_converter = new TimeSpanConverter();
@@ -13,6 +16,9 @@ namespace klbotlib.Reflection
         /// </summary>
         public static class PrefetchMethods
         {
+            /// <summary>
+            /// 对应JsonConvert.DeserializeObject&lt;T&gt;()的方法对象
+            /// </summary>
             public static MethodInfo JsonConvert_DeserializeObject_T;
             static PrefetchMethods()
             {

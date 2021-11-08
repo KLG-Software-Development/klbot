@@ -39,7 +39,6 @@ namespace klbotlib.Modules.ModuleUtils
         /// 从指定地址GET一条字符串
         /// </summary>
         /// <param name="url">地址</param>
-        /// <param name="body">内容</param>
         public string GetString(string url)
         {
             HttpWebRequest request = WebRequest.CreateHttp(url);

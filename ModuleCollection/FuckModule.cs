@@ -1,6 +1,5 @@
 ﻿using klbotlib.Extensions;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -44,7 +43,7 @@ namespace klbotlib.Modules
                 case 6: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(combine) + Pick(stuff);//(主)谓副宾连接词称号玩意
                 case 7: return Pick(combine) + Pick(stuff);//称号玩意
                 case 8: return Pick(you) + Pick(status) + Pick(combine) + Pick(stuff);//(你)(他妈)称号玩意
-                case 9:  return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(organ) + Pick(subfix);//(主)谓宾连接词器官
+                case 9: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(organ) + Pick(subfix);//(主)谓宾连接词器官
                 case 10: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix);//(主)谓宾连接词形容词器官
                 case 11: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix);//(主)谓副宾连接词形容词器官
                 case 12: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix) + Pick(v) + Pick(human) + "的";
@@ -57,7 +56,7 @@ namespace klbotlib.Modules
                 case 17: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(organ) + Pick(subfix);//谓宾连接词器官
                 case 18: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix);//谓宾连接词形容词器官
                 case 19: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix) + " " + Pick(v) + Pick(human) + "的";
-                //主谓副宾连接词形容词器官谓宾
+                    //主谓副宾连接词形容词器官谓宾
             }
             return "操你妈的";
         }
