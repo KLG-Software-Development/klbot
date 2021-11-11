@@ -84,6 +84,6 @@ namespace klbotlib.Modules
                 : null;
         }
         public sealed override string Processor(MessagePlain msg, string _)
-            => ModuleAccess.GetModule<AnonyVoiceModule>().TextToSpeech(GenerateFuck());
+            => GenerateFuck();
     }
 }
