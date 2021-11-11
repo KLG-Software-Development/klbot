@@ -7,17 +7,17 @@
     <Product>KLBotModuleCollection</Product>
     <Description>一个KLBot模块合集</Description>
     <NeutralLanguage>zh-Hans</NeutralLanguage>
-    <AssemblyVersion>0.2.*</AssemblyVersion>
-    <FileVersion>0.1</FileVersion>
+    <AssemblyVersion>0.3.*</AssemblyVersion>
+    <FileVersion>0.3</FileVersion>
     <Deterministic>False</Deterministic>
     <RootNamespace>ModuleCollection</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Xabe.FFmpeg" Version="5.0.2" />
   </ItemGroup>
 
   <ItemGroup>

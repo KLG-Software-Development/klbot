@@ -289,7 +289,7 @@ namespace klbotlib.Modules.CommandModuleNamespace.Commands
                 sb.AppendLine($"模块合集版本: v{mc_version.Major}.{mc_version.Minor}-{mc_version.ToKLGBuildString()}");
             else
                 sb.AppendLine($"模块合集版本: 未注册任何模块合集");
-            sb.AppendLine($"[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
+            sb.AppendLine($"\n[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
             sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
             sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
             sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");

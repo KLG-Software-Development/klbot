@@ -55,9 +55,9 @@ namespace ModuleCollection
             return null;
         }
 
-        private string GetStepByStepUrl(string input, string pod_state)
+        private static string GetStepByStepUrl(string input, string pod_state)
             => $"https://api.wolframalpha.com/v2/query.jsp?appid=6682H9-A87PYX7R9A&input={Uri.EscapeDataString(input)}&podstate={Uri.EscapeDataString(pod_state)}&format=image";
-        private string GetResultUrl(string input)
+        private static string GetResultUrl(string input)
             => $"https://api.wolframalpha.com/v2/query.jsp?appid=6682H9-A87PYX7R9A&input={Uri.EscapeDataString(input)}&format=image";
 
         private bool TryGetResultRoot(string xml, out XmlNode queryresult)
@@ -68,7 +68,7 @@ namespace ModuleCollection
             return queryresult.Attributes["success"].Value == "true";
         }
         //尝试获取primary pod
-        private bool TryGetPrimaryPod(XmlNodeList childs, out XmlNode output)
+        private static bool TryGetPrimaryPod(XmlNodeList childs, out XmlNode output)
         {
             XmlNode first_pod = null;
             output = null;

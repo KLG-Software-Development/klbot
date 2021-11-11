@@ -1039,6 +1039,16 @@
             模块诊断统计信息
             </summary>
         </member>
+        <member name="M:klbotlib.ModuleDiagnosticData.RestartMeasurement">
+            <summary>
+            重新开始处理计时
+            </summary>
+        </member>
+        <member name="M:klbotlib.ModuleDiagnosticData.StopMeasurement">
+            <summary>
+            结束计时并记录处理时间
+            </summary>
+        </member>
         <member name="P:klbotlib.ModuleDiagnosticData.LastProcessTime">
             <summary>
             最后一次处理消息消耗的时间
@@ -1052,16 +1062,6 @@
         <member name="P:klbotlib.ModuleDiagnosticData.LastException">
             <summary>
             最近一次异常的调用栈
-            </summary>
-        </member>
-        <member name="M:klbotlib.ModuleDiagnosticData.RestartMeasurement">
-            <summary>
-            重新开始处理计时
-            </summary>
-        </member>
-        <member name="M:klbotlib.ModuleDiagnosticData.StopMeasurement">
-            <summary>
-            结束计时并记录处理时间
             </summary>
         </member>
         <member name="M:klbotlib.ModuleDiagnosticData.GetSummaryString">

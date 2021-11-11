@@ -7,18 +7,16 @@ namespace klbotlib.Modules
     /// </summary>
     public class 上号Module : SingleTypeModule<MessagePlain>
     {
-#pragma warning disable IDE1006 // 命名样式
         [ModuleStatus(IsHidden = true)]
-        private string LastMsg = "";
+        private string _lastMsg = "";
         [ModuleStatus(IsHidden = true)]
-        private string Last2Msg = "";
+        private string _last2Msg = "";
         [ModuleStatus(IsHidden = true)]
-        private DateTime LastHal = new DateTime();
+        private DateTime _lastHal = new DateTime();
         [ModuleSetup]
-        private readonly TimeSpan CoolDownTime = new TimeSpan(0, 0, 60);
-#pragma warning restore IDE1006 // 命名样式
+        private readonly TimeSpan _coolDownTime = new TimeSpan(0, 0, 60);
 
-        private bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");
+        private static bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");
         /// <summary>
         /// 关闭模块签名
         /// </summary>
@@ -31,18 +29,18 @@ namespace klbotlib.Modules
         {
             string msg_text = msg.Text.Trim();
             string output = null;
-            if (Is上号(msg_text) && !Is上号(LastMsg))
+            if (Is上号(msg_text) && !Is上号(_lastMsg))
                 output = "上号";
-            else if (msg_text.Contains("蛤儿") && DateTime.Now - LastHal > CoolDownTime)
+            else if (msg_text.Contains("蛤儿") && DateTime.Now - _lastHal > _coolDownTime)
             {
                 output = "蛤儿";
                 //刷新冷却时间
-                LastHal = DateTime.Now;
+                _lastHal = DateTime.Now;
             }
-            else if (!Is上号(LastMsg) && msg_text == LastMsg && LastMsg != Last2Msg)
+            else if (!Is上号(_lastMsg) && msg_text == _lastMsg && _lastMsg != _last2Msg)
                 output = "跟风";
-            Last2Msg = LastMsg;
-            LastMsg = msg_text;
+            _last2Msg = _lastMsg;
+            _lastMsg = msg_text;
             return output;
         }
         /// <summary>

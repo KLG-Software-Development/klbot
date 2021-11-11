@@ -30,6 +30,7 @@ start:
                 ? (new(args[0], module_collection: Assembly.GetAssembly(typeof(ImageModule))))
                 : new KLBot(module_collection: Assembly.GetAssembly(typeof(ImageModule)));
             klg.AddModule(new CollapseModule());
+            klg.AddModule(new CompilerModule());
             klg.AddModule(new ImageModule());
             klg.AddModule(new IMGPModule());
             klg.AddModule(new AnonyVoiceModule());

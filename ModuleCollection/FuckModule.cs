@@ -10,12 +10,10 @@ namespace klbotlib.Modules
     public class FuckModule : SingleTypeModule<MessagePlain>
     {
         private readonly RNGCryptoServiceProvider _ro = new RNGCryptoServiceProvider();
-#pragma warning disable IDE1006 // 命名样式
         [ModuleSetup]
-        private readonly Regex pattern;
+        private readonly Regex _pattern;
         [ModuleSetup]
-        private readonly string[] sub, you, v, human, organ, subfix, adj_of_organ, adv, connector, combine, stuff, status;
-#pragma warning restore IDE1006 // 命名样式
+        private readonly string[] _sub, _you, _v, _human, _organ, _subfix, _adjOfOrgan, _adv, _connector, _combine, _stuff, _status;
 
         // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
         [ModuleStatus]
@@ -35,30 +33,30 @@ namespace klbotlib.Modules
             int mode = _ro.Next(20);
             switch (mode)
             {
-                case 0: return Pick(sub) + Pick(v) + Pick(human);//(主)谓宾 (我)操你妈
-                case 1: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(organ);//(主)谓宾连接词器官 (我)操你妈了个比
-                case 2: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ);//(主)谓宾连接词形容词器官 (我)操你妈了个臭比
-                case 3: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ);//(主)谓副宾连接词形容词器官
-                case 4: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + " " + Pick(v) + Pick(human) + "的";
+                case 0: return Pick(_sub) + Pick(_v) + Pick(_human);//(主)谓宾 (我)操你妈
+                case 1: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ);//(主)谓宾连接词器官 (我)操你妈了个比
+                case 2: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ);//(主)谓宾连接词形容词器官 (我)操你妈了个臭比
+                case 3: return Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ);//(主)谓副宾连接词形容词器官
+                case 4: return Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + " " + Pick(_v) + Pick(_human) + "的";
                 //(主)谓副宾连接词形容词器官 谓宾
-                case 5: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(combine) + Pick(stuff);//(主)谓宾连接词称号玩意
-                case 6: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(combine) + Pick(stuff);//(主)谓副宾连接词称号玩意
-                case 7: return Pick(combine) + Pick(stuff);//称号玩意
-                case 8: return Pick(you) + Pick(status) + Pick(combine) + Pick(stuff);//(你)(他妈)称号玩意
-                case 9: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(organ) + Pick(subfix);//(主)谓宾连接词器官
-                case 10: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix);//(主)谓宾连接词形容词器官
-                case 11: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix);//(主)谓副宾连接词形容词器官
-                case 12: return Pick(sub) + Pick(v) + Pick(adv) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix) + Pick(v) + Pick(human) + "的";
+                case 5: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_combine) + Pick(_stuff);//(主)谓宾连接词称号玩意
+                case 6: return Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_combine) + Pick(_stuff);//(主)谓副宾连接词称号玩意
+                case 7: return Pick(_combine) + Pick(_stuff);//称号玩意
+                case 8: return Pick(_you) + Pick(_status) + Pick(_combine) + Pick(_stuff);//(你)(他妈)称号玩意
+                case 9: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ) + Pick(_subfix);//(主)谓宾连接词器官
+                case 10: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix);//(主)谓宾连接词形容词器官
+                case 11: return Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix);//(主)谓副宾连接词形容词器官
+                case 12: return Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix) + Pick(_v) + Pick(_human) + "的";
                 //(主)谓副宾连接词形容词器官谓宾
-                case 13: return Pick(human) + Pick(connector) + Pick(organ);//宾连接词器官
-                case 14: return Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ);//宾连接词形容词器官
-                case 15: return Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(v) + Pick(human) + "的";
+                case 13: return Pick(_human) + Pick(_connector) + Pick(_organ);//宾连接词器官
+                case 14: return Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ);//宾连接词形容词器官
+                case 15: return Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_v) + Pick(_human) + "的";
                 //谓副宾连接词形容词器官谓宾
-                case 16: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(combine) + Pick(stuff);//(主)谓宾连接词称号玩意
-                case 17: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(organ) + Pick(subfix);//谓宾连接词器官
-                case 18: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix);//谓宾连接词形容词器官
-                case 19: return Pick(sub) + Pick(v) + Pick(human) + Pick(connector) + Pick(adj_of_organ) + Pick(organ) + Pick(subfix) + " " + Pick(v) + Pick(human) + "的";
-                    //主谓副宾连接词形容词器官谓宾
+                case 16: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_combine) + Pick(_stuff);//(主)谓宾连接词称号玩意
+                case 17: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ) + Pick(_subfix);//谓宾连接词器官
+                case 18: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix);//谓宾连接词形容词器官
+                case 19: return Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix) + " " + Pick(_v) + Pick(_human) + "的";
+                //主谓副宾连接词形容词器官谓宾
             }
             return "操你妈的";
         }
@@ -81,7 +79,7 @@ namespace klbotlib.Modules
         public sealed override string FriendlyName => "嘴臭模块";
         public sealed override string Filter(MessagePlain msg)
         {
-            return pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfID)) 
+            return _pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfID)) 
                 ? "ok" 
                 : null;
         }

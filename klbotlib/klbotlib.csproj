@@ -22,6 +22,7 @@
     <NeutralLanguage>zh-Hans</NeutralLanguage>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

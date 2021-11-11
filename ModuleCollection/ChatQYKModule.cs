@@ -1,5 +1,4 @@
-﻿using klbotlib.Modules.ChatQYKModuleNamespace;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net;
@@ -24,17 +23,14 @@ namespace klbotlib.Modules
             string jreply = _client.DownloadString(host);
             return JsonConvert.DeserializeObject<ChatterBotReply>(jreply).FormattedContent();
         }
-    }
-}
 
-namespace klbotlib.Modules.ChatQYKModuleNamespace
-{
-    internal class ChatterBotReply
-    {
-        public int result;
-        public string content;
-        public static Regex trashPat = new Regex(@"{r\+}");
-        public static Regex facePat = new Regex(@"{face:[\d]+}");
-        public string FormattedContent() => trashPat.Replace(facePat.Replace(content.Replace("{br}", "\r\n"), ""), "");
+        private class ChatterBotReply
+        {
+            public int result;
+            public string content;
+            public static Regex trashPat = new Regex(@"{r\+}");
+            public static Regex facePat = new Regex(@"{face:[\d]+}");
+            public string FormattedContent() => trashPat.Replace(facePat.Replace(content.Replace("{br}", "\r\n"), ""), "");
+        }
     }
 }

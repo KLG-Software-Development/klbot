@@ -12,10 +12,8 @@ namespace klbotlib.Modules
         /// <inheritdoc/>
         public sealed override bool IsTransparent => true;
 
-#pragma warning disable IDE1006
         [ModuleStatus]
-        private int TimeZone = 8; //默认是UTC+8
-#pragma warning restore IDE1006
+        private int _timeZone = 8; //默认是UTC+8
 
         /// <inheritdoc/>
         public override string Filter(MessagePlain msg)
@@ -33,12 +31,12 @@ namespace klbotlib.Modules
             switch (filter_out)
             {
                 case "报时":
-                    return DateTime.UtcNow.AddHours(TimeZone).ToString() + @"{\face:大哭}";
+                    return DateTime.UtcNow.AddHours(_timeZone).ToString() + @"{\face:大哭}";
                 case "设置时区":
                     if (int.TryParse(msg.Text.Substring(5), out int result))
                     {
-                        TimeZone = result;
-                        return $"时区已设置为UTC{TimeZone:+#;-#;#}";
+                        _timeZone = result;
+                        return $"时区已设置为UTC{_timeZone:+#;-#;#}";
                     }
                     else
                         return $"错误：你输了什么狗屁东西？";

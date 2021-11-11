@@ -1,6 +1,4 @@
-﻿#pragma warning disable IDE0044 // 添加只读修饰符
-using klbotlib.Extensions;
-using klbotlib.Modules.ImageModuleNamespace;
+﻿using klbotlib.Extensions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -19,18 +17,16 @@ namespace klbotlib.Modules
         private readonly WebClient _client = new WebClient();
         private readonly Stopwatch _sw = new Stopwatch();
 
-#pragma warning disable IDE1006 // 命名样式
         [ModuleStatus(IsHidden = true)]
-        private readonly Dictionary<string, int> ListNumCache = new Dictionary<string, int>();  //缓存每个搜索词的结果数量
+        private readonly Dictionary<string, int> _listNumCache = new Dictionary<string, int>();  //缓存每个搜索词的结果数量
         [ModuleStatus]
-        private int CacheCount = 0;
+        private int _cacheCount = 0;
         [ModuleStatus]
-        private string LastDownloadTime = "N/A";
+        private string _lastDownloadTime = "N/A";
         [ModuleStatus]
-        private string LastParseTime = "N/A";
+        private string _lastParseTime = "N/A";
         [ModuleStatus]
         public int Fraction = 50;   //只在前n%的结果内随机
-#pragma warning restore IDE1006 // 命名样式
         public sealed override bool UseSignature => false;
         public sealed override string FriendlyName => "搜图模块";
         public sealed override string HelpInfo => "发送“[关键词]图来”或“来点[关键词]图”，在百度图片中搜索相关图片";
@@ -85,10 +81,10 @@ namespace klbotlib.Modules
             //每次都使用上一次缓存的list_num（如果存在）
             bool is_cached = false;
             int list_num = 0;
-            if (ListNumCache.ContainsKey(word))
+            if (_listNumCache.ContainsKey(word))
             {
                 is_cached = true;
-                list_num = ListNumCache[word];
+                list_num = _listNumCache[word];
                 if (list_num == 0)
                     goto not_found; //缓存的值为0，意味着无结果
             }
@@ -101,14 +97,14 @@ namespace klbotlib.Modules
             //更新字典
             if (!is_cached)
             {
-                ListNumCache.Add(word, result.listNum);
-                CacheCount++;
+                _listNumCache.Add(word, result.listNum);
+                _cacheCount++;
             }
             else
-                ListNumCache[word] = result.listNum;
+                _listNumCache[word] = result.listNum;
             url = result.data[_ro.Next(result.data.Length)].middleURL;
             _sw.Stop();
-            LastParseTime = _sw.Elapsed.ToMsString();
+            _lastParseTime = _sw.Elapsed.ToMsString();
             if (string.IsNullOrEmpty(url))
                 goto not_found;
             else
@@ -125,13 +121,11 @@ not_found:
             _client.QueryString.Add("word", word);
             _client.QueryString.Add("pn", pn.ToString());
             _sw.Stop();
-            LastDownloadTime = _sw.Elapsed.ToMsString();
+            _lastDownloadTime = _sw.Elapsed.ToMsString();
             return _client.DownloadString("https://image.baidu.com/search/acjson");
         }
+
+        private class JResult { public int listNum; public JImage[] data; }
+        private class JImage { public string middleURL; }
     }
-}
-namespace klbotlib.Modules.ImageModuleNamespace
-{
-    class JResult { public int listNum; public JImage[] data; }
-    class JImage { public string middleURL; }
 }
