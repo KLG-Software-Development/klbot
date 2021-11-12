@@ -54,6 +54,7 @@ namespace ModuleCollection
                     if (fileExt == null)
                         return $"不支持语言\"{language}\"";
                     string response = _httpHelper.PostString(_urlA, BuildPostBody(language, fileExt, code));
+                    ModulePrint($"Response: {response}");
                     JReply jreply = JsonConvert.DeserializeObject<JReply>(response);
                     _sb.Clear();
                     if (!string.IsNullOrWhiteSpace(jreply.errors))
