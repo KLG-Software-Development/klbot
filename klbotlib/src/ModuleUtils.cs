@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ImgEncoder = System.Drawing.Imaging.Encoder;
 
@@ -15,101 +19,113 @@ namespace klbotlib.Modules.ModuleUtils
     /// </summary>
     public class HttpHelper
     {
+        private CancellationToken _cancellationToken = new CancellationToken();
+        private HttpClient _client = new();
         /// <summary>
-        /// 进行所有请求时的超时时间（秒）。默认为30。
+        /// 进行所有请求时的超时时间（秒）。默认为15。
         /// </summary>
-        public int Timeout { get; set; } = 30;
+        public int Timeout 
+        {
+            get => _client.Timeout.Milliseconds;
+            set
+            {
+                lock (_client)
+                    _client.Timeout = new TimeSpan(0, 0, 0, value, 0);
+            } 
+        }
         /// <summary>
         /// 进行所有请求时使用的UA标识
         /// </summary>
-        public string UA { get; set; } = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0";
+        public string UA 
+        { 
+            get => _client.DefaultRequestHeaders.UserAgent.First().ToString(); 
+            set 
+            {
+                lock (_client)
+                {
+                    _client.DefaultRequestHeaders.UserAgent.Clear();
+                    if (!_client.DefaultRequestHeaders.UserAgent.TryParseAdd(value))
+                        Console.WriteLine($"警告: 设置UA标识为\"{value}\"失败。UA标识未改变");
+                }
+            } 
+        }
         /// <summary>
         /// 进行所有请求时使用的ContentType
         /// </summary>
-        public string ContentType { get; set; } = "application/x-www-form-urlencoded";
+        public string ContentType { get; set; }
         /// <summary>
         /// 进行所有请求时使用的编码
         /// </summary>
-        public Encoding Encoding { get; set; } = Encoding.UTF8;
+        public string ContentEncoding 
+        { 
+            get => _client.DefaultRequestHeaders.AcceptEncoding.First().ToString();
+            set
+            {
+                lock (_client)
+                {
+                    _client.DefaultRequestHeaders.AcceptEncoding.Clear();
+                    if (!_client.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(value))
+                        Console.WriteLine($"警告: 设置编码为\"{value}\"失败。编码未改变");
+                }
+            }
+        }
         /// <summary>
         /// 其他自定义Header
         /// </summary>
         public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
         /// <summary>
+        /// 创建新的HttpHelper对象
+        /// </summary>
+        /// <param name="timeout">超时(毫秒)</param>
+        /// <param name="ua">UA标识</param>
+        /// <param name="contentType">默认ContentType</param>
+        public HttpHelper(int timeout = 15, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0", string contentType = "application/x-www-form-urlencoded")
+        {
+            Timeout = timeout;
+            UA = ua;
+            ContentType = contentType;
+        }
+
+        /// <summary>
+        /// 从指定地址GET字节数组
+        /// </summary>
+        /// <param name="url">地址</param>
+        public async Task<byte[]> GetBytesAsync(string url)
+        {
+            foreach (var kvp in Headers)
+            {
+                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
+            }
+            return await _client.GetByteArrayAsync(url, _cancellationToken);
+        }
+        /// <summary>
         /// 从指定地址GET一条字符串
         /// </summary>
         /// <param name="url">地址</param>
-        public string GetString(string url)
+        public async Task<string> GetStringAsync(string url)
         {
-            HttpWebRequest request = WebRequest.CreateHttp(url);
-            request.Method = "GET";
-            request.UserAgent = UA;
-            request.ContentType = ContentType;
             foreach (var kvp in Headers)
             {
-                request.Headers.Add(kvp.Key, kvp.Value);
+                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            using (var stream = request.GetResponse().GetResponseStream())
-            {
-                StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                return reader.ReadToEnd();
-            }
+            return await _client.GetStringAsync(url, _cancellationToken);
         }
         /// <summary>
         /// 向指定地址POST一条字符串
         /// </summary>
         /// <param name="url">地址</param>
         /// <param name="body">内容</param>
-        public string PostString(string url, string body)
-        {
-            HttpWebRequest request = WebRequest.CreateHttp(url);
-            request.Method = "POST";
-            request.UserAgent = UA;
-            request.ContentType = ContentType;
-            foreach (var kvp in Headers)
-            {
-                request.Headers.Add(kvp.Key, kvp.Value);
-            }
-            using (var stream = request.GetRequestStream())
-            {
-                byte[] data = Encoding.GetBytes(body);
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-            }
-            using (var stream = request.GetResponse().GetResponseStream())
-            {
-                StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                return reader.ReadToEnd();
-            }
-        }
-        /// <summary>
-        /// 向指定地址POST一条字符串 (异步版)
-        /// </summary>
-        /// <param name="url">地址</param>
-        /// <param name="body">内容</param>
-        /// <returns></returns>
         public async Task<string> PostStringAsync(string url, string body)
         {
-            HttpWebRequest request = WebRequest.CreateHttp(url);
-            request.Method = "POST";
-            request.UserAgent = UA;
-            request.ContentType = ContentType;
-            request.Timeout = Timeout;
             foreach (var kvp in Headers)
             {
-                request.Headers.Add(kvp.Key, kvp.Value);
+                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            using (var stream = await request.GetRequestStreamAsync())
-            {
-                byte[] data = Encoding.GetBytes(body);
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-            }
-            using (var stream = request.GetResponse().GetResponseStream())
-            {
-                StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                return reader.ReadToEnd();
-            }
+            StringContent content = new StringContent(body, System.Text.Encoding.GetEncoding(ContentEncoding));
+            return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
     }
     /// <summary>
@@ -117,7 +133,7 @@ namespace klbotlib.Modules.ModuleUtils
     /// </summary>
     public class ImageHelper
     {
-        private WebClient _client = new WebClient();
+        private HttpClient _client = new();
 
         /// <summary>
         /// 下载一张图片，并解析为Bitmap对象。默认使用伪装的Firefox UserAgent
@@ -127,7 +143,13 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="ua">下载时使用的UserAgent</param>
         public Bitmap DownloadImage(string url, out int size, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
         {
-            byte[] bin = _client.DownloadData(url);
+            byte[] bin;
+            lock (_client)
+            {
+                _client.DefaultRequestHeaders.UserAgent.Clear();
+                _client.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
+                bin = _client.GetByteArrayAsync(url).Result;
+            }
             size = bin.Length;
             using (var ms = new MemoryStream(bin))
             {
@@ -140,7 +162,13 @@ namespace klbotlib.Modules.ModuleUtils
         /// 下载图片为Base64字符串
         /// </summary>
         /// <param name="url">图像地址</param>
-        public string DownloadAsBase64(string url) => Convert.ToBase64String(_client.DownloadData(url));
+        public string DownloadAsBase64(string url)
+        {
+            lock (_client)
+            {
+                return Convert.ToBase64String(_client.GetByteArrayAsync(url).Result);
+            }
+        } 
         /// <summary>
         /// 缩放一张图片到指定分辨率
         /// </summary>

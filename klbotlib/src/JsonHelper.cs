@@ -60,6 +60,8 @@ namespace klbotlib.Json
                 => "{\"type\":\"Image\",\"" + key + "\":\"" + HttpUtility.JavaScriptStringEncode(value) + "\"}";
             internal static string BuildVoiceElement(string key, string value)
                 => "{\"type\":\"Voice\",\"" + key + "\":\"" + HttpUtility.JavaScriptStringEncode(value) + "\"}";
+            internal static string BuildFileElement(string key, string value)
+                => "{\"type\":\"File\",\"" + key + "\":\"" + HttpUtility.JavaScriptStringEncode(value) + "\",\"size:0\",\"name\":\"fuck.txt\"}";
         }
     }
 

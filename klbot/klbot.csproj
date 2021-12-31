@@ -2,7 +2,7 @@
   
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyVersion>1.6.*</AssemblyVersion>
     <FileVersion>1.6</FileVersion>
@@ -11,20 +11,34 @@
     <Authors>Deleeete</Authors>
     <Company>KLG Science</Company>
     <Version>1.6</Version>
-    <Platforms>AnyCPU;ARM32;x64</Platforms>
+    <Platforms>AnyCPU;ARM64;x64</Platforms>
     <Configurations>Debug;Release;Ref_Only</Configurations>
     <PackageId>KLG.PaleMutant</PackageId>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <TieredCompilation>True</TieredCompilation>
+    <NeutralLanguage>zh-CN</NeutralLanguage>
   </PropertyGroup>
-  
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|AnyCPU'">
     <Optimize>True</Optimize>
   </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|ARM32'">
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|ARM64'">
     <Optimize>True</Optimize>
   </PropertyGroup>
-  
+    
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|x64'">
     <Optimize>True</Optimize>
   </PropertyGroup>
@@ -39,6 +53,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ModuleCollection\ModuleCollection.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_UseGlobalSettings="True" /></VisualStudio></ProjectExtensions>

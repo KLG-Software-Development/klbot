@@ -43,4 +43,8 @@ namespace klbotlib.Exceptions
     {
         public MsgMarkerException(string msg) : base($"MsgMarker文本解析异常：{msg}") { }
     }
+    internal class MiraiException : Exception
+    {
+        public MiraiException(int code, string msg) : base($"Mirai服务器错误[{code}]：{msg}") { }
+    }
 }

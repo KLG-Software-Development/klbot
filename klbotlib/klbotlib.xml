@@ -139,7 +139,7 @@
             模块打印消息到控制台的标准方法
             </summary>
             <param name="message">模块要打印消息的内容</param>
-            <param name="msg_type">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
+            <param name="msgType">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
             <param name="prefix">要在消息类型标识前附上的内容</param>
         </member>
         <member name="M:klbotlib.Modules.Module.TrySetFieldAndProperty``1(System.String,``0)">
@@ -184,7 +184,7 @@
             处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
             </summary>
             <param name="msg">待处理消息</param>
-            <param name="filter_out">消息经过过滤器时的输出</param>
+            <param name="filterOut">消息经过过滤器时的输出</param>
             <returns>用字符串表示的处理结果</returns>
         </member>
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(klbotlib.Message)">
@@ -275,7 +275,7 @@
         </member>
         <member name="P:klbotlib.Modules.ModuleUtils.HttpHelper.Timeout">
             <summary>
-            进行所有请求时的超时时间（秒）。默认为30。
+            进行所有请求时的超时时间（秒）。默认为15。
             </summary>
         </member>
         <member name="P:klbotlib.Modules.ModuleUtils.HttpHelper.UA">
@@ -288,7 +288,7 @@
             进行所有请求时使用的ContentType
             </summary>
         </member>
-        <member name="P:klbotlib.Modules.ModuleUtils.HttpHelper.Encoding">
+        <member name="P:klbotlib.Modules.ModuleUtils.HttpHelper.ContentEncoding">
             <summary>
             进行所有请求时使用的编码
             </summary>
@@ -298,26 +298,32 @@
             其他自定义Header
             </summary>
         </member>
-        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.GetString(System.String)">
+        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.#ctor(System.Int32,System.String,System.String)">
+            <summary>
+            创建新的HttpHelper对象
+            </summary>
+            <param name="timeout">超时(毫秒)</param>
+            <param name="ua">UA标识</param>
+            <param name="contentType">默认ContentType</param>
+        </member>
+        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.GetBytesAsync(System.String)">
+            <summary>
+            从指定地址GET字节数组
+            </summary>
+            <param name="url">地址</param>
+        </member>
+        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.GetStringAsync(System.String)">
             <summary>
             从指定地址GET一条字符串
             </summary>
             <param name="url">地址</param>
         </member>
-        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.PostString(System.String,System.String)">
+        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.PostStringAsync(System.String,System.String)">
             <summary>
             向指定地址POST一条字符串
             </summary>
             <param name="url">地址</param>
             <param name="body">内容</param>
-        </member>
-        <member name="M:klbotlib.Modules.ModuleUtils.HttpHelper.PostStringAsync(System.String,System.String)">
-            <summary>
-            向指定地址POST一条字符串 (异步版)
-            </summary>
-            <param name="url">地址</param>
-            <param name="body">内容</param>
-            <returns></returns>
         </member>
         <member name="T:klbotlib.Modules.ModuleUtils.ImageHelper">
             <summary>
@@ -390,18 +396,6 @@
             </summary>
             <param name="version">版本号</param>
             <returns>KLG标准的Build编号</returns>
-        </member>
-        <member name="M:klbotlib.Extensions.DictionaryExtension.Serialize(System.Collections.Generic.Dictionary{System.String,System.Object})">
-            <summary>
-            将字符串字典序列化为二进制
-            </summary>
-            <param name="dict">待序列化字典</param>
-        </member>
-        <member name="M:klbotlib.Extensions.DictionaryExtension.Deserialize(System.Byte[])">
-            <summary>
-            将二进制反序列化为字典
-            </summary>
-            <param name="bin">待反序列化字节数组</param>
         </member>
         <member name="M:klbotlib.Extensions.UnitStringExtension.ToMemorySizeString(System.Int64,System.Int32)">
             <summary>
@@ -569,6 +563,15 @@
             <param name="user_id">目标用户ID</param>
             <param name="content">MsgMarker文本</param>
         </member>
+        <member name="M:klbotlib.IMessagingAPI.UploadFile(klbotlib.MessageContext,System.Int64,System.String,System.String)">
+            <summary>
+            上传文件接口
+            </summary>
+            <param name="context">上传文件的上下文</param>
+            <param name="target">目标ID</param>
+            <param name="uploadPath">上传路径</param>
+            <param name="filePath">文件本地路径</param>
+        </member>
         <member name="T:klbotlib.IModuleAccessAPI">
             <summary>
             模块访问API
@@ -727,8 +730,8 @@
             </summary>
             <param name="module">编译MsgMarker时使用的模块</param>
             <param name="context">发送的消息上下文类型</param>
-            <param name="user_id">用户ID</param>
-            <param name="group_id">群组ID</param>
+            <param name="userId">用户ID</param>
+            <param name="groupId">群组ID</param>
             <param name="content">待编译MsgMarker文本</param>
         </member>
         <member name="M:klbotlib.KLBot.ReplyMessage(klbotlib.Modules.Module,klbotlib.Message,System.String)">
@@ -736,7 +739,7 @@
             回复消息接口
             </summary>
             <param name="module">调用模块</param>
-            <param name="origin_msg">待回复的原始消息</param>
+            <param name="originMsg">待回复的原始消息</param>
             <param name="content">回复内容</param>
         </member>
         <member name="M:klbotlib.KLBot.SendGroupMessage(klbotlib.Modules.Module,System.Int64,System.String)">
@@ -744,7 +747,7 @@
             发送群消息接口
             </summary>
             <param name="module">编译MsgMarker时使用的模块</param>
-            <param name="group_id">目标群组ID</param>
+            <param name="groupId">目标群组ID</param>
             <param name="content">MsgMarker文本</param>
         </member>
         <member name="M:klbotlib.KLBot.SendGroupMessage(klbotlib.Modules.Module,System.Int64,System.Int64,System.String)">
@@ -752,8 +755,8 @@
             发送临时消息接口
             </summary>
             <param name="module">编译MsgMarker时使用的模块</param>
-            <param name="user_id">目标用户ID</param>
-            <param name="group_id">通过的群组的ID</param>
+            <param name="userId">目标用户ID</param>
+            <param name="groupId">通过的群组的ID</param>
             <param name="content">MsgMarker文本</param>
         </member>
         <member name="M:klbotlib.KLBot.SendPrivateMessage(klbotlib.Modules.Module,System.Int64,System.String)">
@@ -761,8 +764,17 @@
             发送私聊消息接口
             </summary>
             <param name="module">编译MsgMarker时使用的模块</param>
-            <param name="user_id">目标用户ID</param>
+            <param name="userId">目标用户ID</param>
             <param name="content">MsgMarker文本</param>
+        </member>
+        <member name="M:klbotlib.KLBot.UploadFile(klbotlib.Modules.Module,System.Int64,System.String,System.String)">
+            <summary>
+            上传群文件接口
+            </summary>
+            <param name="module">模块</param>
+            <param name="groupId">群聊ID</param>
+            <param name="uploadPath">上传的目标路径</param>
+            <param name="filePath">文件相对于模块私有目录的本地路径</param>
         </member>
         <member name="M:klbotlib.KLBot.ObjectPrint(System.Object,System.String,Gleee.Consoleee.ConsoleMessageType,System.String)">
             <summary>
@@ -778,7 +790,15 @@
             发送给定消息.
             </summary>
             <param name="context">指定发送的上下文</param>
-            <param name="full_msg_json">回复消息json</param>
+            <param name="fullMsgJson">回复消息json</param>
+        </member>
+        <member name="M:klbotlib.KLBot.TryUploadFile(klbotlib.MessageContext,System.IO.FileStream,System.Net.Http.MultipartFormDataContent)">
+            <summary>
+            发送给定消息.
+            </summary>
+            <param name="context">指定发送的上下文</param>
+            <param name="fs">上传文件的文件流对象multipart</param>
+            <param name="fullContent">上传文件的multipart</param>
         </member>
         <member name="M:klbotlib.KLBot.GetMessageListFromJSON(System.Func{System.String},System.Boolean)">
             <summary>
@@ -809,7 +829,7 @@
             用processor依次处理消息列表。返回非空消息的个数
             </summary>
             <param name="msgs">待处理消息列表</param>
-            <param name="main_processor">消息处理函数</param>
+            <param name="mainProcessor">消息处理函数</param>
             <returns>已处理的消息数量</returns>
         </member>
         <member name="M:klbotlib.KLBot.DefaultLoop">
@@ -841,6 +861,16 @@
             <summary>
             返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
             </summary>
+        </member>
+        <member name="M:klbotlib.KLBot.CheckNetworkTaskResult(System.Exception,klbotlib.Modules.Module,System.Int64,System.Int64,klbotlib.MessageContext)">
+            <summary>
+            检查上一个发送任务是否正确完成，若失败则根据异常决定是否尝试使机器人发送错误消息
+            </summary>
+            <param name="exception">发送任务最终的返回值。为空时无异常</param>
+            <param name="module">发送的模块</param>
+            <param name="userId">用户ID</param>
+            <param name="groupId">群组ID</param>
+            <param name="context">消息上下文</param>
         </member>
         <member name="T:klbotlib.KLBotDiagnosticData">
             <summary>
