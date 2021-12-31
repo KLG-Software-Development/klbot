@@ -271,6 +271,11 @@ namespace klbotlib.Modules
             => HostBot.SendMessage(this, MessageContext.Group, user_id, group_id, content);
         void IMessagingAPI.SendPrivateMessage(long user_id, string content)
             => HostBot.SendMessage(this, MessageContext.Group, user_id, -1, content);
+        [Obsolete]
+        void IMessagingAPI.UploadFile(MessageContext context, long groupID, string uploadPath, string filePath)
+        {
+            HostBot.UploadFile(this, groupID, uploadPath, filePath);
+        }
         /// <summary>
         /// 返回当前模块的缓存目录绝对路径
         /// </summary>
@@ -297,25 +302,26 @@ namespace klbotlib.Modules
         {
             if (!Enabled)
                 return false;
-            string filter_out = null;
+            string filterOut = null;
             try
             {
-                filter_out = Filter(msg);
+                filterOut = Filter(msg);
             }
             catch (Exception ex)    //过滤器存在问题
             {
                 throw new ModuleException(this, $"模块过滤器产生异常：{ex.Message}");
             }
-            if (string.IsNullOrEmpty(filter_out))
+            if (string.IsNullOrEmpty(filterOut))    //过滤器输出空，表示不处理
                 return false;
-            if (IsAsync)
-                Task.Run(() => ProcessMessage(msg, filter_out));
+            //这里模块内异步过于简单粗暴。框架需要对每个任务提供跟踪功能
+            if (IsAsync)    //模块启用内部异步 则同一模块每条消息也放在Task内处理
+                Task.Run(() => ProcessMessage(msg, filterOut));
             else
             {
                 if (!_processWorker.IsCompleted)
-                    _processWorker.ContinueWith(x => ProcessMessage(msg, filter_out));    //若未完成 则排队
+                    _processWorker.ContinueWith(x => ProcessMessage(msg, filterOut));    //若未完成 则排队
                 else
-                    _processWorker = Task.Run(() => ProcessMessage(msg, filter_out));      //已完成则取而代之直接开始
+                    _processWorker = Task.Run(() => ProcessMessage(msg, filterOut));      //已完成 则取而代之直接开始
             }
             return true;
         }

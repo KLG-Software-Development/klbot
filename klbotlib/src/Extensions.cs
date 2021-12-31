@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using System.Text;
 using System.Xml;
 
 namespace klbotlib.Extensions
@@ -26,38 +27,10 @@ namespace klbotlib.Extensions
         }
     }
 #pragma warning disable CS1591
-    public static class DictionaryExtension
-    {
-        /// <summary>
-        /// 将字符串字典序列化为二进制
-        /// </summary>
-        /// <param name="dict">待序列化字典</param>
-        public static byte[] Serialize(this Dictionary<string, object> dict)
-        {
-            var formatter = new BinaryFormatter();
-            using (MemoryStream stream = new MemoryStream())
-            {
-                formatter.Serialize(stream, dict);
-                return stream.ToArray();
-            }
-        }
-        /// <summary>
-        /// 将二进制反序列化为字典
-        /// </summary>
-        /// <param name="bin">待反序列化字节数组</param>
-        public static Dictionary<string, object> Deserialize(this byte[] bin)
-        {
-            var formatter = new BinaryFormatter();
-            using (MemoryStream stream = new MemoryStream(bin))
-            {
-                return (Dictionary<string, object>)formatter.Deserialize(stream);
-            }
-        }
-    }
     public static class UnitStringExtension
     {
         //Long bytes -> memory unit
-        private static readonly string[] mem_units = new string[] { "B", "KB", "MB", "GB" }; 
+        private static readonly string[] _memUnits = new string[] { "B", "KB", "MB", "GB" }; 
         /// <summary>
         /// 将字节数自动转换为合适数据单位的字符串
         /// </summary>
@@ -67,12 +40,12 @@ namespace klbotlib.Extensions
         {
             int unit_index = 0;
             double value = byte_count;
-            while (value > 1024f && unit_index < mem_units.Length)
+            while (value > 1024f && unit_index < _memUnits.Length)
             {
                 unit_index++;
                 value /= 1024f;
             }
-            return value.ToString($"f{decimals}") + mem_units[unit_index];
+            return value.ToString($"f{decimals}") + _memUnits[unit_index];
         }
         /// <summary>
         /// 将字节数自动转换为合适数据单位的字符串
@@ -83,12 +56,12 @@ namespace klbotlib.Extensions
         {
             int unit_index = 0;
             double value = byte_count;
-            while (value > 1024f && unit_index < mem_units.Length)
+            while (value > 1024f && unit_index < _memUnits.Length)
             {
                 unit_index++;
                 value /= 1024f;
             }
-            return value.ToString($"f{decimals}") + mem_units[unit_index];
+            return value.ToString($"f{decimals}") + _memUnits[unit_index];
         }
 
         //double/long ms -> time unit
@@ -199,28 +172,6 @@ namespace klbotlib.Extensions
     {
         public static string ToMsString(this TimeSpan time_span, int decimals = 4) => time_span.TotalMilliseconds.ToString("f" + decimals) + "ms";
     }
-    public static class CryptoExtension
-    {
-        public static int Next(this RNGCryptoServiceProvider ro)
-        {
-            byte[] buffer = new byte[4];
-            ro.GetBytes(buffer);
-            return BitConverter.ToInt32(buffer, 0);
-        }
-        public static int Next(this RNGCryptoServiceProvider ro, int max)
-        {
-            byte[] buffer = new byte[4];
-            ro.GetBytes(buffer);
-            int i = BitConverter.ToInt32(buffer, 0);
-            return i > 0 ? i % max : -i % max;
-        }
-        public static int Next(this RNGCryptoServiceProvider ro, int min, int max)
-        {
-            byte[] buffer = new byte[4];
-            ro.GetBytes(buffer);
-            return BitConverter.ToInt32(buffer, 0) % max + min;
-        }
-    }
     public static class StringExtension
     {
         /// <summary>
@@ -252,6 +203,22 @@ namespace klbotlib.Extensions
             }
             output = null;
             return false;
+        }
+    }
+    public static class ByteArrayExtension
+    {
+        private static readonly StringBuilder _sb = new StringBuilder();
+        public static string ToHexString(this byte[] buffer)
+        {
+            lock (_sb)
+            {
+                _sb.Clear();
+                foreach (byte b in buffer)
+                {
+                    _sb.Append(b.ToString("x2"));
+                }
+                return _sb.ToString();
+            }
         }
     }
 #pragma warning restore CS1591 

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -25,7 +26,7 @@ namespace klbotlib
     {
         private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
-        private Task<bool> _networkTask;
+        private Task<Exception> _networkTask;
         private CmdLoopStatus _cmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
 
         /// <summary>
@@ -77,7 +78,7 @@ namespace klbotlib
         private KLBot(string config_path)
         {
             _isBooting = true;
-            _networkTask = Task<bool>.Run(() => true);
+            _networkTask = Task<Exception>.Run(() => (Exception)null);
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _console.WriteLn($"正在从\"{config_path}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
             try
@@ -85,7 +86,7 @@ namespace klbotlib
                 if (!File.Exists(config_path))
                 {
                     _console.WriteLn($"KLBot配置文件{config_path}不存在", ConsoleMessageType.Error);
-                    throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件不存在");
+                    throw new KLBotInitializationException($"KLBot初始化失败：KLBot配置文件{config_path}不存在");
                 }
                 JKLBotConfig Config = JsonConvert.DeserializeObject<JKLBotConfig>(File.ReadAllText(config_path));
                 if (Config.HasNull(out string field_name))
@@ -191,55 +192,55 @@ namespace klbotlib
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="context">发送的消息上下文类型</param>
-        /// <param name="user_id">用户ID</param>
-        /// <param name="group_id">群组ID</param>
+        /// <param name="userId">用户ID</param>
+        /// <param name="groupId">群组ID</param>
         /// <param name="content">待编译MsgMarker文本</param>
-        internal void SendMessage(Module module, MessageContext context, long user_id, long group_id, string content)
+        internal void SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
         {
             //编译MsgMarker文本到json消息链
-            string chain_json;
+            string chainJson;
             try
             {
-                chain_json = MsgMarker.CompileMessageChainJson(content);
+                chainJson = MsgMarker.CompileMessageChainJson(content);
             }
             catch (Exception ex)
             {
                 DiagData.LastException = ex;
-                chain_json = JsonHelper.MessageElementBuilder.BuildPlainElement($"{module.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
+                chainJson = JsonHelper.MessageElementBuilder.BuildPlainElement($"{module.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
             }
             //创建完整JSON字符串
-            string full_json = JsonHelper.MessageJsonBuilder.BuildMessageJson(user_id, group_id, context, chain_json);
+            string fullJson = JsonHelper.MessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
             //发送
-            if (!_networkTask.IsCompleted)
+            if (_networkTask.IsCompleted)
             {
-                _networkTask.ContinueWith((x) =>
-                {
-                    CheckNetworkTaskResult(x.Result);
-                    TrySendMessage(context, full_json);
-                });
+                _networkTask = Task.Run(() => TrySendMessage(context, fullJson));
+                _networkTask.ContinueWith(x => CheckNetworkTaskResult(x.Result, module, userId, groupId, context));
             }
             else
             {
-                _networkTask = Task.Run(() => TrySendMessage(context, full_json));
-                _networkTask.ContinueWith(x => CheckNetworkTaskResult(x.Result));
+                _networkTask.ContinueWith((x) =>
+                {
+                    CheckNetworkTaskResult(x.Result, module, userId, groupId, context);   //检查上一条消息的完成结果 若有问题打印相关信息
+                    TrySendMessage(context, fullJson);  //尝试发送下一条消息
+                });
             }
         }
         /// <summary>
         /// 回复消息接口
         /// </summary>
         /// <param name="module">调用模块</param>
-        /// <param name="origin_msg">待回复的原始消息</param>
+        /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        internal void ReplyMessage(Module module, Message origin_msg, string content)
+        internal void ReplyMessage(Module module, Message originMsg, string content)
         {
-            switch (origin_msg.Context)
+            switch (originMsg.Context)
             {
                 case MessageContext.Group:
-                    SendMessage(module, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
+                    SendMessage(module, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
                     break;
                 case MessageContext.Temp:
                 case MessageContext.Private:
-                    SendMessage(module, origin_msg.Context, origin_msg.SenderID, origin_msg.GroupID, content);
+                    SendMessage(module, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
                     break;
             }
         }
@@ -247,28 +248,62 @@ namespace klbotlib
         /// 发送群消息接口
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
-        /// <param name="group_id">目标群组ID</param>
+        /// <param name="groupId">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendGroupMessage(Module module, long group_id, string content)
-            => SendMessage(module, MessageContext.Group, -1, group_id, content);
+        internal void SendGroupMessage(Module module, long groupId, string content)
+            => SendMessage(module, MessageContext.Group, -1, groupId, content);
         /// <summary>
         /// 发送临时消息接口
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
-        /// <param name="user_id">目标用户ID</param>
-        /// <param name="group_id">通过的群组的ID</param>
+        /// <param name="userId">目标用户ID</param>
+        /// <param name="groupId">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendGroupMessage(Module module, long user_id, long group_id, string content)
-            => SendMessage(module, MessageContext.Group, user_id, group_id, content);
+        internal void SendGroupMessage(Module module, long userId, long groupId, string content)
+            => SendMessage(module, MessageContext.Group, userId, groupId, content);
         /// <summary>
         /// 发送私聊消息接口
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
-        /// <param name="user_id">目标用户ID</param>
+        /// <param name="userId">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendPrivateMessage(Module module, long user_id, string content)
-            => SendMessage(module, MessageContext.Group,  user_id, -1, content);
-
+        internal void SendPrivateMessage(Module module, long userId, string content)
+            => SendMessage(module, MessageContext.Group,  userId, -1, content);
+        /// <summary>
+        /// 上传群文件接口
+        /// </summary>
+        /// <param name="module">模块</param>
+        /// <param name="groupId">群聊ID</param>
+        /// <param name="uploadPath">上传的目标路径</param>
+        /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
+        [Obsolete]
+        internal void UploadFile(Module module, long groupId, string uploadPath, string filePath)
+        {
+            var multipart = new MultipartFormDataContent();
+            multipart.Add(new StringContent("group"), "type");
+            multipart.Add(new StringContent(groupId.ToString()), "target");
+            multipart.Add(new StringContent(uploadPath), "path");
+            FileStream fs = new FileStream(Path.Combine(GetModuleCacheDir(module), filePath), FileMode.Open);
+            multipart.Add(new StreamContent(fs), "file");
+            //发送
+            if (_networkTask.IsCompleted)
+            {
+                _networkTask = Task.Run(() =>
+                {
+                    Exception ex = TryUploadFile(MessageContext.Group, fs, multipart);
+                    CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
+                    return ex;
+                });
+            }
+            else
+            {
+                _networkTask.ContinueWith((x) =>
+                {
+                    TryUploadFile(MessageContext.Group, fs, multipart);  //尝试上传消息
+                    CheckNetworkTaskResult(x.Result, module, groupId, groupId, MessageContext.Group);   //检查上一个任务的完成结果 若有问题打印相关信息
+                });
+            }
+        }
 
         //暴露给Module类的一些成员
         /// <summary>
@@ -304,19 +339,51 @@ namespace klbotlib
         /// 发送给定消息.
         /// </summary>
         /// <param name="context">指定发送的上下文</param>
-        /// <param name="full_msg_json">回复消息json</param>
-        private bool TrySendMessage(MessageContext context, string full_msg_json)
+        /// <param name="fullMsgJson">回复消息json</param>
+        private Exception TrySendMessage(MessageContext context, string fullMsgJson)
         {
             string url = NetworkHelper.GetSendMessageUrl(ServerURL, context);
             try
             {
-                NetworkHelper.PostJSON(url, full_msg_json);
-                return true;
+                bool result = NetworkHelper.PostPlainText(url, fullMsgJson, out string responseStr);
+                if (!result)
+                    throw new Exception($"非成功返回码：{responseStr}");
+                var response = JsonConvert.DeserializeObject<JSendMessageResponse>(responseStr);
+                if (response.code != 0)
+                    throw new MiraiException(response.code, response.msg);
+                return null;
             }
             catch (Exception ex)    //错误会被记录在DiagData中
             {
                 DiagData.LastException = ex;
-                return false;
+                return ex;
+            }
+        }
+        /// <summary>
+        /// 发送给定消息.
+        /// </summary>
+        /// <param name="context">指定发送的上下文</param>
+        /// <param name="fs">上传文件的文件流对象multipart</param>
+        /// <param name="fullContent">上传文件的multipart</param>
+        private Exception TryUploadFile(MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
+        {
+            string url = NetworkHelper.GetUploadFileUrl(ServerURL, context);
+            try
+            {
+                bool result = NetworkHelper.PostMultipart(url, fullContent, out string responseStr);
+                if (!result)
+                    throw new Exception($"非成功返回码：{responseStr}");
+                var response = JsonConvert.DeserializeObject<JSendMessageResponse>(responseStr);
+                if (response.code != 0)
+                    throw new MiraiException(response.code, response.msg);
+                fs.Close();
+                return null;
+            }
+            catch (Exception ex)    //错误会被记录在DiagData中
+            {
+                fs.Close();
+                DiagData.LastException = ex;
+                return ex;
             }
         }
         /// <summary>
@@ -368,21 +435,21 @@ namespace klbotlib
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
-        /// <param name="main_processor">消息处理函数</param>
+        /// <param name="mainProcessor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs, Action<Message> main_processor)
+        public void ProcessMessages(List<Message> msgs, Action<Message> mainProcessor)
         {
             if (_isBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
                 _isBooting = false;
             }
-            msgs.ForEach(msg => { main_processor(msg); });
+            msgs.ForEach(msg => { mainProcessor(msg); });
         }
         // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
-        private void MsgLoop(ManualResetEvent wait_for_pause_msgLoop_signal)
+        private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
         {
-            long success_counter_cache = 0, continuous_error_counter = 0;
+            long successCounterCache = 0, continuousErrorCounter = 0;
         start:
             IsLoopOn = true;
             Thread.Sleep(500);     //延迟启动 为命令循环线程预留至少0.5s时间
@@ -392,7 +459,7 @@ namespace klbotlib
                 {
                     ProcessMessages(FetchMessages());
                     Thread.Sleep(PollingTimeInterval);
-                    wait_for_pause_msgLoop_signal.WaitOne();
+                    waitForPauseMsgLoopSignal.WaitOne();
                 }
             }
             catch (Exception ex)
@@ -409,18 +476,18 @@ namespace klbotlib
                     }
                     else  //未知异常
                     {
-                        if (success_counter_cache == DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
-                            continuous_error_counter++;
+                        if (successCounterCache == DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                            continuousErrorCounter++;
                         else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
-                            continuous_error_counter = 0;
-                        if (continuous_error_counter > 3)
+                            continuousErrorCounter = 0;
+                        if (continuousErrorCounter > 3)
                         {
                             _console.WriteLn("连续3次发生致命错误，停止重试", ConsoleColor.DarkYellow);
                             goto quit;
                         }
                         else
                         {
-                            success_counter_cache = DiagData.SuccessPackageCount;    //记录此次错误的位置
+                            successCounterCache = DiagData.SuccessPackageCount;    //记录此次错误的位置
                             _console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
                             _console.ClearInputBuffer();
                             _console.Write("> ", ConsoleColor.DarkYellow);
@@ -439,14 +506,14 @@ namespace klbotlib
         /// </summary>
         public void DefaultLoop()
         {
-            object _sync = new object();
-            var wait_for_pause_msgLoop_signal = new ManualResetEvent(true);
+            object sync = new object();
+            var waitForPauseMsgLoopSignal = new ManualResetEvent(true);
             DiagData.SuccessPackageCount = 0;
             //消息循环线程
-            var msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
-            bool exit_flag = false;
+            var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
+            bool exitFlag = false;
             //命令循环线程
-            while (!exit_flag)
+            while (!exitFlag)
             {
                 _console.Write("> ", ConsoleColor.DarkYellow);
                 _cmdStat = CmdLoopStatus.ReadLn;
@@ -458,27 +525,27 @@ namespace klbotlib
                         continue;  //不执行操作
                     else if (cmd == "start")
                     {
-                        if (!msg_loop.IsCompleted)
+                        if (!msgLoop.IsCompleted)
                             _console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
                         else
                         {
-                            msg_loop = Task.Run(() => MsgLoop(wait_for_pause_msgLoop_signal));
+                            msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
                             _console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
                         }
                     }
                     else if (cmd == "pause")
                     {
-                        wait_for_pause_msgLoop_signal.Reset();
+                        waitForPauseMsgLoopSignal.Reset();
                         _console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
                     }
                     else if (cmd == "resume")
                     {
                         _isBooting = true;   //为暂停继续情形引入重启忽略机制
-                        wait_for_pause_msgLoop_signal.Set();
+                        waitForPauseMsgLoopSignal.Set();
                         _console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }
                     else if (cmd == "quit")
-                        exit_flag = true;
+                        exitFlag = true;
                     else if (cmd == "status")
                     {
                         _console.WriteLn(GetModuleStatusString(), ConsoleMessageType.Info);
@@ -516,13 +583,21 @@ namespace klbotlib
                     }
                     else if (cmd == "save")
                     {
-                        _console.WriteLn("手动保存所有模块到存档...", ConsoleMessageType.Info);
+                        _console.WriteLn("手动保存所有模块状态到存档...", ConsoleMessageType.Info);
                         ModuleChain.ForEach(x =>
                         {
                             SaveModuleStatus(x);
-#pragma warning disable CS0618
+                        });
+                    }
+                    else if (cmd == "save all")
+                    {
+                        _console.WriteLn("手动保存所有模块状态和模块配置到存档...", ConsoleMessageType.Info);
+                        ModuleChain.ForEach(x =>
+                        {
+                            SaveModuleStatus(x);
+#pragma warning disable CS0618 // 类型或成员已过时
                             SaveModuleSetup(x);
-#pragma warning restore CS0618
+#pragma warning restore CS0618 // 类型或成员已过时
                         });
                     }
                     else if (cmd == "reload")
@@ -567,8 +642,8 @@ namespace klbotlib
             {
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool should_process = module.AddProcessTask(msg);
-                if (should_process)
+                bool shouldProcess = module.AddProcessTask(msg);
+                if (shouldProcess)
                 {
                     DiagData.ProcessedMessageCount++;
                     DiagData.LastUsedModule = module;
@@ -728,11 +803,25 @@ namespace klbotlib
                 Directory.CreateDirectory(path);
             }
         }
-        private void CheckNetworkTaskResult(bool result)
+        /// <summary>
+        /// 检查上一个发送任务是否正确完成，若失败则根据异常决定是否尝试使机器人发送错误消息
+        /// </summary>
+        /// <param name="exception">发送任务最终的返回值。为空时无异常</param>
+        /// <param name="module">发送的模块</param>
+        /// <param name="userId">用户ID</param>
+        /// <param name="groupId">群组ID</param>
+        /// <param name="context">消息上下文</param>
+        private void CheckNetworkTaskResult(Exception exception, Module module, long userId, long groupId, MessageContext context)
         {
-            if (!result)   //检查上个发送任务是否正确完成
+            if (exception != null)   //检查上个发送任务是否正确完成
             {
                 ObjectPrint(this, $"消息回复失败：{DiagData.LastException}", ConsoleMessageType.Error, "\b\b");
+                if (exception is MiraiException) //极可能是消息本身的问题，可以尝试发送错误信息
+                {
+                    string chainJson = JsonHelper.MessageElementBuilder.BuildPlainElement($"{module.ModuleID}返回的消息不受mirai服务器认可。\n异常信息：\n{exception.Message}");
+                    string fullJson = JsonHelper.MessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
+                    TrySendMessage(context, fullJson);
+                }
                 _console.Write("> ", ConsoleColor.DarkYellow);
             }
         }

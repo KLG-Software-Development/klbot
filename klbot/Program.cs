@@ -12,6 +12,9 @@ class Program
 {
     static void Main(string[] args)
     {
+        Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");           //Disable AOT
+        Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");            //Turn on layered PGO
+        Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");  //Enable Quick Jit for loop
         Console.ResetColor();
         Version exe_version = Assembly.GetExecutingAssembly().GetName().Version;
         Version lib_version = klbotlib.Info.CoreLibInfo.GetLibVersion();

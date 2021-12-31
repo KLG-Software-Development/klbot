@@ -106,12 +106,14 @@ namespace klbotlib
                 {
                     if (is_after_at)           //意味着之前还有别的Plain消息，而且上一条子消息是At消息。用Substring()处理@后面无缘无故冒出来的傻逼空格
                     {
-                        ((MessagePlain)ret).AppendText(sub_msg.text.Substring(1));
+                        ret.AppendText(sub_msg.text.Substring(1));
                         is_after_at = false;
                     }
                     else                            //意味着之前还有别的Plain消息。则简单将文本追加到已有对象的文本中
-                        ((MessagePlain)ret).AppendText(sub_msg.text);
+                        ret.AppendText(sub_msg.text);
                 }
+                else if (sub_msg.type == "Face")
+                    ret.AppendText(sub_msg.text);
                 else if (sub_msg.type == "At")
                     is_after_at = true;
             }

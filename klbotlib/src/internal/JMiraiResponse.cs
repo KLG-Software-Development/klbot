@@ -1,4 +1,5 @@
-﻿using System;
+﻿using klbotlib.Exceptions;
+using System;
 
 namespace klbotlib.Internal
 {
@@ -10,7 +11,7 @@ namespace klbotlib.Internal
         public void CheckStatusCode()
         {
             if (code != 0)
-                throw new Exception($"mirai错误[{code}]：{msg}");
+                throw new MiraiException(code, msg);
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace klbotlib
@@ -81,6 +82,14 @@ namespace klbotlib
         /// <param name="user_id">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
         void SendPrivateMessage(long user_id, string content);
+        /// <summary>
+        /// 上传文件接口
+        /// </summary>
+        /// <param name="context">上传文件的上下文</param>
+        /// <param name="target">目标ID</param>
+        /// <param name="uploadPath">上传路径</param>
+        /// <param name="filePath">文件本地路径</param>
+        void UploadFile(MessageContext context, long target, string uploadPath, string filePath);
     }
     /// <summary>
     /// 模块访问API
