@@ -26,7 +26,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
 
     public override string FriendlyName => "抽奖模块";
     public override bool UseSignature => false;
-    public override string HelpInfo => "发起快速抽奖：发送“抽奖”并@机器人和抽奖包括的群成员，发起快速抽奖。抽奖结果直接公布\n发起自愿抽奖：@机器人并发送“抽奖”，可以发起一次自愿抽奖；接下来@机器人并发送“加入”的人员可以参与抽奖；人员加入完成后，发起人@机器人并发送“开始”可以启动抽奖并公示抽奖结果";
+    public override string HelpInfo => "发起快速抽奖：发送“抽奖”并@机器人和抽奖包括的群成员，发起快速抽奖。抽奖结果直接公布\n发起自愿抽奖：@机器人并发送“抽奖”，可以发起一次自愿抽奖；接下来@机器人并发送“加入”的人员可以参与抽奖；人员加入完成后，发起人@机器人并发送“开始抽奖”可以启动抽奖并公示抽奖结果";
 
     public override string Filter(MessagePlain msg)
     {
@@ -40,7 +40,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
         }
         else if (text == "加入")
             return "join";
-        else if (text == "开始")
+        else if (text == "开始抽奖")
             return "begin";
         else
             return null;
