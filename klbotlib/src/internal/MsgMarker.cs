@@ -50,7 +50,7 @@ namespace klbotlib.Internal
                         elements.Add(JsonHelper.MessageElementBuilder.BuildFaceElement(body));
                     else if (prefix == "tag")     //@消息。格式：{\tag:目标id}
                     {
-                        if (long.TryParse(body, out long id))
+                        if (!long.TryParse(body, out long id))
                             throw new MsgMarkerException($"无法将{body}转换为目标ID");
                         elements.Add(JsonHelper.MessageElementBuilder.BuildTagElement(id));
                     }

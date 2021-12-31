@@ -32,6 +32,7 @@ start:
             klg = args.Length != 0
                 ? (new(args[0], module_collection: Assembly.GetAssembly(typeof(ImageModule))))
                 : new KLBot(module_collection: Assembly.GetAssembly(typeof(ImageModule)));
+            klg.AddModule(new RollinModule());
             klg.AddModule(new CollapseModule());
             klg.AddModule(new CompilerModule());
             klg.AddModule(new ImageModule());
