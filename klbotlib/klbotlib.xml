@@ -139,7 +139,7 @@
             模块打印消息到控制台的标准方法
             </summary>
             <param name="message">模块要打印消息的内容</param>
-            <param name="msg_type">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
+            <param name="msgType">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
             <param name="prefix">要在消息类型标识前附上的内容</param>
         </member>
         <member name="M:klbotlib.Modules.Module.TrySetFieldAndProperty``1(System.String,``0)">
@@ -184,7 +184,7 @@
             处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
             </summary>
             <param name="msg">待处理消息</param>
-            <param name="filter_out">消息经过过滤器时的输出</param>
+            <param name="filterOut">消息经过过滤器时的输出</param>
             <returns>用字符串表示的处理结果</returns>
         </member>
         <member name="M:klbotlib.Modules.SingleTypeModule`1.Filter(klbotlib.Message)">
@@ -563,14 +563,14 @@
             <param name="user_id">目标用户ID</param>
             <param name="content">MsgMarker文本</param>
         </member>
-        <member name="M:klbotlib.IMessagingAPI.UploadFile(klbotlib.MessageContext,System.Int64,System.String)">
+        <member name="M:klbotlib.IMessagingAPI.UploadFile(klbotlib.MessageContext,System.Int64,System.String,System.String)">
             <summary>
             上传文件接口
             </summary>
             <param name="context">上传文件的上下文</param>
             <param name="target">目标ID</param>
-            <param name="path">上传路径</param>
-            <param name="fileData">文件内容</param>
+            <param name="uploadPath">上传路径</param>
+            <param name="filePath">文件本地路径</param>
         </member>
         <member name="T:klbotlib.IModuleAccessAPI">
             <summary>
@@ -767,14 +767,14 @@
             <param name="userId">目标用户ID</param>
             <param name="content">MsgMarker文本</param>
         </member>
-        <member name="M:klbotlib.KLBot.UploadFile(klbotlib.Modules.Module,System.Int64,System.String)">
+        <member name="M:klbotlib.KLBot.UploadFile(klbotlib.Modules.Module,System.Int64,System.String,System.String)">
             <summary>
             上传群文件接口
             </summary>
             <param name="module">模块</param>
             <param name="groupId">群聊ID</param>
-            <param name="path">文件的本地路径</param>
-            <param name="fileData"></param>
+            <param name="uploadPath">上传的目标路径</param>
+            <param name="filePath">文件相对于模块私有目录的本地路径</param>
         </member>
         <member name="M:klbotlib.KLBot.ObjectPrint(System.Object,System.String,Gleee.Consoleee.ConsoleMessageType,System.String)">
             <summary>
@@ -792,11 +792,12 @@
             <param name="context">指定发送的上下文</param>
             <param name="fullMsgJson">回复消息json</param>
         </member>
-        <member name="M:klbotlib.KLBot.TryUploadFile(klbotlib.MessageContext,System.Net.Http.MultipartFormDataContent)">
+        <member name="M:klbotlib.KLBot.TryUploadFile(klbotlib.MessageContext,System.IO.FileStream,System.Net.Http.MultipartFormDataContent)">
             <summary>
             发送给定消息.
             </summary>
             <param name="context">指定发送的上下文</param>
+            <param name="fs">上传文件的文件流对象multipart</param>
             <param name="fullContent">上传文件的multipart</param>
         </member>
         <member name="M:klbotlib.KLBot.GetMessageListFromJSON(System.Func{System.String},System.Boolean)">

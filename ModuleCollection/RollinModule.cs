@@ -74,6 +74,15 @@ public class RollinModule : SingleTypeModule<MessagePlain>
             case "begin":
                 if (msg.SenderID != _owner)
                     return @$"只有抽奖发起人可以控制抽奖进程";
+                if (_list.Count == 0)
+                {
+                    //抽奖结束，清理与重置
+                    _hash.Clear();
+                    _list.Clear();
+                    _owner = -1;
+                    _hasRollStarted = false;
+                    return "无人参加，抽奖已直接结束";
+                }
                 _sb.Clear();
                 foreach (long id in _list)
                 {
