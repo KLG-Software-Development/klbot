@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace klbotlib.Modules;
 
@@ -7,6 +8,8 @@ namespace klbotlib.Modules;
 /// </summary>
 public class 上号Module : SingleTypeModule<MessagePlain>
 {
+    //应被忽略的不支持消息
+    private readonly HashSet<string> _downgradedMsgKeywords = new() { "[QQ红包]", "[视频游戏]", "你的QQ暂不支持查看视频短片"}; 
     [ModuleStatus(IsHidden = true)]
     private string _lastMsg = "";
     [ModuleStatus(IsHidden = true)]
@@ -31,20 +34,25 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     /// </summary>
     public sealed override string Filter(MessagePlain msg)
     {
-        string msg_text = msg.Text.Trim();
+        string msgText = msg.Text.Trim();
+        foreach (string keyword in _downgradedMsgKeywords)
+        {
+            if (msgText.StartsWith(keyword))
+                return null;
+        }
         string output = null;
-        if (Is上号(msg_text) && !Is上号(_lastMsg))
+        if (Is上号(msgText) && !Is上号(_lastMsg))
             output = "上号";
-        else if (msg_text.Contains("蛤儿") && DateTime.Now - _lastHal > _coolDownTime)
+        else if (msgText.Contains("蛤儿") && DateTime.Now - _lastHal > _coolDownTime)
         {
             output = "蛤儿";
             //刷新冷却时间
             _lastHal = DateTime.Now;
         }
-        else if (!Is上号(_lastMsg) && msg_text == _lastMsg && _lastMsg != _last2Msg)
+        else if (!Is上号(_lastMsg) && msgText == _lastMsg && _lastMsg != _last2Msg)
             output = "跟风";
         _last2Msg = _lastMsg;
-        _lastMsg = msg_text;
+        _lastMsg = msgText;
         return output;
     }
     /// <summary>
