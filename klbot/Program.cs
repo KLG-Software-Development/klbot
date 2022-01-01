@@ -37,6 +37,7 @@ start:
             klg.AddModule(new RollinModule());
             klg.AddModule(new CollapseModule());
             klg.AddModule(new CompilerModule());
+            klg.AddModule(new WelcomekxggModule());
             klg.AddModule(new ImageModule());
             klg.AddModule(new IMGPModule());
             klg.AddModule(new AnonyVoiceModule());
