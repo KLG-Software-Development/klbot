@@ -343,7 +343,7 @@ namespace klbotlib
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
             List<Message> msgs = _msgServer.FetchMessages().Where(msg => msg.Context == MessageContext.Group && TargetGroupIDList.Contains(msg.GroupID)).ToList();
-            DiagData.ReceivedMessageCount = msgs.Count;
+            DiagData.ReceivedMessageCount += msgs.Count;
             return msgs;
         }
         /// <summary>

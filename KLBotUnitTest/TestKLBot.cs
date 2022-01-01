@@ -2,6 +2,7 @@ using klbotlib;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace KLBotUnitTest;
 
@@ -14,7 +15,7 @@ public class TestKLBot
     [TestMethod]
     public void TestModuleCount()
     {
-        KLBot bot = new(new DebugMessageServer(), "config/unit_test_config.json");
+        KLBot bot = new(new DebugMessageServer(TestConst.NullAction, TestConst.NullAction, TestConst.NullAction), "config/unit_test_config.json");
         Assert.AreEqual(TestConst.CoreModuleCount, bot.ModuleCount);
         bot.AddModule(new TimeModule());
         Assert.AreEqual(TestConst.CoreModuleCount + 1, bot.ModuleCount);
@@ -28,15 +29,22 @@ public class TestKLBot
     [TestMethod]
     public void TestKLBotDiagData()
     {
-        KLBot bot = new(new DebugMessageServer(), "config/unit_test_config.json");
+        DebugMessageServer server = new(TestConst.NullAction, TestConst.NullAction, TestConst.NullAction);
+        KLBot bot = new(server, "config/unit_test_config.json");
         Assert.AreEqual(0, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(0, bot.DiagData.SuccessPackageCount);
-        bot.SimulateMiraiMessagePlainInput(MessageContext.Group, -1, -1, "some non-sense");
+        MessagePlain msg = new(-1, -1, "some non-sense");
+        msg.Context = MessageContext.Group;
+        server.AddReceivedMessage(msg);
+        bot.ProcessMessages(bot.FetchMessages());
         Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(1, bot.DiagData.SuccessPackageCount);
-        bot.SimulateMiraiMessagePlainInput(MessageContext.Group, -1, -1, "##help");
+        msg = new(-1, -1, "##help");
+        msg.Context = MessageContext.Group;
+        server.AddReceivedMessage(msg);
+        bot.ProcessMessages(bot.FetchMessages());
         Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(1, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(2, bot.DiagData.SuccessPackageCount);
