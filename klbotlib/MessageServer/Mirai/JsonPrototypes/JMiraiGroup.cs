@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace klbotlib.Internal
+﻿namespace klbotlib.MessageServer.Mirai.JsonPrototypes
 {
-    internal class JGroup
+    internal class JMiraiGroup
     {
         public int id;
         public string name;

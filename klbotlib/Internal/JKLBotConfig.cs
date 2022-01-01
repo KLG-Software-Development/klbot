@@ -32,21 +32,18 @@ namespace klbotlib
     internal class JKLBotConfig
     {
         internal JQQConfig QQ;
-        internal JNetworkConfig Network;
         internal JPathesConfig Pathes;
 
         /// <summary>
         /// 创建一个KLBot配置
         /// </summary>
-        /// <param name="url">mirai服务器所在URL</param>
         /// <param name="self_id">KLBot自身ID (QQ号)</param>
         /// <param name="targets">监听群组列表</param>
         /// <param name="modules_cache_dir">模块缓存目录（相对）。所有模块的缓存目录集中在该目录下</param>
         /// <param name="modules_save_dir">模块状态和模块配置的存档目录（相对）。所有模块的状态存档和配置存档文件集中在该目录下</param>
-        public JKLBotConfig(string url, long self_id, IEnumerable<long> targets, string modules_cache_dir, string modules_save_dir)
+        public JKLBotConfig(long self_id, IEnumerable<long> targets, string modules_cache_dir, string modules_save_dir)
         {
             QQ = new JQQConfig(self_id, targets);
-            Network = new JNetworkConfig(url);
             Pathes = new JPathesConfig(modules_cache_dir, modules_save_dir);
         }
         internal bool HasNull(out string null_field_name)
@@ -89,11 +86,15 @@ namespace klbotlib
         //Bot账号的自身ID
         public long SelfID;
         //Bot监听的群组的ID列表
-        public List<long> TargetGroupIDList;
+        public HashSet<long> TargetGroupIDList;
         public JQQConfig(long selfID, IEnumerable<long> targetGroupIDList)
         {
             SelfID = selfID;
-            TargetGroupIDList = targetGroupIDList.ToList();
+            TargetGroupIDList = new();
+            foreach (var target in targetGroupIDList)
+            {
+                TargetGroupIDList.Add(target);
+            }
         }
     }
     [JsonObject(MemberSerialization.Fields)]

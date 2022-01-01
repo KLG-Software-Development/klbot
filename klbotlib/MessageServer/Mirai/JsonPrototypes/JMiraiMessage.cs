@@ -1,13 +1,9 @@
-﻿using System;
-using Newtonsoft.Json;
-
-namespace klbotlib.Internal
+﻿namespace klbotlib.MessageServer.Mirai.JsonPrototypes
 {
-
     /// <summary>
     /// 直接从JSON解析的消息对象
     /// </summary>
-    internal class JMessage
+    internal class JMiraiMessage
     {
         public string type;
         public long id;

@@ -1,12 +1,10 @@
-﻿using klbotlib;
-using klbotlib.Modules;
-using klbotlib.Modules.ModuleUtils;
+﻿using klbotlib.Modules.ModuleUtils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ModuleCollection;
+namespace klbotlib.Modules;
 
 /// <summary>
 /// 编译模块

@@ -24,7 +24,6 @@ namespace klbotlib.Json
         //构建完整消息
         internal static class MessageJsonBuilder
         {
-            
             internal static string BuildPrivateMessageJson(long user_id, string chain)
                 => $"{{\"target\":\"{user_id}\",\"messageChain\":[{chain}]}}";
             internal static string BuildGroupMessageJson(long group_id, string chain)
