@@ -1,15 +1,13 @@
 ﻿using klbotlib.Exceptions;
 using klbotlib.Json;
-using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 
-namespace klbotlib.Internal
+namespace klbotlib.MessageServer.Mirai
 {
-    // 用来解析MessageMarker文本
-    internal static class MsgMarker
+    // 翻译MessageMarker文本到mirai_json文本
+    internal static class MiraiMsgMarkerTranslater
     {
         private static readonly Exception ParseMessageMarkerException = new Exception("解析MsgMarker文本时发生错误");
         private static readonly Regex _prefixPattern = new Regex(@"\\(\w+?):(.+)");
@@ -45,7 +43,6 @@ namespace klbotlib.Internal
                 if (lhs.Length != 0)
                     elements.Add(JsonHelper.MessageElementBuilder.BuildPlainElement(lhs));    //先添加文本消息
                 if (TryParsePrefix(code, out string prefix, out string body))
-                {
                     if (prefix == "face")   //表情消息。格式：{\face:face_name}
                         elements.Add(JsonHelper.MessageElementBuilder.BuildFaceElement(body));
                     else if (prefix == "tag")     //@消息。格式：{\tag:目标id}
@@ -56,7 +53,6 @@ namespace klbotlib.Internal
                     }
                     else
                         throw new MsgMarkerException($"未知或不支持的嵌入消息类型\"{prefix}\"");
-                }
                 else
                     elements.Add(JsonHelper.MessageElementBuilder.BuildPlainElement(match.Value)); //如果无法匹配prefix语法，则当作笔误处理，按照纯文本输出
                 lhsStart = lhsEnd + match.Value.Length;
@@ -71,7 +67,7 @@ namespace klbotlib.Internal
         {
             if (!TryParsePrefix(content, out string key, out string value))
                 throw new MsgMarkerException($"无法解析图像消息\"{content}\"");
-            if (key != "url" &&  key != "base64")
+            if (key != "url" && key != "base64")
                 throw new MsgMarkerException($"不支持的图像来源类型\"{key}\"");
             return JsonHelper.MessageElementBuilder.BuildImageElement(key, value);
         }
@@ -85,7 +81,7 @@ namespace klbotlib.Internal
             return JsonHelper.MessageElementBuilder.BuildVoiceElement(key, value);
         }
         //把文件类型的MsgMarker编译为MessageChain
-        
+
         private static string CompileFileChainJson(string content)
         {
             if (!TryParsePrefix(content, out string key, out string value))
@@ -104,7 +100,7 @@ namespace klbotlib.Internal
             if (!TryParsePrefix(content, out string type, out string body, startOnly: true))
             {
                 //无prefix语法则默认当作纯文本
-                type = "plain"; 
+                type = "plain";
                 body = content;
             }
             switch (type)

@@ -8,3 +8,6 @@ dotnet_diagnostic.IDE0052.severity = none
 
 # IDE0079: 请删除不必要的忽略
 dotnet_diagnostic.IDE0079.severity = silent
+
+# CS8602: 解引用可能出现空引用。
+dotnet_diagnostic.CS8602.severity = silent

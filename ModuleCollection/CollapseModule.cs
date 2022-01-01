@@ -1,13 +1,11 @@
-﻿using klbotlib;
-using klbotlib.Extensions;
-using klbotlib.Modules;
+﻿using klbotlib.Extensions;
 using klbotlib.Modules.ModuleUtils;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 
-namespace ModuleCollection;
+namespace klbotlib.Modules;
 
 /// <summary>
 /// 塌塌模块
