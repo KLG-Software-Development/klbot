@@ -25,7 +25,7 @@ namespace klbotlib
         /// <summary>
         /// 此消息的上下文。私聊=Private；临时会话=Temp；群聊=Group
         /// </summary>
-        public MessageContext Context { get; internal set; }
+        public MessageContext Context { get; set; }
         /// <summary>
         /// 返回此消息是否@了某个ID
         /// </summary>
@@ -57,7 +57,6 @@ namespace klbotlib
                 return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(SenderID, GroupID, chain);
             else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
         }
-
     }
 
     /// <summary>
