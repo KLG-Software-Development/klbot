@@ -13,7 +13,7 @@ namespace klbotlib.Modules
     {
         [ModuleStatus]
         private common1 common = new common1();
-        public override bool IsTransparent { get; } = false;
+        public override bool IsTransparent { get; } = true;
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
@@ -26,7 +26,7 @@ namespace klbotlib.Modules
         {
             if (filter_out == "yes")
             {
-                if (common.Y != DateTime.Now.Month && common.Z != DateTime.Now.Day)
+                if (common.Y != DateTime.Now.Month || common.Z != DateTime.Now.Day)
                 {
                     common.K = 1;
                     common.Y = DateTime.Now.Month;
