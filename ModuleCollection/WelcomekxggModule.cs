@@ -13,7 +13,7 @@ namespace klbotlib.Modules
     {
         [ModuleStatus]
         private common1 common = new common1();
-        public override bool IsTransparent { get; } = false;
+        public override bool IsTransparent { get; } = true;
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
