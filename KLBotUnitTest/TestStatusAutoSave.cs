@@ -18,12 +18,16 @@ public class TestStatusAutoSave
     [TestMethod]
     public void StatusAutoSaveForAllModuleWhenCoreModuleProcessed()
     {
-        KLBot bot = new(new DebugMessageServer(), "config/unit_test_config.json");
+        DebugMessageServer server = new(TestConst.NullAction, TestConst.NullAction, TestConst.NullAction);
+        KLBot bot = new(server, "config/unit_test_config.json");
         FuckModule module = new();
         bot.AddModule(module);
         bool initState = module.Enabled;
         //通过命令模块修改启用状态
-        bot.SimulateMiraiMessagePlainInput(MessageContext.Group, -1, -1, "##fuckmod enabled");   //unit_test_config.json中应将-1设置为监听群
+        MessagePlain msg = new(-1, -1, "##fuckmod enabled"); //unit_test_config.json中应将-1设置为监听群
+        msg.Context = MessageContext.Group;
+        server.AddReceivedMessage(msg);
+        bot.ProcessMessages(bot.FetchMessages());   
         Thread.Sleep(25);//等待命令处理完成
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         //Test save file
