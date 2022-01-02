@@ -30,7 +30,7 @@ start:
         KLBot klg = null;
         try
         {
-            MiraiMessageServer miraiServer = new("http://mp:3356");
+            MiraiMessageServer miraiServer = new("http://localhost:3356");
             klg = args.Length != 0
                 ? (new(miraiServer, args[0], moduleCollection: Assembly.GetAssembly(typeof(ImageModule))))
                 : new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));

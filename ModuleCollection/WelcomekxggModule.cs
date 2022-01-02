@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using klbotlib.Modules.KLDNamespace;
+﻿using klbotlib.Modules.KLDNamespace;
 using System;
 
 namespace klbotlib.Modules
 {
+    /// <summary>
+    /// kx打招呼模块
+    /// </summary>
     public class WelcomekxggModule : SingleTypeModule<MessagePlain>
     {
         [ModuleStatus]
@@ -61,6 +58,10 @@ namespace klbotlib.Modules.KLDNamespace
         {
             get;
             set;
+        }
+        public override string ToString()
+        {
+            return $"[K:{K}, Y:{Y}, Z:{Z}]";
         }
     }
 }

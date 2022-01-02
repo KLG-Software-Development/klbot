@@ -12,7 +12,7 @@ public class Program
 {
     private static readonly List<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
     private static readonly DebugMessageServer _localServer = new(PrintInfo, PrintInfo, PrintInfo); //调试用消息服务器
-    private static long _userId = 42;    //调试时发出的所有消息的用户ID
+    private static long _userId = 2044164212;    //调试时发出的所有消息的用户ID
     private static long _groupId = 7355608;   //调试时发出的所有消息的群组ID
     private static MessageContext _context = MessageContext.Group;   //调试时发出的所有消息的上下文类型。默认为群组
 
@@ -40,16 +40,7 @@ start:
         {
             
             lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
-            lcb.AddModule(new RollinModule());
-            lcb.AddModule(new CollapseModule());
-            lcb.AddModule(new CompilerModule());
-            lcb.AddModule(new ImageModule());
-            lcb.AddModule(new IMGPModule());
-            lcb.AddModule(new AnonyVoiceModule());
-            lcb.AddModule(new TimeModule());
-            lcb.AddModule(new 上号Module());
-            lcb.AddModule(new ChatQYKModule());
-            lcb.AddModule(new FuckModule());
+            lcb.AddModule(new WelcomekxggModule());
             Console.WriteLine(lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。输入命令开始调试");
             while (true)
