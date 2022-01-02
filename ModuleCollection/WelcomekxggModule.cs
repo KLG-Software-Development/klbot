@@ -26,7 +26,7 @@ namespace klbotlib.Modules
         {
             if (filter_out == "yes")
             {
-                if (common.Y != DateTime.Now.Month && common.Z != DateTime.Now.Day)
+                if (common.Y != DateTime.Now.Month || common.Z != DateTime.Now.Day)
                 {
                     common.K = 1;
                     common.Y = DateTime.Now.Month;
