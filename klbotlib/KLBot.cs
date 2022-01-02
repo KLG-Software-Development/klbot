@@ -80,6 +80,7 @@ namespace klbotlib
         /// <param name="server">消息服务器</param>
         /// <param name="targetGroups">监听的群组</param>
         /// <param name="selfID">KLBot自身ID。默认为33550336</param>
+        /// <param name="isSilent">是否开启安静模式。开启时ObjectPrint()不打印任何内容</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
         public KLBot(IMessageServer server, Assembly moduleCollection, List<long> targetGroups, long selfID = 33550336, bool isSilent = true)
         {
@@ -342,7 +343,7 @@ namespace klbotlib
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
             List<Message> msgs = _msgServer.FetchMessages().Where(msg => msg.Context == MessageContext.Group && TargetGroupIDList.Contains(msg.GroupID)).ToList();
-            DiagData.ReceivedMessageCount = msgs.Count;
+            DiagData.ReceivedMessageCount += msgs.Count;
             return msgs;
         }
         /// <summary>
