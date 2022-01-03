@@ -11,8 +11,8 @@ namespace klbotlib.Modules
     //命令模块
     internal class CommandModule : SingleTypeModule<MessagePlain>
     {
-        const string prefix = "##";
-        private readonly Regex _cmdPat = new($@"^{prefix}(.+)$");
+        const string _prefix = "##";
+        private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$");
 
         [ModuleSetup]
         public Dictionary<long, AuthorType> Users { get; private set; } = new();
@@ -49,7 +49,7 @@ namespace klbotlib.Modules
 
         public sealed override bool IsTransparent => false;
         public sealed override string FriendlyName => "命令模块";
-        public sealed override string HelpInfo => $"发送“{prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
+        public sealed override string HelpInfo => $"发送“{_prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
         public sealed override string Filter(MessagePlain msg) => _cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
         public sealed override string Processor(MessagePlain msg, string _)
         {
