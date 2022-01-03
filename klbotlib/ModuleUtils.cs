@@ -150,7 +150,10 @@ namespace klbotlib.Modules.ModuleUtils
             foreach (var kvpString in kvps)
             {
                 string[] kvp = kvpString.Split('=');
-                form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
+                if (kvp.Length == 2)
+                    form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
+                else
+                    form.Add(new KeyValuePair<string,string>(kvp[0], ""));
             }
             FormUrlEncodedContent content = new(form);
             return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
