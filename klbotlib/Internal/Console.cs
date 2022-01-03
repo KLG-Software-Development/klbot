@@ -105,34 +105,34 @@ public class Consoleee
         WriteWithoutIndent(TaskFinishMessage + "\n", ConsoleColor.Green);
     }
     [Obsolete("已过时")]
-    public bool WriteOperationLn(string description, Func<bool> operation, ConsoleMessageType error_level = ConsoleMessageType.Default, string success_string = "[Success]", string failed_string = "[Failed]", ConsoleColor success_color = ConsoleColor.Green, ConsoleColor failed_color = ConsoleColor.Red)
+    public bool WriteOperationLn(string description, Func<bool> operation, ConsoleMessageType errorLevel = ConsoleMessageType.Default, string successString = "[Success]", string failedString = "[Failed]", ConsoleColor successColor = ConsoleColor.Green, ConsoleColor failedColor = ConsoleColor.Red)
     {
-        WriteLn(description + "...", error_level);
+        WriteLn(description + "...", errorLevel);
         bool result = operation();
         Write(description);
         if (result)
-            WriteLn(success_string, success_color);
+            WriteLn(successString, successColor);
         else
-            WriteLn(failed_string, failed_color);
+            WriteLn(failedString, failedColor);
         return result;
     }
     public void ClearCurrentLine()
     {
-        int temp_top = Console.CursorTop;
+        int tempTop = Console.CursorTop;
         Console.CursorVisible = false;
         Console.SetCursorPosition(0, Console.CursorTop);
         Console.Write(new string(' ', Console.WindowWidth - 1));
-        Console.SetCursorPosition(0, temp_top);
+        Console.SetCursorPosition(0, tempTop);
         Console.CursorVisible = true;
     }
     public void OverwriteSecondLastLine(object obj, ConsoleMessageType level = ConsoleMessageType.Default, string prefix = "")
     {
-        int tmp_top = Console.CursorTop, tmp_left = Console.CursorLeft;
+        int tmpTop = Console.CursorTop, tmpLeft = Console.CursorLeft;
         Console.SetCursorPosition(0, Console.CursorTop - 1);
         Console.Write(new string(' ', Console.WindowWidth - 1));
         Console.SetCursorPosition(0, Console.WindowWidth - 1);
         Write(obj, level, prefix);
-        Console.SetCursorPosition(tmp_left, tmp_top);
+        Console.SetCursorPosition(tmpLeft, tmpTop);
     }
     public void SetCursorPos(int left, int top) => Console.SetCursorPosition(left, top);
     public string ReadLn() => Console.ReadLine();
@@ -196,9 +196,9 @@ public class Consoleee
         _bufferCursor = 0;
     }
 
-    public Consoleee(string task_finish_msg = "Operation done.")
+    public Consoleee(string taskFinishMsg = "Operation done.")
     {
-        TaskFinishMessage = task_finish_msg;
+        TaskFinishMessage = taskFinishMsg;
     }
 }
 
