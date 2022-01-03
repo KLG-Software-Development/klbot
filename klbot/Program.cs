@@ -3,7 +3,6 @@ using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.MessageServer.Mirai;
 using klbotlib.Modules;
-using ModuleCollection;
 using System;
 using System.Reflection;
 
@@ -17,15 +16,15 @@ class Program
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");            //Turn on layered PGO
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");  //Enable Quick Jit for loop
         Console.ResetColor();
-        Version exe_version = Assembly.GetExecutingAssembly().GetName().Version;
-        Version lib_version = klbotlib.Info.CoreLibInfo.GetLibVersion();
-        Version mc_version = ModuleCollection.Info.CollectionInfo.GetLibVersion();
-        long query_counter_cache = 0;
-        int fatal_failure_counter = 0;
+        Version exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        Version libVersion = klbotlib.Info.CoreLibInfo.GetLibVersion();
+        Version mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion();
+        long queryCounterCache = 0;
+        int fatalFailureCounter = 0;
         Console.WriteLine($"KLBot via mirai");
-        Console.WriteLine($"exe version: {exe_version.Major}.{exe_version.Minor} Build {exe_version.ToKLGBuildString()}");
-        Console.WriteLine($"corelib version: {lib_version.Major}.{lib_version.Minor} Build {lib_version.ToKLGBuildString()}");
-        Console.WriteLine($"MC version: {mc_version.Major}.{mc_version.Minor} Build {mc_version.ToKLGBuildString()}\n");
+        Console.WriteLine($"exe version: {exeVersion.Major}.{exeVersion.Minor} Build {exeVersion.ToKLGBuildString()}");
+        Console.WriteLine($"corelib version: {libVersion.Major}.{libVersion.Minor} Build {libVersion.ToKLGBuildString()}");
+        Console.WriteLine($"MC version: {mcVersion.Major}.{mcVersion.Minor} Build {mcVersion.ToKLGBuildString()}\n");
 start:
         KLBot klg = null;
         try
@@ -71,11 +70,11 @@ start:
                 Console.WriteLine(ex.Message);
                 Console.WriteLine($"意外异常：{ex.Message}\n调用栈：\n{ex.StackTrace}\n");
                 Console.ResetColor();
-                if (query_counter_cache == klg.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
-                    fatal_failure_counter++;
+                if (queryCounterCache == klg.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                    fatalFailureCounter++;
                 else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
-                    fatal_failure_counter = 0;
-                if (fatal_failure_counter > 10)
+                    fatalFailureCounter = 0;
+                if (fatalFailureCounter > 10)
                 {
                     Console.WriteLine("连续10次发生致命错误。将停止重试并有序退出");
                     if (klg != null)
