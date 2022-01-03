@@ -128,7 +128,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return $@"\image:\base64:{b64}";
         }
         //以下都是单图文消息 可以统一把图片Url拿出来做URL encode
-        string esc_url = Uri.EscapeDataString(msg.UrlList[0]);
+        string esc_url = msg.UrlList[0];
         switch (filter_out)
         {
             case "recogn": //识别
@@ -188,7 +188,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return $@"\image:\base64:{b64}";
             case "image process": //图像处理
                 word = msg.Text.Trim();
-                type = Uri.EscapeDataString(_typeByWordProc[word]);
+                type = _typeByWordProc[word];
                 body = $"image&image_url={esc_url}&type={type}&show=true";
                 //HostBot.ReplyPlainMessage(this, msg, "处理中...");
                 JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);

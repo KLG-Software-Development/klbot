@@ -34,26 +34,6 @@ namespace klbotlib.Modules.ModuleUtils
             } 
         }
         /// <summary>
-        /// 进行所有请求时使用的UA标识
-        /// </summary>
-        public string UA 
-        { 
-            get => _client.DefaultRequestHeaders.UserAgent.First().ToString(); 
-            set 
-            {
-                lock (_client)
-                {
-                    _client.DefaultRequestHeaders.UserAgent.Clear();
-                    if (!_client.DefaultRequestHeaders.UserAgent.TryParseAdd(value))
-                        Console.WriteLine($"警告: 设置UA标识为\"{value}\"失败。UA标识未改变");
-                }
-            } 
-        }
-        /// <summary>
-        /// 进行所有请求时使用的ContentType
-        /// </summary>
-        public string ContentType { get; set; }
-        /// <summary>
         /// 进行所有请求时使用的编码
         /// </summary>
         public string ContentEncoding 
@@ -77,14 +57,10 @@ namespace klbotlib.Modules.ModuleUtils
         /// 创建新的HttpHelper对象
         /// </summary>
         /// <param name="timeout">超时(毫秒)</param>
-        /// <param name="ua">UA标识</param>
-        /// <param name="contentType">默认ContentType</param>
         /// <param name="contentEncoding">默认Encoding</param>
-        public HttpHelper(int timeout = 15, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0", string contentType = "application/x-www-form-urlencoded", string contentEncoding = "utf-8")
+        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8")
         {
             Timeout = timeout;
-            UA = ua;
-            ContentType = contentType;
             ContentEncoding = contentEncoding;
         }
 
@@ -150,7 +126,10 @@ namespace klbotlib.Modules.ModuleUtils
             foreach (var kvpString in kvps)
             {
                 string[] kvp = kvpString.Split('=');
-                form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
+                if (kvp.Length >= 2)
+                    form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
+                else
+                    form.Add(new KeyValuePair<string,string>(kvp[0], ""));
             }
             FormUrlEncodedContent content = new(form);
             return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();

@@ -85,7 +85,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
     {
         _sb.Clear();
         _sb.Append("code=");
-        _sb.Append(Uri.EscapeDataString(code));
+        _sb.Append(code);
         _sb.Append("&token=");
         _sb.Append(_token);
         _sb.Append("&language=");

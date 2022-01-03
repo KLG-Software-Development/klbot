@@ -22,8 +22,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     /// </summary>
     public CollapseModule()
     {
-        _helper.ContentType = "application/x-www-form-urlencoded";
-        _helper.UA = "Wolfram Android App/1.3.0.5403760";
+        //_helper.UA = "Wolfram Android App/1.3.0.5403760";
         _helper.Headers.Add("Cookie", "WR_SID=fb447e9e.5cd2d52be64ed");
         _helper.Headers.Add("Cookie2", "$Version=1");
     }
