@@ -23,7 +23,7 @@ public class TimeModule : SingleTypeModule<MessagePlain>
         return msg.Text == "报时"
             ? "报时"
             : msg.Text.StartsWith("设置时区为")
-                ? "设置"
+                ? "设置时区"
                 : null;
     }
 
