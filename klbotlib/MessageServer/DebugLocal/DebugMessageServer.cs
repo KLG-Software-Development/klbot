@@ -89,17 +89,13 @@ public class DebugMessageServer : IMessageServer
             content = $"[语音消息]";
         else
             content = $"[未知类型消息：{msg}]";
-        switch (msg.Context)
+        return msg.Context switch
         {
-            case MessageContext.Group:
-                return $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Temp:
-                return $"* 用户[{msg.SenderID}]通过群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Private:
-                return $"* 用户[{msg.SenderID}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            default:
-                return $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]或机器人发送了未知类型[{msg.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------";
-        }
+            MessageContext.Group => $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Temp => $"* 用户[{msg.SenderID}]通过群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Private => $"* 用户[{msg.SenderID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]或机器人发送了未知类型[{msg.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+        };
     }
     /// <summary>
     /// 生成消息的调试信息字符串
@@ -112,17 +108,13 @@ public class DebugMessageServer : IMessageServer
     /// <returns>消息的调试信息</returns>
     private string GetMessageDebugInfo(Module module, MessageContext context, long userId, long groupId, string content)
     {
-        switch (context)
+        return context switch
         {
-            case MessageContext.Group:
-                return $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Temp:
-                return $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Private:
-                return $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            default:
-                return $"* 模块[{module}]向群组[{groupId}]或用户[{userId}]发送了未知类型[{context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------";
-        }
+            MessageContext.Group => $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Temp => $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Private => $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 模块[{module}]向群组[{groupId}]或用户[{userId}]发送了未知类型[{context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+        };
     }
     /// <summary>
     /// 生成消息的调试信息字符串
