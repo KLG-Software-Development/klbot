@@ -29,10 +29,12 @@ start:
         KLBot klg = null;
         try
         {
-            MiraiMessageServer miraiServer = new("http://localhost:3356");
-            klg = args.Length != 0
-                ? (new(miraiServer, args[0], moduleCollection: Assembly.GetAssembly(typeof(ImageModule))))
-                : new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+            MiraiMessageServer miraiServer;
+            if (args.Length == 0)
+                miraiServer = new("http://localhost:3356");
+            else
+                miraiServer = new(args[0]);
+            klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
             klg.AddModule(new RollinModule());
             klg.AddModule(new CollapseModule());
             klg.AddModule(new CompilerModule());
