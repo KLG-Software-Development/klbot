@@ -59,7 +59,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
                 _fileExts.TryGetValue(language, out string fileExt);
                 if (fileExt == null)
                     return $"不支持语言\"{language}\"";
-                string response = _httpHelper.PostStringAsync(_urlA, BuildPostBody(language, fileExt, code)).Result;
+                string response = _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code)).Result;
                 ModulePrint($"Response: {response}");
                 JReply jreply = JsonConvert.DeserializeObject<JReply>(response);
                 _sb.Clear();
