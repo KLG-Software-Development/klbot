@@ -14,19 +14,11 @@ namespace klbotlib.Modules
     {
         [ModuleStatus]
         private Common1 common = new();
-        public override bool IsTransparent => true;
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
             long x = msg.SenderID;
             if (x == 2044164212)
-                return "yes";
-            else 
-                return null;
-        }
-        public override string Processor(MessagePlain msg, string filter_out)
-        {
-            if (filter_out == "yes")
             {
                 if (common.Y != DateTime.UtcNow.Month || common.Z != DateTime.UtcNow.Day)
                 {
@@ -37,11 +29,18 @@ namespace klbotlib.Modules
                 if (common.K == 1)
                 {
                     common.K = 0;
-                    return "welcome KXGG!";
+                    return "yes";
                 }
-                else 
+                else
                     return null;
             }
+            else
+                return null;
+        }
+        public override string Processor(MessagePlain msg, string filter_out)
+        {
+            if (filter_out == "yes")
+                return "welcome KXGG!";
             else 
                 return null;
         }
