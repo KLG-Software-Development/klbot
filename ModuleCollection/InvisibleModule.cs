@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
+
 using klbotlib.Modules.KLDNamespace;
-using System.Reflection;
 namespace klbotlib.Modules
 {
     public class InvisibleModule : SingleTypeModule<MessagePlain>
@@ -12,11 +8,10 @@ namespace klbotlib.Modules
         [ModuleStatus]
         private Invisible ruan = new Invisible();
 
-        public override bool IsTransparent { get; } = false;
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
-           
+
             long x = msg.SenderID;
             if (x == 2044164212)
             {
@@ -37,7 +32,7 @@ namespace klbotlib.Modules
             }
 
 
-            else return null; 
+            else return null;
         }
         public override string Processor(MessagePlain msg, string filter_out)
         {
@@ -52,15 +47,15 @@ namespace klbotlib.Modules
                 return "kxgg back!";
             }
             else return null;
-            
+
         }
     }
 }
 namespace klbotlib.Modules.KLDNamespace
-{        public class Invisible
+{
+    public class Invisible
     {
-        private int k = 2;
-        public int K { get; set; }
+        public int K { get; set; } = 2;
     }
 
 }
