@@ -4,7 +4,6 @@ using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules
@@ -16,7 +15,7 @@ namespace klbotlib.Modules
         private readonly Regex cmdPat = new Regex($@"^{prefix}(.+)$");
 
         [ModuleSetup]
-        public Dictionary<long, AuthorType> Users { get; private set; }
+        public Dictionary<long, AuthorType> Users { get; private set; } = new();
 
         internal List<Command> Cmds = new List<Command>();
         internal AuthorType GetAuthorType(long id)
