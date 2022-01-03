@@ -119,7 +119,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     /// <returns>转换后语音的Base64编码</returns>
     public string TextToSpeech(string text)
     {
-        string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(text.Trim())}";
+        string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={text.Trim()}";
         string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
         JReply reply = JsonConvert.DeserializeObject<JReply>(json);
         if (reply.errno != 0)

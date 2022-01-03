@@ -150,7 +150,7 @@ namespace klbotlib.Modules.ModuleUtils
             foreach (var kvpString in kvps)
             {
                 string[] kvp = kvpString.Split('=');
-                if (kvp.Length == 2)
+                if (kvp.Length >= 2)
                     form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
                 else
                     form.Add(new KeyValuePair<string,string>(kvp[0], ""));
