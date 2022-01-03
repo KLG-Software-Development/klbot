@@ -124,7 +124,7 @@ not_found:
         _query["pn"] = pn.ToString();
         _sw.Stop();
         _lastDownloadTime = _sw.Elapsed.ToMsString();
-        return _client.GetAsync($"{_url}?{_query}").Result.ToString();
+        return _client.GetAsync($"{_url}?{_query}").Result.Content.ReadAsStringAsync().Result;
     }
 
     private class JResult { public int listNum; public JImage[] data; }
