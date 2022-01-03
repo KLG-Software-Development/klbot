@@ -117,7 +117,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 string b642 = _imgHelper.DownloadAsBase64(msg.UrlList[1]);
                 string query_string = "?type=merge&apiType=face";
                 string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
-                string json = _httpHelper.PostStringAsync(_postUrl + query_string, body).Result;
+                string json = _httpHelper.PostFormUrlEncodedAsync(_postUrl + query_string, body).Result;
                 JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
                 //错误检查
                 if (reply.errno != 0)
@@ -141,7 +141,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 if (type == "landmark")
                 {
                     //只有一个result对象，用JReplySingle
-                    JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(_httpHelper.PostStringAsync(_postUrl, body).Result);
+                    JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                     //错误检查
                     if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                         return ErrorString(reply.errno, reply.msg);
@@ -152,7 +152,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 }
                 else
                 {
-                    string json = _httpHelper.PostStringAsync(_postUrl, body).Result;
+                    string json = _httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result;
                     JReplyMulti reply = JsonConvert.DeserializeObject<JReplyMulti>(json);
                     if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                         return ErrorString(reply.errno, reply.msg);
@@ -166,7 +166,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return _sb.ToString();
             case "face": //人脸评分
                 body = $"image&image_url={esc_url}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
-                JFaceReply reply_face = JsonConvert.DeserializeObject<JFaceReply>(_httpHelper.PostStringAsync(_postUrl, body).Result);
+                JFaceReply reply_face = JsonConvert.DeserializeObject<JFaceReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                 if (reply_face.errno != 0 || reply_face.msg.Trim().ToLower() != "success")
                     return ErrorString(reply_face.errno, reply_face.msg);
                 if (reply_face.data.result.face_num == 0)
@@ -191,7 +191,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 type = Uri.EscapeDataString(_typeByWordProc[word]);
                 body = $"image&image_url={esc_url}&type={type}&show=true";
                 //HostBot.ReplyPlainMessage(this, msg, "处理中...");
-                JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostStringAsync(_postUrl, body).Result);
+                JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                 //错误检查
                 if (reply_proc.errno != 0 || reply_proc.msg.Trim().ToLower() != "success")
                     return ErrorString(reply_proc.errno, reply_proc.msg);

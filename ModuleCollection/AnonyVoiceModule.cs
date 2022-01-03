@@ -120,7 +120,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     public string TextToSpeech(string text)
     {
         string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(text.Trim())}";
-        string json = _httpHelper.PostStringAsync(_url, body).Result;
+        string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
         JReply reply = JsonConvert.DeserializeObject<JReply>(json);
         if (reply.errno != 0)
             return $"匿名语音模块TTS API错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
