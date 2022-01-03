@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using klbotlib.Modules.KLDNamespace;
-using System;
+
 
 namespace klbotlib.Modules
 {
@@ -26,7 +26,7 @@ namespace klbotlib.Modules
         {
             if (filter_out == "yes")
             {
-                if (common.Y != DateTime.Now.Month || common.Z != DateTime.Now.Day)
+                if (common.Y != DateTime.UtcNow.Month || common.Z != DateTime.UtcNow.Day)
                 {
                     common.K = 1;
                     common.Y = DateTime.Now.Month;
