@@ -193,22 +193,24 @@ internal abstract class ExternalAssignmentCommand<T> : AssignmentCommand<T>
 [DefaultCommand]
 internal class HelpCmd : InfoCommand
 {
+    private readonly StringBuilder _sb = new();     //调用者清理
     public override string CommandString => "help";
     public override string InfoDescription => "可用命令和帮助";
     public override string GetInfo(KLBot bot)
     {
-        StringBuilder sb = new();
-        sb.AppendLine("命令列表: ");
+        _sb.Clear();
+        _sb.AppendLine("命令列表: ");
         foreach (Command cmd in bot.GetModule<CommandModule>()._cmds)
         {
-            sb.AppendLine($"{cmd.Format}\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\n");
+            _sb.AppendLine($"{cmd.Format}\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\n");
         }
-        return sb.AppendLine("\n提示：发送“##status”可以查看当前模块链条；发送“[模块名]帮助”可以查看模块信息").ToString();
+        return _sb.AppendLine("\n提示：发送“##status”可以查看当前模块链条；发送“[模块名]帮助”可以查看模块信息").ToString();
     }
 }
 [DefaultCommand]
 internal class InfoCmd : InfoCommand
 {
+    private readonly StringBuilder _sb = new();     //调用者清理
     private readonly Regex _multiWhite = new(@"\s+");
     private string GetCoreUtilization()
     {
@@ -284,58 +286,62 @@ internal class InfoCmd : InfoCommand
         Version exeVersion = Assembly.GetEntryAssembly().GetName().Version;
         Version libVersion = Info.CoreLibInfo.GetLibVersion();
         Version mcVersion = Info.ModuleCollectionInfo.GetMCVersion();
-        StringBuilder sb = new();
-        sb.AppendLine($"KLBot via mirai");
-        sb.AppendLine($"主函数版本: v{exeVersion.Major}.{exeVersion.Minor}-{exeVersion.ToKLGBuildString()}");
-        sb.AppendLine($"核心库版本: v{libVersion.Major}.{libVersion.Minor}-{libVersion.ToKLGBuildString()}");
+        _sb.Clear();
+        _sb.AppendLine($"KLBot via mirai");
+        _sb.AppendLine($"主函数版本: v{exeVersion.Major}.{exeVersion.Minor}-{exeVersion.ToKLGBuildString()}");
+        _sb.AppendLine($"核心库版本: v{libVersion.Major}.{libVersion.Minor}-{libVersion.ToKLGBuildString()}");
         if (mcVersion != null)
-            sb.AppendLine($"模块合集版本: v{mcVersion.Major}.{mcVersion.Minor}-{mcVersion.ToKLGBuildString()}");
+            _sb.AppendLine($"模块合集版本: v{mcVersion.Major}.{mcVersion.Minor}-{mcVersion.ToKLGBuildString()}");
         else
-            sb.AppendLine($"模块合集版本: 未注册任何模块合集");
-        sb.AppendLine($"\n[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
-        sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
-        sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
-        sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
-        sb.AppendLine($"可用内存：{ GetRAMUtilization()}");
-        sb.AppendLine($"\n[进程信息]\n进程架构：{RuntimeInformation.ProcessArchitecture}");
-        sb.AppendLine($"当前内存：{process.WorkingSet64.ToMemorySizeString(3)}");
-        sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
-        sb.AppendLine($"线程数量：{process.Threads.Count}");
-        sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}");
-        return sb.ToString();
+            _sb.AppendLine($"模块合集版本: 未注册任何模块合集");
+        _sb.AppendLine($"\n[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
+        _sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
+        _sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
+        _sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
+        _sb.AppendLine($"可用内存：{ GetRAMUtilization()}");
+        _sb.AppendLine($"\n[进程信息]\n进程架构：{RuntimeInformation.ProcessArchitecture}");
+        _sb.AppendLine($"当前内存：{process.WorkingSet64.ToMemorySizeString(3)}");
+        _sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
+        _sb.AppendLine($"线程数量：{process.Threads.Count}");
+        _sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}");
+        return _sb.ToString();
     }
 }
 [DefaultCommand]
 internal class StatusCmd : InfoCommand
 {
+    private readonly StringBuilder _sb = new();     //调用者清理
     public sealed override string CommandString => "status";
     public sealed override string InfoDescription => "KLBot状态";
     public sealed override string GetInfo(KLBot bot)
     {
-        StringBuilder sb = new($"[配置信息]\n");
-        sb.Append(bot.GetListeningGroupListString());
-        sb.AppendLine("\n[模块信息]");
-        sb.Append(bot.GetModuleChainString() + "\n");
-        sb.AppendLine("\n[统计信息]");
-        sb.Append(bot.DiagData.GetSummaryString());
-        return sb.ToString();
+        _sb.Clear();
+        _sb.Append($"[配置信息]\n");
+        _sb.Append(bot.GetListeningGroupListString());
+        _sb.AppendLine("\n[模块信息]");
+        _sb.Append(bot.GetModuleChainString() + "\n");
+        _sb.AppendLine("\n[统计信息]");
+        _sb.Append(bot.DiagData.GetSummaryString());
+        return _sb.ToString();
     }
 }
 [DefaultCommand]
 internal class StatusAllCmd : InfoCommand
 {
+    private readonly StringBuilder _sb = new();     //调用者清理
+
     public sealed override string CommandString => "status all";
     public sealed override string InfoDescription => "KLBot详细状态";
     public sealed override string GetInfo(KLBot bot)
     {
-        StringBuilder sb = new($"[配置信息]\n");
-        sb.Append(bot.GetListeningGroupListString());
-        sb.AppendLine("\n[模块信息]");
-        sb.Append(bot.GetModuleChainString() + "\n");
-        sb.AppendLine(bot.GetModuleStatusString());
-        sb.AppendLine("\n[统计信息]");
-        sb.Append(bot.DiagData.GetSummaryString());
-        return sb.ToString();
+        _sb.Clear();
+        _sb.Append($"[配置信息]\n");
+        _sb.Append(bot.GetListeningGroupListString());
+        _sb.AppendLine("\n[模块信息]");
+        _sb.Append(bot.GetModuleChainString() + "\n");
+        _sb.AppendLine("\n[统计信息]");
+        _sb.Append(bot.DiagData.GetSummaryString());
+        return _sb.ToString();
     }
 }
 internal class PtiCmd : AssignmentCommand<int>
