@@ -14,24 +14,36 @@ namespace klbotlib.Modules
     {
         [ModuleStatus]
         private Common1 common = new();
+        public override bool IsTransparent => true;
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
             long x = msg.SenderID;
-            if (x == 2044164212 && common.Z != DateTime.UtcNow.Day)
-                return "reply";
+            if (x == 2044164212)
+                return "yes";
             else 
                 return null;
         }
         public override string Processor(MessagePlain msg, string filter_out)
         {
-            if (filter_out == "reply")
+            if (filter_out == "yes")
             {
-                common.Z = DateTime.UtcNow.Day;
-                return "welcome KXGG!";
+                if (common.Y != DateTime.UtcNow.Month || common.Z != DateTime.UtcNow.Day)
+                {
+                    common.K = 1;
+                    common.Y = DateTime.Now.Month;
+                    common.Z = DateTime.Now.Day;
+                }
+                if (common.K == 1)
+                {
+                    common.K = 0;
+                    return "welcome KXGG!";
+                }
+                else 
+                    return null;
             }
             else 
-                return "未知过滤器输出";
+                return null;
         }
     }
 }
