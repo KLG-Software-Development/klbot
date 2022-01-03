@@ -52,10 +52,14 @@ internal abstract class ActionCommand<T> : Command
     {
         _sw.Restart();
         string valueString = cmd[(CommandString.Length + 1)..];
-        TryParseCmdStringValue(valueString, out T parameter);
-        Action(bot, cmdMsg, parameter);
-        _sw.Stop();
-        return $"{ActionName}执行成功，耗时{_sw.ElapsedMilliseconds.ToTimeSpanString(2)}。";
+        if (TryParseCmdStringValue(valueString, out T parameter))
+        {
+            Action(bot, cmdMsg, parameter);
+            _sw.Stop();
+            return $"{ActionName}执行成功，耗时{_sw.ElapsedMilliseconds.ToTimeSpanString(2)}。";
+        }
+        else
+            return $"{ActionName}执行失败，无法解析参数“{valueString}”";
     }
 }
 /// <summary>
