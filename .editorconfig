@@ -14,3 +14,6 @@ dotnet_diagnostic.CS8602.severity = silent
 
 # CA1822: 将成员标记为 static
 dotnet_diagnostic.CA1822.severity = silent
+
+# Default severity for all analyzer diagnostics
+dotnet_analyzer_diagnostic.severity = silent

@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules;
@@ -88,8 +89,8 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
             case "content":
                 _userStat[msg.SenderID] = UserStatus.Idle;
                 Messaging.ReplyMessage(msg, "正在薅羊毛...");
-                string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
-                string json = _httpHelper.PostStringAsync(_url, body).Result;
+                string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={msg.Text.Trim()}";
+                string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
                 JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                 if (reply.errno != 0)
                     return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";

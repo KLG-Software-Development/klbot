@@ -342,7 +342,9 @@ namespace klbotlib
         {
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
-            List<Message> msgs = _msgServer.FetchMessages().Where(msg => msg.Context == MessageContext.Group && TargetGroupIDList.Contains(msg.GroupID)).ToList();
+            List<Message> msgs = _msgServer.FetchMessages().Where(msg => 
+            msg.Context != MessageContext.Group || msg.Context != MessageContext.Temp   //非私聊、非临时会话时无需过滤
+            || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
             return msgs;
         }
@@ -474,7 +476,7 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("status "))
                     {
-                        string id = cmd.Substring(7);
+                        string id = cmd[7..];
                         if (!ModuleChain.ContainsModule(id))
                             _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
@@ -482,7 +484,7 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("enable "))
                     {
-                        string id = cmd.Substring(7);
+                        string id = cmd[7..];
                         if (!ModuleChain.ContainsModule(id))
                             _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
@@ -493,7 +495,7 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("disable "))
                     {
-                        string id = cmd.Substring(8);
+                        string id = cmd[8..];
                         if (!ModuleChain.ContainsModule(id))
                             _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
@@ -709,7 +711,7 @@ namespace klbotlib
                     if (member.IsNonHiddenModuleStatus())
                     {
                         member.TryGetValue(module, out object value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
-                        sb.AppendLine($" {member.Name.ToString().PadRight(10)} = {value}");
+                        sb.AppendLine($" {member.Name,-10} = {value}");
                     }
                 }
             }

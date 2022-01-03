@@ -142,7 +142,7 @@ namespace klbotlib.Modules
         T IModuleAccessAPI.GetModule<T>(int index = 0) => HostBot.GetModule<T>(index);
         bool IModuleAccessAPI.TryGetFieldAndProperty<T>(string name, out T value)
         {
-            value = default(T);
+            value = default;
             Type type = GetType();
             var p = type.GetProperty(name);
             if (p != null)
@@ -417,7 +417,7 @@ namespace klbotlib.Modules
             bool hasError = false;
             try   //对处理器的异常控制
             {
-                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]等待处理器完成...");
+                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
                 output = Processor(msg, filterOut);
                 DiagData.StopMeasurement();
@@ -444,10 +444,10 @@ namespace klbotlib.Modules
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
                 _hostBot.ReplyMessage(this, msg, signature + output);
-                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 已调用回复接口.");
+                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else
-                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
+                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 无回复内容.");
             //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
             if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
                 _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
