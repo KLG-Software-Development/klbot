@@ -3,7 +3,7 @@
 #pragma warning disable IDE1006 // 命名样式
 
 using klbotlib.Modules.KLDNamespace;
-
+using System;
 
 namespace klbotlib.Modules
 {
