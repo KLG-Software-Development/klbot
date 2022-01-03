@@ -45,6 +45,8 @@ start:
             lcb.AddModule(new CompilerModule());
             lcb.AddModule(new ImageModule());
             lcb.AddModule(new IMGPModule());
+            lcb.AddModule(new InvisibleModule());
+            lcb.AddModule(new WelcomekxggModule());
             lcb.AddModule(new AnonyVoiceModule());
             lcb.AddModule(new TimeModule());
             lcb.AddModule(new 上号Module());
