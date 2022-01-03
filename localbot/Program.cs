@@ -1,7 +1,6 @@
 ﻿#pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
 using klbotlib;
 using klbotlib.Exceptions;
-using klbotlib.Extensions;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
 using System.Reflection;
@@ -23,17 +22,8 @@ public class Program
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");            //Turn on layered PGO
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");  //Enable Quick Jit for loop
         Console.ResetColor();
-        Version? exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
-        if (exeVersion == null)
-            exeVersion = new Version();
-        Version lib_version = klbotlib.Info.CoreLibInfo.GetLibVersion();
-        Version mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion();
         long queryCounterCache = 0;
         int fatalFailureCounter = 0;
-        Console.WriteLine($"KLBot via mirai");
-        Console.WriteLine($"exe version: {exeVersion.Major}.{exeVersion.Minor} Build {exeVersion.ToKLGBuildString()}");
-        Console.WriteLine($"corelib version: {lib_version.Major}.{lib_version.Minor} Build {lib_version.ToKLGBuildString()}");
-        Console.WriteLine($"MC version: {mcVersion.Major}.{mcVersion.Minor} Build {mcVersion.ToKLGBuildString()}\n");
 start:
         KLBot lcb = null;
         try

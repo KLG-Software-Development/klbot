@@ -1,4 +1,8 @@
-﻿using klbotlib.Modules.KLDNamespace;
+﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
+#pragma warning disable IDE0044 // 添加只读修饰符
+#pragma warning disable IDE1006 // 命名样式
+
+using klbotlib.Modules.KLDNamespace;
 using System;
 
 namespace klbotlib.Modules
@@ -9,21 +13,22 @@ namespace klbotlib.Modules
     public class WelcomekxggModule : SingleTypeModule<MessagePlain>
     {
         [ModuleStatus]
-        private common1 common = new common1();
-        public override bool IsTransparent { get; } = true;
+        private Common1 common = new();
+        public override bool IsTransparent => true;
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
             long x = msg.SenderID;
             if (x == 2044164212)
                 return "yes";
-            else return null;
+            else 
+                return null;
         }
         public override string Processor(MessagePlain msg, string filter_out)
         {
             if (filter_out == "yes")
             {
-                if (common.Y != DateTime.Now.Month || common.Z != DateTime.Now.Day)
+                if (common.Y != DateTime.UtcNow.Month || common.Z != DateTime.UtcNow.Day)
                 {
                     common.K = 1;
                     common.Y = DateTime.Now.Month;
@@ -34,15 +39,17 @@ namespace klbotlib.Modules
                     common.K = 0;
                     return "welcome KXGG!";
                 }
-                else return null;
+                else 
+                    return null;
             }
-            else return null;
+            else 
+                return null;
         }
     }
 }
 namespace klbotlib.Modules.KLDNamespace
 {
-    public class common1
+    public class Common1
     {
         public int K
         {
