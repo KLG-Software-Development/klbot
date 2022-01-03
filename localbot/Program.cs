@@ -30,7 +30,7 @@ start:
         {
             
             lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
-            lcb.AddModule(new AnonyVoiceModule());
+            lcb.AddModule(new WelcomekxggModule());
             Console.WriteLine(lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。输入命令开始调试");
             while (true)

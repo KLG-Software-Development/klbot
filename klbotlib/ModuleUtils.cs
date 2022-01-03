@@ -79,13 +79,11 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="timeout">超时(毫秒)</param>
         /// <param name="ua">UA标识</param>
         /// <param name="contentType">默认ContentType</param>
-        /// <param name="contentEncoding">默认Encoding</param>
-        public HttpHelper(int timeout = 15, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0", string contentType = "application/x-www-form-urlencoded", string contentEncoding = "utf-8")
+        public HttpHelper(int timeout = 15, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0", string contentType = "application/x-www-form-urlencoded")
         {
             Timeout = timeout;
             UA = ua;
             ContentType = contentType;
-            ContentEncoding = contentEncoding;
         }
 
         /// <summary>
@@ -126,33 +124,7 @@ namespace klbotlib.Modules.ModuleUtils
                 if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            StringContent content = new(body, System.Text.Encoding.GetEncoding(ContentEncoding));
-            return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
-        }
-        /// <summary>
-        /// 向指定地址POST一组x-www-form-urlencoded内容
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="body"></param>
-        /// <returns></returns>
-        public async Task<string> PostFormUrlEncodedAsync(string url, string body)
-        {
-            foreach (var kvp in Headers)
-            {
-                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
-                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
-            }
-            if (body.StartsWith("?"))
-                body = body[1..];
-            //解析formUrlEncoded
-            List<KeyValuePair<string, string>> form = new();
-            string[] kvps = body.Split('&');
-            foreach (var kvpString in kvps)
-            {
-                string[] kvp = kvpString.Split('=');
-                form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
-            }
-            FormUrlEncodedContent content = new(form);
+            StringContent content = new StringContent(body, System.Text.Encoding.GetEncoding(ContentEncoding));
             return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
     }
