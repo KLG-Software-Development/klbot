@@ -399,6 +399,7 @@ namespace klbotlib
                     }
                     else  //未知异常
                     {
+                        _console.WriteLn($"调用栈：\n{ex.StackTrace}");
                         if (successCounterCache == DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                             continuousErrorCounter++;
                         else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零

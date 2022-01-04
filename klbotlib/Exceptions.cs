@@ -35,6 +35,20 @@ namespace klbotlib.Exceptions
         /// <param name="msg">异常信息</param>
         public ModuleMissingException(string msg) : base($"找不到模块：{msg}") { }
     }
+    /// <summary>
+    /// JSON反序列化异常
+    /// </summary>
+    internal class JsonDeserializationException : Exception
+    {
+        /// <summary>
+        /// 触发JSON反序列化异常的原始JSON字符串
+        /// </summary>
+        public string OriginalJson { get; }
+        public JsonDeserializationException(string msg, string originalJson) : base(msg)
+        {
+            OriginalJson = originalJson;
+        }
+    }
     internal class ModuleException : Exception
     {
         public ModuleException(Module source, string msg) : base($"模块{source}出现异常：{msg}") { }
