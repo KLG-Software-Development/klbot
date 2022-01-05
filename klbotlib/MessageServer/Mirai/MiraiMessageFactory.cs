@@ -30,6 +30,8 @@ namespace klbotlib.MessageServer.Mirai
                 ret = BuildVoice(msgPackage);
             else if (type == typeof(MessageImagePlain))
                 ret = BuildImagePlain(msgPackage);
+            else if (type == typeof(MessageRecall))
+                ret = new MessageRecall(msgPackage.authorId, msgPackage.@operator.id, -1, msgPackage.messageId);
             else
                 return Message.Empty;
             //添加统计生成的@列表
@@ -99,6 +101,10 @@ namespace klbotlib.MessageServer.Mirai
                 case "GroupMessage":
                     msg.Context = MessageContext.Group;
                     msg.GroupID = msgPackage.sender.group.id;
+                    break;
+                case "GroupRecallEvent":
+                    msg.Context = MessageContext.Group;
+                    msg.GroupID = msgPackage.@operator.group.id;
                     break;
             }
         }
