@@ -373,6 +373,7 @@ namespace klbotlib
         private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
         {
             long successCounterCache = 0, continuousErrorCounter = 0;
+            bool isLoopRestarting = true;
         start:
             IsLoopOn = true;
             Thread.Sleep(500);     //延迟启动 为命令循环线程预留至少0.5s时间
@@ -380,7 +381,14 @@ namespace klbotlib
             {
                 while (IsLoopOn)
                 {
-                    ProcessMessages(_msgServer.FetchMessages());
+                    if (isLoopRestarting)
+                    {
+                        var lastOnly = new List<Message> { _msgServer.FetchMessages().Last() };
+                        ProcessMessages(lastOnly);
+                        isLoopRestarting = false;
+                    }
+                    else
+                        ProcessMessages(_msgServer.FetchMessages());
                     Thread.Sleep(PollingTimeInterval);
                     waitForPauseMsgLoopSignal.WaitOne();
                 }
@@ -395,6 +403,7 @@ namespace klbotlib
                     {
                         _console.WriteLn("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行。六秒后将重试", ConsoleMessageType.Error);
                         Thread.Sleep(6000);
+                        isLoopRestarting = true;
                         goto start;
                     }
                     else  //未知异常
@@ -415,6 +424,7 @@ namespace klbotlib
                             _console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
                             _console.ClearInputBuffer();
                             _console.Write("> ", ConsoleColor.DarkYellow);
+                            isLoopRestarting = true;
                             goto start;
                         }
                     }
