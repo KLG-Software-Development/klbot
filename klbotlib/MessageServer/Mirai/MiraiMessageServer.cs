@@ -57,9 +57,22 @@ public class MiraiMessageServer : IMessageServer
                 Console.Write("> ");
                 continue;
             }
-            //初步过滤
-            var jmsgs = obj.data.ToList();
-            jmsgs.ForEach(jmsg => msgs.Add(MiraiMessageFactory.BuildMessage(jmsg)));
+            List<JMiraiMessagePackage> jmsgs = obj.data.ToList();
+            foreach (JMiraiMessagePackage jmsg in jmsgs)
+            {
+                try
+                {
+                    msgs.Add(MiraiMessageFactory.BuildMessage(jmsg));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Message对象构造失败：{ex.Message}");
+                    File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+                    Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+                    Console.Write("> ");
+                    continue;
+                }
+            }
         }
         while (obj != null && obj.data.Count != 0);   //无限轮询直到拿下所有消息
         return msgs.Where(x => !(x is MessageEmpty)).ToList(); //预过滤空消息
