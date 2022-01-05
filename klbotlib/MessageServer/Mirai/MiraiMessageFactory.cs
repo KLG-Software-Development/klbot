@@ -1,8 +1,6 @@
-﻿using klbotlib.Internal;
-using klbotlib.MessageServer.Mirai.JsonPrototypes;
+﻿using klbotlib.MessageServer.Mirai.JsonPrototypes;
 using System;
 using System.Collections.Generic;
-using System.Net;
 
 namespace klbotlib.MessageServer.Mirai
 {
@@ -16,6 +14,8 @@ namespace klbotlib.MessageServer.Mirai
             { "FlashImage", 1 },    //闪照和正常图片统一按图片处理
             { "Voice", 2 },
         };
+        private static readonly HashSet<string> _commonMessageTypes = new() { "GroupMessage", "TempMessage", "PrivateMessage" };
+
 
         //从消息链生成Message对象
         internal static Message BuildMessage(JMiraiMessagePackage msg_package)
@@ -44,30 +44,44 @@ namespace klbotlib.MessageServer.Mirai
         private static Type CalcMessageType(JMiraiMessagePackage msg_package, out List<long> targets)
         {
             targets = new List<long>();
-            //忽略所有不在映射表里的消息
-            int[] count = new int[16];
-            //遍历消息链，统计每种类型子消息的数量。如果遇到At，添加目标ID到输出
-            foreach (var sub_msg in msg_package.messageChain)
-                if (_index_of.ContainsKey(sub_msg.type))
-                    count[_index_of[sub_msg.type]]++;
-                else if (sub_msg.type == "At")
-                    targets.Add(sub_msg.target);
-            bool has_plain = count[_index_of["Plain"]] != 0;
-            bool has_img = count[_index_of["Image"]] != 0;
-            bool has_voice = count[_index_of["Voice"]] != 0;
+            //(Issue#22) 判断是否是普通消息 i.e.群聊消息、临时会话消息、私聊消息中的一种
+            //如果是，则正常走统计构建流程
+            if (_commonMessageTypes.Contains(msg_package.type))
+            {
+                //忽略所有不在映射表里的消息
+                int[] count = new int[16];
+                //遍历消息链，统计每种类型子消息的数量。如果遇到At，添加目标ID到输出
+                foreach (var sub_msg in msg_package.messageChain)
+                    if (_index_of.ContainsKey(sub_msg.type))
+                        count[_index_of[sub_msg.type]]++;
+                    else if (sub_msg.type == "At")
+                        targets.Add(sub_msg.target);
+                bool has_plain = count[_index_of["Plain"]] != 0;
+                bool has_img = count[_index_of["Image"]] != 0;
+                bool has_voice = count[_index_of["Voice"]] != 0;
 
-            //根据统计结果判断消息类型
-            if (has_plain)
-                if (!has_img)
-                    return typeof(MessagePlain);
+                //根据统计结果判断消息类型
+                if (has_plain)
+                    if (!has_img)
+                        return typeof(MessagePlain);
+                    else
+                        return typeof(MessageImagePlain);
+                else if (has_img)
+                    return typeof(MessageImage);
+                else if (has_voice)
+                    return typeof(MessageVoice);
                 else
-                    return typeof(MessageImagePlain);
-            else if (has_img)
-                return typeof(MessageImage);
-            else if (has_voice)
-                return typeof(MessageVoice);
+                    return typeof(MessageEmpty);
+            }
+            //否则具体情况具体分析
             else
-                return typeof(MessageEmpty);
+            {
+                if (msg_package.type == "GroupRecallEvent")
+                    return typeof(MessageRecall);
+                else
+                    return typeof(MessageEmpty);
+            }
+
         }
         //根据消息链，将Message对象的Context字段和相应的ID字段修改成合适值
         private static void RefineContext(JMiraiMessagePackage msg_package, Message msg)
