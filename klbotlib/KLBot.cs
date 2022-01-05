@@ -381,10 +381,11 @@ namespace klbotlib
             {
                 while (IsLoopOn)
                 {
+                    List<Message> msgs = _msgServer.FetchMessages();
                     if (isLoopRestarting)
                     {
-                        var lastOnly = new List<Message> { _msgServer.FetchMessages().Last() };
-                        ProcessMessages(lastOnly);
+                        if (msgs.Count != 0)
+                            ProcessMessages(new List<Message> { msgs.Last() });
                         isLoopRestarting = false;
                     }
                     else
