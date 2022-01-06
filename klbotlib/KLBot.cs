@@ -1,11 +1,8 @@
 ﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.Internal;
 using klbotlib.Json;
-using klbotlib.MessageServer;
 using klbotlib.MessageServer.Mirai;
-using klbotlib.MessageServer.Mirai.JsonPrototypes;
 using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
@@ -13,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -385,7 +381,7 @@ namespace klbotlib
             {
                 while (IsLoopOn)
                 {
-                    List<Message> msgs = _msgServer.FetchMessages();
+                    List<Message> msgs = FetchMessages();
                     if (isLoopRestarting)
                     {
                         if (msgs.Count != 0)
