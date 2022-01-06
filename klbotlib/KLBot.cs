@@ -10,6 +10,7 @@ using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -385,7 +386,7 @@ namespace klbotlib
             {
                 while (IsLoopOn)
                 {
-                    List<Message> msgs = _msgServer.FetchMessages();
+                    List<Message> msgs = FetchMessages();
                     if (isLoopRestarting)
                     {
                         if (msgs.Count != 0)
