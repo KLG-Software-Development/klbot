@@ -27,24 +27,24 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     {
         get
         {
-            StringBuilder sb = new();
+            _sb.Clear();
             //纯文本消息
-            sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
+            _sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
             foreach (var key in _typeByWordProc.Keys)
             {
-                sb.Append(" " + key);
+                _sb.Append(" " + key);
             }
-            sb.AppendLine("；\n");
-            sb.AppendLine(("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有："));
+            _sb.AppendLine("；\n");
+            _sb.AppendLine(("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有："));
             foreach (var key in _typeByWordRecg.Keys)
             {
-                sb.Append(" " + key);
+                _sb.Append(" " + key);
             }
-            sb.AppendLine("；\n");
-            sb.AppendLine("输入\"如何评价\"，可以让AI对附带照片中的人脸打分；\n");
-            sb.AppendLine("选择两张图并输入\"换脸/交配\"，可以把后一张图的脸换到前一张图片的脸上；\n");
-            sb.AppendLine("由于傻逼百度不允许处理大图片，一些图片可能处理不了。可以输入\"压缩\"让本模块手动压缩并返图。");
-            return sb.ToString();
+            _sb.AppendLine("；\n");
+            _sb.AppendLine("输入\"如何评价\"，可以让AI对附带照片中的人脸打分；\n");
+            _sb.AppendLine("选择两张图并输入\"换脸/交配\"，可以把后一张图的脸换到前一张图片的脸上；\n");
+            _sb.AppendLine("由于傻逼百度不允许处理大图片，一些图片可能处理不了。可以输入\"压缩\"让本模块手动压缩并返图。");
+            return _sb.ToString();
         }
     }
 
@@ -74,7 +74,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     private static readonly List<string> _mergeKeyword = new() { "换脸", "囍", "杂交", "交配" };
     private static readonly HttpHelper _httpHelper = new();
     private static readonly ImageHelper _imgHelper = new();
-    private static readonly StringBuilder _sb = new();
+    private static readonly StringBuilder _sb = new();  //caller clear
     private static string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
     private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
 
