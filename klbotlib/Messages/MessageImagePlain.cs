@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace klbotlib
 {
     /// <summary>
     /// 图文消息
     /// </summary>
-    public class MessageImagePlain : Message
+    public class MessageImagePlain : MessageCommon
     {
         private readonly List<string> _url_list = new List<string>();
 

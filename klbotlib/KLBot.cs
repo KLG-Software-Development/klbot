@@ -291,15 +291,19 @@ namespace klbotlib
         /// <param name="content">回复内容</param>
         internal void ReplyMessage(Module module, Message originMsg, string content)
         {
-            switch (originMsg.Context)
+            if (originMsg is MessageCommon originMsgCommon)
+                SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
+            else
             {
-                case MessageContext.Group:
-                    SendMessage(module, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
-                    return;
-                case MessageContext.Temp:
-                case MessageContext.Private:
-                    SendMessage(module, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
-                    return;
+                switch (originMsg.Context)
+                {
+                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
+                        SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
+                        return;
+                    default:
+                        ObjectPrint(module, $"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
+                        return;
+                }
             }
         }
 
@@ -389,7 +393,7 @@ namespace klbotlib
                         isLoopRestarting = false;
                     }
                     else
-                        ProcessMessages(_msgServer.FetchMessages());
+                        ProcessMessages(msgs);
                     Thread.Sleep(PollingTimeInterval);
                     waitForPauseMsgLoopSignal.WaitOne();
                 }

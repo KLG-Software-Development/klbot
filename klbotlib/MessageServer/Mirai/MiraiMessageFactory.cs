@@ -14,28 +14,33 @@ namespace klbotlib.MessageServer.Mirai
             { "FlashImage", 1 },    //闪照和正常图片统一按图片处理
             { "Voice", 2 },
         };
-        private static readonly HashSet<string> _commonMessageTypes = new() { "GroupMessage", "TempMessage", "PrivateMessage" };
+        private static readonly HashSet<string> _commonMessageTypes = new() { "GroupMessage", "TempMessage", "FriendMessage" };
 
 
         //从消息链生成Message对象
         internal static Message BuildMessage(JMiraiMessagePackage msgPackage)
         {
-            Message ret = null;
             var type = CalcMessageType(msgPackage, out var targets);
+            Message ret = null;
+
+            MessageCommon retCommon = null;
             if (type == typeof(MessagePlain))
-                ret = BuildPlain(msgPackage);
+                retCommon = BuildPlain(msgPackage);
             else if (type == typeof(MessageImage))
-                ret = BuildImage(msgPackage);
+                retCommon = BuildImage(msgPackage);
             else if (type == typeof(MessageVoice))
-                ret = BuildVoice(msgPackage);
+                retCommon = BuildVoice(msgPackage);
             else if (type == typeof(MessageImagePlain))
-                ret = BuildImagePlain(msgPackage);
+                retCommon = BuildImagePlain(msgPackage);
             else if (type == typeof(MessageRecall))
                 ret = new MessageRecall(msgPackage.authorId, msgPackage.@operator.id, -1, msgPackage.messageId);
             else
                 return Message.Empty;
-            //添加统计生成的@列表
-            ret.AddTargetID(targets);
+            if (retCommon != null)
+            {
+                retCommon.AddTargetID(targets);
+                ret = retCommon;
+            }
             //加工合适的上下文和ID
             RefineContext(msgPackage, ret);
             return ret;
@@ -92,7 +97,8 @@ namespace klbotlib.MessageServer.Mirai
             {
                 case "FriendMessage":
                     msg.Context = MessageContext.Private;
-                    msg.SenderID = msgPackage.sender.id;
+                    if (msg is MessageCommon msgc)
+                        msgc.SenderID = msgPackage.sender.id;
                     break;
                 case "TempMessage":
                     msg.Context = MessageContext.Temp;

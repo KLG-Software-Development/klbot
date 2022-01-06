@@ -7,7 +7,7 @@ namespace klbotlib
     /// <summary>
     /// 图像消息类
     /// </summary>
-    public class MessageImage : Message
+    public class MessageImage : MessageCommon
     {
         private readonly List<string> _url_list = new List<string>();
         /// <summary>
