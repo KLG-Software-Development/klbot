@@ -9,6 +9,7 @@ namespace klbotlib.Modules;
 /// 嘴臭模块
 public class FuckModule : SingleTypeModule<MessagePlain>
 {
+    private readonly StringBuilder _sb = new();
     [ModuleSetup]
     private readonly Regex _pattern;
     [ModuleSetup]
@@ -32,12 +33,16 @@ public class FuckModule : SingleTypeModule<MessagePlain>
     {
         if (IsCascade)
         {
-            StringBuilder builder = new(SingleSentence());
-            while (RandomNumberGenerator.GetInt32(100) > TermProb && builder.Length <= MaxLength)
+            lock (_sb)
             {
-                builder.AppendFormat(" {0}", SingleSentence());
+                _sb.Clear();
+                _sb.Append(SingleSentence());
+                while (RandomNumberGenerator.GetInt32(100) > TermProb && _sb.Length <= MaxLength)
+                {
+                    _sb.AppendFormat(" {0}", SingleSentence());
+                }
+                return _sb.ToString();
             }
-            return builder.ToString();
         }
         else
             return SingleSentence();

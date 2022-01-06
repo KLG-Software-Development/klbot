@@ -25,6 +25,7 @@ namespace klbotlib
     {
         private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
+        private readonly StringBuilder _sb = new();
         private CmdLoopStatus _cmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
         private IMessageServer _msgServer;
 
@@ -679,55 +680,64 @@ namespace klbotlib
         /// </summary>
         public string GetModuleChainString()
         {
-            StringBuilder sb = new StringBuilder("模块链条：\n");
-            int index = 0;
-            ModuleChain.ForEach(module =>
+            lock (_sb)
             {
-                if (module.ModuleName == module.FriendlyName)
-                    sb.AppendLine($"  [{index}] {module}");
-                else
-                    sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
-                index++;
-            });
-            return sb.ToString();
+                _sb.AppendLine("模块链条：");
+                int index = 0;
+                ModuleChain.ForEach(module =>
+                {
+                    if (module.ModuleName == module.FriendlyName)
+                        _sb.AppendLine($"  [{index}] {module}");
+                    else
+                        _sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
+                    index++;
+                });
+                return _sb.ToString();
+            }
         }
         /// <summary>
         /// 返回字符串，其中列出当前监听群组的列表
         /// </summary>
         public string GetListeningGroupListString()
         {
-            StringBuilder sb = new StringBuilder("监听群组列表:\n");
-            int index = 0;
-            foreach (var target in TargetGroupIDList)
+            lock (_sb)
             {
-                sb.AppendLine($"  [{index}]  {target}");
-                index++;
+                _sb.AppendLine("监听群组列表：");
+                int index = 0;
+                foreach (var target in TargetGroupIDList)
+                {
+                    _sb.AppendLine($"  [{index}]  {target}");
+                    index++;
+                }
+                return _sb.ToString();
             }
-            return sb.ToString();
         }
         /// <summary>
         /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
         /// </summary>
         public string GetModuleStatusString()
         {
-            StringBuilder sb = new StringBuilder("模块状态：\n");
-            foreach (var module in ModuleChain)
+            lock (_sb)
             {
-                sb.AppendLine($"<{module.ModuleID}>");
-                Type type = module.GetType();
-                List<MemberInfo> members = new List<MemberInfo>();
-                members.AddRange(type.GetProperties_All().Reverse());
-                members.AddRange(type.GetFields_All().Reverse());
-                foreach (var member in members)
+                _sb.AppendLine("模块状态：");
+                foreach (var module in ModuleChain)
                 {
-                    if (member.IsNonHiddenModuleStatus())
+                    _sb.AppendLine($"<{module.ModuleID}>");
+                    Type type = module.GetType();
+                    List<MemberInfo> members = new List<MemberInfo>();
+                    members.AddRange(type.GetProperties_All().Reverse());
+                    members.AddRange(type.GetFields_All().Reverse());
+                    foreach (var member in members)
                     {
-                        member.TryGetValue(module, out object value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
-                        sb.AppendLine($" {member.Name,-10} = {value}");
+                        if (member.IsNonHiddenModuleStatus())
+                        {
+                            member.TryGetValue(module, out object value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
+                            _sb.AppendLine($" {member.Name,-10} = {value}");
+                        }
                     }
                 }
+                return _sb.ToString();
             }
-            return sb.ToString();
         }
 
         private void CreateDirectoryIfNotExist(string path, string dir_description)

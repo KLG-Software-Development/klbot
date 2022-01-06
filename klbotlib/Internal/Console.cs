@@ -219,8 +219,14 @@ public interface IConsole
 
 static class StringExtension
 {
+    private readonly static StringBuilder _sb = new();
     public static string Repeat(this string value, int count)
     {
-        return new StringBuilder(value.Length * count).Insert(0, value, count).ToString();
+        lock (_sb)
+        {
+            _sb.Clear();
+            _sb.Insert(0, value, count);
+            return _sb.ToString();
+        }
     }
 }
