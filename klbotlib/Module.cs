@@ -250,7 +250,7 @@ namespace klbotlib.Modules
         }
         void IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
             => HostBot.SendMessage(this, context, userId, groupId, content);
-        void IMessagingAPI.ReplyMessage(Message originMsg, string content)
+        void IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)
         {
             //统一Assert
             AssertAttachedStatus(true);

@@ -1,9 +1,6 @@
 ﻿using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace klbotlib.MessageServer.Debug;
 
@@ -12,7 +9,7 @@ namespace klbotlib.MessageServer.Debug;
 /// </summary>
 public class DebugMessageServer : IMessageServer
 {
-    private readonly List<Message> _msgBuffer = new();
+    private readonly List<MessageCommon> _msgBuffer = new();
 
     /// <summary>
     /// 消息缓冲区加入新消息时触发的回调。参数为从消息生成的调试信息
@@ -43,7 +40,7 @@ public class DebugMessageServer : IMessageServer
     /// <inheritdoc/>
     public List<Message> FetchMessages()
     {
-        List<Message> msgs = new List<Message>(_msgBuffer);
+        List<Message> msgs = new(_msgBuffer);
         _msgBuffer.Clear();  //清理缓冲区
         return msgs;
     }
@@ -63,7 +60,7 @@ public class DebugMessageServer : IMessageServer
     /// 向消息服务器中添加未读消息
     /// </summary>
     /// <param name="msgs">待加入的消息</param>
-    public void AddReceivedMessage(params Message[] msgs)
+    public void AddReceivedMessage(params MessageCommon[] msgs)
     {
         _msgBuffer.AddRange(msgs);
         foreach (var msg in msgs)
@@ -76,7 +73,7 @@ public class DebugMessageServer : IMessageServer
     /// 生成消息的调试信息字符串
     /// </summary>
     /// <returns>消息的调试信息</returns>
-    private string GetMessageDebugInfo(Message msg)
+    private string GetMessageDebugInfo(MessageCommon msg)
     {
         string content;
         if (msg is MessagePlain pmsg)

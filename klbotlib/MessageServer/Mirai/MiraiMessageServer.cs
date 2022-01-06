@@ -39,7 +39,7 @@ public class MiraiMessageServer : IMessageServer
     /// <returns></returns>
     public List<Message> FetchMessages()
     {
-        List<Message> msgs = new List<Message>();
+        List<Message> msgs = new();
         JMiraiFetchMessageResponse obj = null;
         do
         {

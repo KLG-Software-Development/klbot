@@ -3,7 +3,7 @@
     /// <summary>
     /// 纯文本消息类
     /// </summary>
-    public class MessagePlain : Message
+    public class MessagePlain : MessageCommon
     {
         /// <summary>
         /// 此消息的文本内容

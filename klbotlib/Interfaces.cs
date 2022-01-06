@@ -62,7 +62,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="origin_msg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        void ReplyMessage(Message origin_msg, string content);
+        void ReplyMessage(MessageCommon origin_msg, string content);
         /// <summary>
         /// 发送群消息接口
         /// </summary>
