@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace klbotlib
 {
@@ -9,15 +7,15 @@ namespace klbotlib
     /// </summary>
     public class MessageImage : MessageCommon
     {
-        private readonly List<string> _url_list = new List<string>();
+        private readonly List<string> _urlList = new List<string>();
         /// <summary>
         /// 图像的Url的列表，顺序从先到后
         /// </summary>
-        public IReadOnlyList<string> UrlList { get => _url_list; }
+        public IReadOnlyList<string> UrlList { get => _urlList; }
 
-        internal MessageImage(long sender_id, long group_id) : base(sender_id, group_id) { }
+        internal MessageImage(long senderId, long groupId) : base(senderId, groupId) { }
 
-        internal void Add(params string[] url) => _url_list.AddRange(url);
-        internal void AddRange(IEnumerable<string> url) => _url_list.AddRange(url);
+        internal void Add(params string[] url) => _urlList.AddRange(url);
+        internal void AddRange(IEnumerable<string> url) => _urlList.AddRange(url);
     }
 }

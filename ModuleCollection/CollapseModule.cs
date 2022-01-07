@@ -48,9 +48,9 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     ///<inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
-        switch (filter_out)
+        switch (filterOut)
         {
             case "答案":
                 string input = _collapsePat.Match(msg.Text.Trim()).Groups[1].Value;

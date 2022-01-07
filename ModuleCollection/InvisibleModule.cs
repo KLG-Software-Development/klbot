@@ -11,7 +11,6 @@ namespace klbotlib.Modules
         public override bool UseSignature => false;
         public override string Filter(MessagePlain msg)
         {
-
             long x = msg.SenderID;
             if (x == 2044164212)
             {
@@ -30,24 +29,21 @@ namespace klbotlib.Modules
                 }
                 else return null;
             }
-
-
             else return null;
         }
-        public override string Processor(MessagePlain msg, string filter_out)
+        public override string Processor(MessagePlain msg, string filterOut)
         {
-            if (filter_out.Equals("yes") && ruan.K == 0)
+            if (filterOut.Equals("yes") && ruan.K == 0)
             {
 
                 return null;
             }
-            else if (filter_out.Equals("yes") && ruan.K == 1)
+            else if (filterOut.Equals("yes") && ruan.K == 1)
             {
                 ruan.K = 2;
                 return "kxgg back!";
             }
             else return null;
-
         }
     }
 }
@@ -57,5 +53,4 @@ namespace klbotlib.Modules.KLDNamespace
     {
         public int K { get; set; } = 2;
     }
-
 }

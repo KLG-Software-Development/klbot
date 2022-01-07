@@ -72,33 +72,33 @@ public class ImageModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
         string url, text = msg.Text.Trim();
-        string word = filter_out switch
+        string word = filterOut switch
         {
             "X图来" => text[..(msg.Text.Length - 2)],
             "来点X图" => _pattern.Match(text).Groups[1].Value,
             _ => throw new Exception("意外遇到未实现的情况。检查处理器实现是否完整"),
         };
         //每次都使用上一次缓存的list_num（如果存在）
-        bool is_cached = false;
-        int list_num = 0;
+        bool isCached = false;
+        int listNum = 0;
         if (_listNumCache.ContainsKey(word))
         {
-            is_cached = true;
-            list_num = _listNumCache[word];
-            if (list_num == 0)
+            isCached = true;
+            listNum = _listNumCache[word];
+            if (listNum == 0)
                 goto not_found; //缓存的值为0，意味着无结果
         }
-        int max_index = Convert.ToInt32(Math.Round(list_num * (Fraction / 100f)));
+        int max_index = Convert.ToInt32(Math.Round(listNum * (Fraction / 100f)));
         int pn = _ro.Next(max_index);
         string json = FetchData(pn, word);
         ModulePrint($"成功获取json，pn={pn}");
         _sw.Restart();
         JResult result = JsonConvert.DeserializeObject<JResult>(json);
         //更新字典
-        if (!is_cached)
+        if (!isCached)
         {
             _listNumCache.Add(word, result.listNum);
             _cacheCount++;

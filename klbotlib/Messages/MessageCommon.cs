@@ -24,10 +24,10 @@ namespace klbotlib
         /// <param name="id">待判断ID</param>
         public bool TargetContains(long id) => _targetId.Contains(id);
 
-        internal MessageCommon(long sender_id, long group_id)
+        internal MessageCommon(long senderId, long groupId)
         {
-            SenderID = sender_id;
-            GroupID = group_id;
+            SenderID = senderId;
+            GroupID = groupId;
         }
         internal void AddTargetID(params long[] ids)
         {

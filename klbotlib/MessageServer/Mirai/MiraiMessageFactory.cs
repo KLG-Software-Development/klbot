@@ -63,19 +63,19 @@ namespace klbotlib.MessageServer.Mirai
                         count[_indexOf[sub_msg.type]]++;
                     else if (sub_msg.type == "At")
                         targets.Add(sub_msg.target);
-                bool has_plain = count[_indexOf["Plain"]] != 0;
-                bool has_img = count[_indexOf["Image"]] != 0;
-                bool has_voice = count[_indexOf["Voice"]] != 0;
+                bool hasPlain = count[_indexOf["Plain"]] != 0;
+                bool hasImg = count[_indexOf["Image"]] != 0;
+                bool hasVoice = count[_indexOf["Voice"]] != 0;
 
                 //根据统计结果判断消息类型
-                if (has_plain)
-                    if (!has_img)
+                if (hasPlain)
+                    if (!hasImg)
                         return typeof(MessagePlain);
                     else
                         return typeof(MessageImagePlain);
-                else if (has_img)
+                else if (hasImg)
                     return typeof(MessageImage);
-                else if (has_voice)
+                else if (hasVoice)
                     return typeof(MessageVoice);
                 else
                     return typeof(MessageEmpty);
