@@ -42,6 +42,7 @@ start:
             klg.AddModule(new WelcomekxggModule());
             klg.AddModule(new ImageModule());
             klg.AddModule(new IMGPModule());
+            klg.AddModule(new FlashGambleModule());
             klg.AddModule(new AnonyVoiceModule());
             klg.AddModule(new TimeModule());
             klg.AddModule(new 上号Module());
