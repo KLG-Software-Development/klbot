@@ -12,8 +12,8 @@ namespace klbotlib.Modules;
 /// </summary>
 public class CollapseModule : SingleTypeModule<MessagePlain>
 {
-    private readonly Regex _collapsePat = new(@"塌\s+(.+)");
-    private readonly Regex _stepPat = new(@"过程\s+(.+)");
+    private readonly Regex _collapsePat = new(@"塌\s+(.+)", RegexOptions.Compiled);
+    private readonly Regex _stepPat = new(@"过程\s+(.+)", RegexOptions.Compiled);
     private readonly HttpHelper _helper = new();
     private readonly XmlDocument _xmlLoader = new();
 
