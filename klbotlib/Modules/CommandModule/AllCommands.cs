@@ -211,7 +211,7 @@ internal class HelpCmd : InfoCommand
 internal class InfoCmd : InfoCommand
 {
     private readonly StringBuilder _sb = new();     //调用者清理
-    private readonly Regex _multiWhite = new(@"\s+");
+    private readonly Regex _multiWhite = new(@"\s+", RegexOptions.Compiled);
     private string GetCoreUtilization()
     {
         Process p = new();

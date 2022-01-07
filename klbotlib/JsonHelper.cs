@@ -33,11 +33,11 @@ namespace klbotlib.Json
             internal static string BuildMessageJson(long user_id, long group_id, MessageContext context, string chain)
             {
                 if (context == MessageContext.Group)
-                    return JsonHelper.MessageJsonBuilder.BuildGroupMessageJson(group_id, chain);
+                    return BuildGroupMessageJson(group_id, chain);
                 else if (context == MessageContext.Private)
-                    return JsonHelper.MessageJsonBuilder.BuildPrivateMessageJson(user_id, chain);
+                    return BuildPrivateMessageJson(user_id, chain);
                 else if (context == MessageContext.Temp)
-                    return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(user_id, group_id, chain);
+                    return BuildTempMessageJson(user_id, group_id, chain);
                 else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
             }
         }

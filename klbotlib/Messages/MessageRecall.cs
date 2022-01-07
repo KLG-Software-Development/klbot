@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace klbotlib;
+﻿namespace klbotlib;
 
 /// <summary>
 /// 撤回消息Message类

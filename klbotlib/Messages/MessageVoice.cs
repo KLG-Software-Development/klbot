@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace klbotlib
+﻿namespace klbotlib
 {
     /// <summary>
     /// 语音消息
@@ -14,7 +10,7 @@ namespace klbotlib
         /// </summary>
         public string Url { get; internal set; }
 
-        internal MessageVoice(long sender_id, long group_id, string url = "") : base(sender_id, group_id)
+        internal MessageVoice(long senderId, long groupId, string url = "") : base(senderId, groupId)
         {
             Url = url;
         }

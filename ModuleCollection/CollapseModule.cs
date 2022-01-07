@@ -12,8 +12,8 @@ namespace klbotlib.Modules;
 /// </summary>
 public class CollapseModule : SingleTypeModule<MessagePlain>
 {
-    private readonly Regex _collapsePat = new(@"塌\s+(.+)");
-    private readonly Regex _stepPat = new(@"过程\s+(.+)");
+    private readonly Regex _collapsePat = new(@"塌\s+(.+)", RegexOptions.Compiled);
+    private readonly Regex _stepPat = new(@"过程\s+(.+)", RegexOptions.Compiled);
     private readonly HttpHelper _helper = new();
     private readonly XmlDocument _xmlLoader = new();
 
@@ -48,9 +48,9 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     ///<inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
-        switch (filter_out)
+        switch (filterOut)
         {
             case "答案":
                 string input = _collapsePat.Match(msg.Text.Trim()).Groups[1].Value;

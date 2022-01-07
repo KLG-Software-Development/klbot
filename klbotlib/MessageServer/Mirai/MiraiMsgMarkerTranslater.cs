@@ -10,10 +10,10 @@ namespace klbotlib.MessageServer.Mirai
     internal static class MiraiMsgMarkerTranslater
     {
         private static readonly Exception ParseMessageMarkerException = new Exception("解析MsgMarker文本时发生错误");
-        private static readonly Regex _prefixPattern = new Regex(@"\\(\w+?):(.+)");
-        private static readonly Regex _codePat = new Regex(@"{([^{\\]*(?:\\.[^}\\]*)*)}");   //匹配{} 但是排除转义\{\}
-        private static readonly Regex _facePat = new Regex(@"face:(\w+)");
-        private static readonly Regex _protoPat = new Regex(@"^\w+://");
+        private static readonly Regex _prefixPattern = new Regex(@"\\(\w+?):(.+)", RegexOptions.Compiled);
+        private static readonly Regex _codePat = new Regex(@"{([^{\\]*(?:\\.[^}\\]*)*)}", RegexOptions.Compiled);   //匹配{} 但是排除转义\{\}
+        private static readonly Regex _facePat = new Regex(@"face:(\w+)", RegexOptions.Compiled);
+        private static readonly Regex _protoPat = new Regex(@"^\w+://", RegexOptions.Compiled);
         private static bool TryParsePrefix(string content, out string prefix, out string body, bool startOnly = false)
         {
             prefix = "";

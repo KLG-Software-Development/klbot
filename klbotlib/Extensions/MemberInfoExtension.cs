@@ -10,8 +10,8 @@ namespace klbotlib.Extensions
         public static bool ContainsAttribute(this MemberInfo info, Type attribute_type) => Attribute.GetCustomAttribute(info, attribute_type) != null;
         public static bool IsNonHiddenModuleStatus(this MemberInfo info)
         {
-            var status_attribute = Attribute.GetCustomAttribute(info, typeof(ModuleStatusAttribute)) as ModuleStatusAttribute;
-            return status_attribute != null && !status_attribute.IsHidden;
+            var statusAttribute = Attribute.GetCustomAttribute(info, typeof(ModuleStatusAttribute)) as ModuleStatusAttribute;
+            return statusAttribute != null && !statusAttribute.IsHidden;
         }
         public static bool TryGetValue(this MemberInfo info, object obj, out object value)
         {
@@ -44,5 +44,4 @@ namespace klbotlib.Extensions
             return false;
         }
     }
-#pragma warning restore CS1591 
 }

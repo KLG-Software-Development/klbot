@@ -1,8 +1,6 @@
 ﻿using klbotlib.Modules.ModuleUtils;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace klbotlib.Modules;
@@ -20,7 +18,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     private readonly Dictionary<long, long> _targetGroups = new();
     private const string _url = "https://ai.baidu.com/aidemo";
     private const string _prefix = "data:audio/x-mpeg;base64,";
-    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$");
+    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$", RegexOptions.Compiled);
     private readonly Dictionary<string, string> _perByName = new()
     {
         { "可爱女童", "4103" },
@@ -75,9 +73,9 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
-        switch (filter_out)
+        switch (filterOut)
         {
             case "request":     //临时会话 发起请求
                 ToWaitForTextState(msg.SenderID, msg.GroupID);
@@ -129,16 +127,16 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     }
 
     private bool IsNewOrIdleUser(long id) => !_userStat.ContainsKey(id) || _userStat[id] == UserStatus.Idle;
-    private void ToWaitForTextState(long user_id, long group_id)    //转移至等待输入文本状态
+    private void ToWaitForTextState(long userId, long groupId)    //转移至等待输入文本状态
     {
-        if (!_userStat.ContainsKey(user_id))
-            _userStat.Add(user_id, UserStatus.ReadyToSendVoice);
+        if (!_userStat.ContainsKey(userId))
+            _userStat.Add(userId, UserStatus.ReadyToSendVoice);
         else
-            _userStat[user_id] = UserStatus.ReadyToSendVoice;
-        if (!_targetGroups.ContainsKey(user_id))
-            _targetGroups.Add(user_id, group_id);
+            _userStat[userId] = UserStatus.ReadyToSendVoice;
+        if (!_targetGroups.ContainsKey(userId))
+            _targetGroups.Add(userId, groupId);
         else
-            _targetGroups[user_id] = group_id;
+            _targetGroups[userId] = groupId;
 
     }
 

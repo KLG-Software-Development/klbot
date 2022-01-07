@@ -49,7 +49,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     }
 
     private const string _postUrl = "https://ai.baidu.com/aidemo";
-    private static readonly Regex _pattern = new(@"什么(东西)");
+    private static readonly Regex _pattern = new(@"什么(东西)", RegexOptions.Compiled);
     private static readonly Dictionary<string, string> _typeByWordRecg = new()
     {
         { "东西", "advanced_general" },
@@ -102,12 +102,12 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessageImagePlain msg, string filter_out)
+    public override string Processor(MessageImagePlain msg, string filterOut)
     {
         _sb.Clear();
         //之后都是图文消息，统一转换类型为MessageImagePlain
         //多图文消息
-        switch (filter_out)
+        switch (filterOut)
         {
             case "merge":
                 Messaging.ReplyMessage(msg, "转换中...");
@@ -115,9 +115,9 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 string b641 = _imgHelper.DownloadAsBase64(msg.UrlList[0]);
                 //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
                 string b642 = _imgHelper.DownloadAsBase64(msg.UrlList[1]);
-                string query_string = "?type=merge&apiType=face";
+                string queryString = "?type=merge&apiType=face";
                 string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
-                string json = _httpHelper.PostFormUrlEncodedAsync(_postUrl + query_string, body).Result;
+                string json = _httpHelper.PostFormUrlEncodedAsync(_postUrl + queryString, body).Result;
                 JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
                 //错误检查
                 if (reply.errno != 0)
@@ -128,15 +128,15 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return $@"\image:\base64:{b64}";
         }
         //以下都是单图文消息 可以统一把图片Url拿出来做URL encode
-        string esc_url = msg.UrlList[0];
-        switch (filter_out)
+        string escUrl = msg.UrlList[0];
+        switch (filterOut)
         {
             case "recogn": //识别
                 string word = msg.Text.Trim()[2..];
                 if (!_typeByWordRecg.ContainsKey(word))
                     return ModuleAccess.GetModule<FuckModule>().SingleSentence() + "，这个不会";
                 string type = _typeByWordRecg[word];
-                string body = $"image&image_url={esc_url}&type={type}&show=true";
+                string body = $"image&image_url={escUrl}&type={type}&show=true";
                 Messaging.ReplyMessage(msg, "识别中...");
                 if (type == "landmark")
                 {
@@ -165,37 +165,37 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 }
                 return _sb.ToString();
             case "face": //人脸评分
-                body = $"image&image_url={esc_url}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
-                JFaceReply reply_face = JsonConvert.DeserializeObject<JFaceReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
-                if (reply_face.errno != 0 || reply_face.msg.Trim().ToLower() != "success")
-                    return ErrorString(reply_face.errno, reply_face.msg);
-                if (reply_face.data.result.face_num == 0)
+                body = $"image&image_url={escUrl}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
+                JFaceReply replyFace = JsonConvert.DeserializeObject<JFaceReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
+                if (replyFace.errno != 0 || replyFace.msg.Trim().ToLower() != "success")
+                    return ErrorString(replyFace.errno, replyFace.msg);
+                if (replyFace.data.result.face_num == 0)
                     return GetFuck() + "，识别不到人脸";
-                if (reply_face.data.result.face_num != 1)
+                if (replyFace.data.result.face_num != 1)
                     return GetFuck() + "，识别出的人脸超过一个";
-                int age = reply_face.data.result.face_list[0].age;
-                float beauty = reply_face.data.result.face_list[0].beauty;
+                int age = replyFace.data.result.face_list[0].age;
+                float beauty = replyFace.data.result.face_list[0].beauty;
                 return $"{age}岁，{beauty}分";
             case "compress": //本地压缩
                 Messaging.ReplyMessage(msg, $"正在下载图片...");
-                Bitmap bmp = _imgHelper.DownloadImage(msg.UrlList[0], out int original_size);
+                Bitmap bmp = _imgHelper.DownloadImage(msg.UrlList[0], out int originalSize);
                 MemoryStream ms = new();
                 Messaging.ReplyMessage(msg, "本地压缩中...");
                 bmp.Save(ms, ImageFormat.Jpeg);
                 byte[] bin = ms.ToArray();
                 string b64 = Convert.ToBase64String(bin);
-                Messaging.ReplyMessage(msg, $"压缩完成。原始大小为{original_size.ToMemorySizeString(1)}，返图大小为{bin.Length.ToMemorySizeString(1)}");
+                Messaging.ReplyMessage(msg, $"压缩完成。原始大小为{originalSize.ToMemorySizeString(1)}，返图大小为{bin.Length.ToMemorySizeString(1)}");
                 return $@"\image:\base64:{b64}";
             case "image process": //图像处理
                 word = msg.Text.Trim();
                 type = _typeByWordProc[word];
-                body = $"image&image_url={esc_url}&type={type}&show=true";
+                body = $"image&image_url={escUrl}&type={type}&show=true";
                 //HostBot.ReplyPlainMessage(this, msg, "处理中...");
-                JProcReply reply_proc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
+                JProcReply replyProc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                 //错误检查
-                if (reply_proc.errno != 0 || reply_proc.msg.Trim().ToLower() != "success")
-                    return ErrorString(reply_proc.errno, reply_proc.msg);
-                b64 = reply_proc.data.image;
+                if (replyProc.errno != 0 || replyProc.msg.Trim().ToLower() != "success")
+                    return ErrorString(replyProc.errno, replyProc.msg);
+                b64 = replyProc.data.image;
                 return $@"\image:\base64:{b64}";
             default:
                 return null;

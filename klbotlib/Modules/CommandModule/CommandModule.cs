@@ -12,7 +12,7 @@ namespace klbotlib.Modules
     internal class CommandModule : SingleTypeModule<MessagePlain>
     {
         const string _prefix = "##";
-        private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$");
+        private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$", RegexOptions.Compiled);
 
         [ModuleSetup]
         public Dictionary<long, AuthorType> Users { get; private set; } = new();

@@ -15,9 +15,9 @@ public class TestReflectionHelper
     [TestMethod]
     public void RestoreTypes()
     {
-        string test_str = "test";
+        string testStr = "test";
         //原地还原
-        Assert.IsTrue((string)ReflectionHelper.RestoreType(typeof(string), test_str) == test_str);
+        Assert.IsTrue((string)ReflectionHelper.RestoreType(typeof(string), testStr) == testStr);
         //还原数字
         Assert.IsTrue((byte)ReflectionHelper.RestoreType(typeof(byte), "42") == 42);
         Assert.IsTrue((short)ReflectionHelper.RestoreType(typeof(short), "42") == 42);
@@ -28,7 +28,7 @@ public class TestReflectionHelper
         //还原TimeSpan
         Assert.IsTrue(((TimeSpan)ReflectionHelper.RestoreType(typeof(TimeSpan), "01:00:00")).TotalMilliseconds == new TimeSpan(1, 0, 0).TotalMilliseconds);
         //还原Regex
-        Regex regex = new(@"^t|e|s|t\n$");
+        Regex regex = new(@"^t|e|s|t\n$", RegexOptions.Compiled);
         Regex regex_restore = (Regex)ReflectionHelper.RestoreType(typeof(Regex), JsonConvert.SerializeObject(regex));
         Assert.IsTrue(regex.ToString() == regex_restore.ToString());
     }
