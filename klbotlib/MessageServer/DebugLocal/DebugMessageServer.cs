@@ -9,6 +9,7 @@ namespace klbotlib.MessageServer.Debug;
 /// </summary>
 public class DebugMessageServer : IMessageServer
 {
+    private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
     private readonly List<MessageCommon> _msgBuffer = new();
 
     /// <summary>
@@ -63,6 +64,10 @@ public class DebugMessageServer : IMessageServer
     public void AddReceivedMessage(params MessageCommon[] msgs)
     {
         _msgBuffer.AddRange(msgs);
+        foreach (var msg in msgs)
+        {
+            _msgCache.Add(_msgCache.Count, msg);
+        }
         foreach (var msg in msgs)
         {
             AddMessageCallback.Invoke(GetMessageDebugInfo(msg));
@@ -124,5 +129,10 @@ public class DebugMessageServer : IMessageServer
     private string GetUploadDebugInfo(Module module, long groupId, string uploadPath, string filePath)
     {
         return $"* 模块[{module}]向群组[{groupId}]上传文件[{filePath}]到群文件夹[{uploadPath}]";
+    }
+    /// <inheritdoc/>
+    public Message GetMessageFromID(long id)
+    {
+        return _msgCache[id];
     }
 }
