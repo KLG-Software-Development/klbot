@@ -41,7 +41,7 @@ namespace klbotlib
         void DeleteFile(string relativePath);
     }
     /// <summary>
-    /// 发送消息API
+    /// 消息API
     /// </summary>
     public interface IMessagingAPI
     {
@@ -86,6 +86,12 @@ namespace klbotlib
         /// <param name="uploadPath">上传路径</param>
         /// <param name="filePath">文件本地路径</param>
         void UploadFile(MessageContext context, long target, string uploadPath, string filePath);
+        /// <summary>
+        /// 根据消息ID获取消息接口
+        /// </summary>
+        /// <param name="id">消息ID</param>
+        /// <returns>消息对象</returns>
+        Message GetMessageFromID(long id);
     }
     /// <summary>
     /// 模块访问API

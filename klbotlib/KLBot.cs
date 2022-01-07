@@ -232,7 +232,9 @@ namespace klbotlib
             }
         }
 
-        //消息发送内部API
+        //消息内部API
+        internal Message GetMessageFromID(long id)
+            => _msgServer.GetMessageFromID(id);
         /// <summary>
         /// 发送消息
         /// </summary>
@@ -344,7 +346,7 @@ namespace klbotlib
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
             List<Message> msgs = _msgServer.FetchMessages().Where(msg => 
-            msg.Context != MessageContext.Group || msg.Context != MessageContext.Temp   //非私聊、非临时会话时无需过滤
+            (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
             || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
             return msgs;
