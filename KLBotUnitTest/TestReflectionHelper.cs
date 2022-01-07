@@ -28,8 +28,8 @@ public class TestReflectionHelper
         //还原TimeSpan
         Assert.IsTrue(((TimeSpan)ReflectionHelper.RestoreType(typeof(TimeSpan), "01:00:00")).TotalMilliseconds == new TimeSpan(1, 0, 0).TotalMilliseconds);
         //还原Regex
-        Regex regex = new(@"^t|e|s|t\n$");
-        Regex regexRestore = (Regex)ReflectionHelper.RestoreType(typeof(Regex), JsonConvert.SerializeObject(regex));
-        Assert.IsTrue(regex.ToString() == regexRestore.ToString());
+        Regex regex = new(@"^t|e|s|t\n$", RegexOptions.Compiled);
+        Regex regex_restore = (Regex)ReflectionHelper.RestoreType(typeof(Regex), JsonConvert.SerializeObject(regex));
+        Assert.IsTrue(regex.ToString() == regex_restore.ToString());
     }
 }

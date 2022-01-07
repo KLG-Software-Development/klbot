@@ -34,8 +34,8 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     {
         public int result;
         public string content;
-        public static Regex trashPat = new(@"{r\+}");
-        public static Regex facePat = new(@"{face:[\d]+}");
+        public static Regex trashPat = new(@"{r\+}", RegexOptions.Compiled);
+        public static Regex facePat = new(@"{face:[\d]+}", RegexOptions.Compiled);
         public string FormattedContent() => trashPat.Replace(facePat.Replace(content.Replace("{br}", "\r\n"), ""), "");
     }
 }

@@ -49,7 +49,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     }
 
     private const string _postUrl = "https://ai.baidu.com/aidemo";
-    private static readonly Regex _pattern = new(@"什么(东西)");
+    private static readonly Regex _pattern = new(@"什么(东西)", RegexOptions.Compiled);
     private static readonly Dictionary<string, string> _typeByWordRecg = new()
     {
         { "东西", "advanced_general" },
