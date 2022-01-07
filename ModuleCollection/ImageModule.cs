@@ -14,7 +14,7 @@ namespace klbotlib.Modules;
 /// 图像模块
 public class ImageModule : SingleTypeModule<MessagePlain>
 {
-    private readonly static Regex _pattern = new(@"来点(\S+?)图");
+    private readonly static Regex _pattern = new(@"来点(\S+?)图", RegexOptions.Compiled);
     private readonly static Random _ro = new();
     private readonly HttpClient _client = new();
     private readonly Stopwatch _sw = new();

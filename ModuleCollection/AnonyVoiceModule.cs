@@ -20,7 +20,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     private readonly Dictionary<long, long> _targetGroups = new();
     private const string _url = "https://ai.baidu.com/aidemo";
     private const string _prefix = "data:audio/x-mpeg;base64,";
-    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$");
+    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$", RegexOptions.Compiled);
     private readonly Dictionary<string, string> _perByName = new()
     {
         { "可爱女童", "4103" },
