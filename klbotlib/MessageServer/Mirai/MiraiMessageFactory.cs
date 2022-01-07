@@ -11,8 +11,8 @@ namespace klbotlib.MessageServer.Mirai
         {
             { "Plain", 0 },
             { "Image", 1 },
-            { "FlashImage", 1 },    //闪照和正常图片统一按图片处理
             { "Voice", 2 },
+            { "FlashImage", 3 },
         };
         private static readonly HashSet<string> _commonMessageTypes = new() { "GroupMessage", "TempMessage", "FriendMessage" };
 
@@ -30,6 +30,8 @@ namespace klbotlib.MessageServer.Mirai
                 retCommon = BuildImage(msgPackage);
             else if (type == typeof(MessageVoice))
                 retCommon = BuildVoice(msgPackage);
+            else if (type == typeof(MessageFlashImage))
+                retCommon = BuildFlashImage(msgPackage);
             else if (type == typeof(MessageImagePlain))
                 retCommon = BuildImagePlain(msgPackage);
             else if (type == typeof(MessageRecall))
@@ -66,6 +68,7 @@ namespace klbotlib.MessageServer.Mirai
                 bool has_plain = count[_indexOf["Plain"]] != 0;
                 bool has_img = count[_indexOf["Image"]] != 0;
                 bool has_voice = count[_indexOf["Voice"]] != 0;
+                bool has_FlashImg = count[_indexOf["FlashImage"]] != 0;
 
                 //根据统计结果判断消息类型
                 if (has_plain)
@@ -77,6 +80,8 @@ namespace klbotlib.MessageServer.Mirai
                     return typeof(MessageImage);
                 else if (has_voice)
                     return typeof(MessageVoice);
+                else if (has_FlashImg)
+                    return typeof(MessageFlashImage);
                 else
                     return typeof(MessageEmpty);
             }
@@ -144,6 +149,15 @@ namespace klbotlib.MessageServer.Mirai
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Image")
+                    ret.Add(subMsg.url);
+            return ret;
+        }
+        private static MessageFlashImage BuildFlashImage(JMiraiMessagePackage msgPackage)
+        {
+            MessageFlashImage ret = new MessageFlashImage(msgPackage.sender.id, msgPackage.sender.group.id);
+            //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
+            foreach (var subMsg in msgPackage.messageChain)
+                if (subMsg.type == "FlashImage")
                     ret.Add(subMsg.url);
             return ret;
         }
