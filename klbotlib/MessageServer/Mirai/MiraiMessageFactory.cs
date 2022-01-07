@@ -68,7 +68,7 @@ namespace klbotlib.MessageServer.Mirai
                 bool has_plain = count[_indexOf["Plain"]] != 0;
                 bool has_img = count[_indexOf["Image"]] != 0;
                 bool has_voice = count[_indexOf["Voice"]] != 0;
-                bool has_FlashImg = count[_indexOf["FlashImage"]] != 0;
+                bool hasFlashImg = count[_indexOf["FlashImage"]] != 0;
 
                 //根据统计结果判断消息类型
                 if (has_plain)
@@ -80,7 +80,7 @@ namespace klbotlib.MessageServer.Mirai
                     return typeof(MessageImage);
                 else if (has_voice)
                     return typeof(MessageVoice);
-                else if (has_FlashImg)
+                else if (hasFlashImg)
                     return typeof(MessageFlashImage);
                 else
                     return typeof(MessageEmpty);
