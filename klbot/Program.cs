@@ -35,6 +35,7 @@ start:
             else
                 miraiServer = new(args[0]);
             klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+            klg.AddModule(new FlashGambleModule());
             klg.AddModule(new RollinModule());
             klg.AddModule(new CollapseModule());
             klg.AddModule(new CompilerModule());
@@ -42,7 +43,6 @@ start:
             klg.AddModule(new WelcomekxggModule());
             klg.AddModule(new ImageModule());
             klg.AddModule(new IMGPModule());
-            klg.AddModule(new FlashGambleModule());
             klg.AddModule(new AnonyVoiceModule());
             klg.AddModule(new TimeModule());
             klg.AddModule(new 上号Module());
