@@ -1,11 +1,8 @@
 ﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.Internal;
 using klbotlib.Json;
-using klbotlib.MessageServer;
 using klbotlib.MessageServer.Mirai;
-using klbotlib.MessageServer.Mirai.JsonPrototypes;
 using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
@@ -13,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -29,6 +25,7 @@ namespace klbotlib
     {
         private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
+        private readonly StringBuilder _sb = new();
         private CmdLoopStatus _cmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
         private IMessageServer _msgServer;
 
@@ -235,7 +232,9 @@ namespace klbotlib
             }
         }
 
-        //消息发送内部API
+        //消息内部API
+        internal Message GetMessageFromID(long id)
+            => _msgServer.GetMessageFromID(id);
         /// <summary>
         /// 发送消息
         /// </summary>
@@ -291,15 +290,19 @@ namespace klbotlib
         /// <param name="content">回复内容</param>
         internal void ReplyMessage(Module module, Message originMsg, string content)
         {
-            switch (originMsg.Context)
+            if (originMsg is MessageCommon originMsgCommon)
+                SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
+            else
             {
-                case MessageContext.Group:
-                    SendMessage(module, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
-                    return;
-                case MessageContext.Temp:
-                case MessageContext.Private:
-                    SendMessage(module, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
-                    return;
+                switch (originMsg.Context)
+                {
+                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
+                        SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
+                        return;
+                    default:
+                        ObjectPrint(module, $"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
+                        return;
+                }
             }
         }
 
@@ -342,7 +345,9 @@ namespace klbotlib
         {
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
-            List<Message> msgs = _msgServer.FetchMessages().Where(msg => msg.Context == MessageContext.Group && TargetGroupIDList.Contains(msg.GroupID)).ToList();
+            List<Message> msgs = _msgServer.FetchMessages().Where(msg => 
+            (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
+            || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
             return msgs;
         }
@@ -371,6 +376,7 @@ namespace klbotlib
         private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
         {
             long successCounterCache = 0, continuousErrorCounter = 0;
+            bool isLoopRestarting = true;
         start:
             IsLoopOn = true;
             Thread.Sleep(500);     //延迟启动 为命令循环线程预留至少0.5s时间
@@ -378,7 +384,15 @@ namespace klbotlib
             {
                 while (IsLoopOn)
                 {
-                    ProcessMessages(_msgServer.FetchMessages());
+                    List<Message> msgs = FetchMessages();
+                    if (isLoopRestarting)
+                    {
+                        if (msgs.Count != 0)
+                            ProcessMessages(new List<Message> { msgs.Last() });
+                        isLoopRestarting = false;
+                    }
+                    else
+                        ProcessMessages(msgs);
                     Thread.Sleep(PollingTimeInterval);
                     waitForPauseMsgLoopSignal.WaitOne();
                 }
@@ -393,10 +407,12 @@ namespace klbotlib
                     {
                         _console.WriteLn("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行。六秒后将重试", ConsoleMessageType.Error);
                         Thread.Sleep(6000);
+                        isLoopRestarting = true;
                         goto start;
                     }
                     else  //未知异常
                     {
+                        _console.WriteLn($"调用栈：\n{ex.StackTrace}");
                         if (successCounterCache == DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                             continuousErrorCounter++;
                         else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
@@ -412,6 +428,7 @@ namespace klbotlib
                             _console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
                             _console.ClearInputBuffer();
                             _console.Write("> ", ConsoleColor.DarkYellow);
+                            isLoopRestarting = true;
                             goto start;
                         }
                     }
@@ -474,7 +491,7 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("status "))
                     {
-                        string id = cmd.Substring(7);
+                        string id = cmd[7..];
                         if (!ModuleChain.ContainsModule(id))
                             _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
@@ -482,7 +499,7 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("enable "))
                     {
-                        string id = cmd.Substring(7);
+                        string id = cmd[7..];
                         if (!ModuleChain.ContainsModule(id))
                             _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
@@ -493,7 +510,7 @@ namespace klbotlib
                     }
                     else if (cmd.StartsWith("disable "))
                     {
-                        string id = cmd.Substring(8);
+                        string id = cmd[8..];
                         if (!ModuleChain.ContainsModule(id))
                             _console.WriteLn($"找不到ID为\"{id}\"的模块", ConsoleMessageType.Error);
                         else
@@ -665,55 +682,64 @@ namespace klbotlib
         /// </summary>
         public string GetModuleChainString()
         {
-            StringBuilder sb = new StringBuilder("模块链条：\n");
-            int index = 0;
-            ModuleChain.ForEach(module =>
+            lock (_sb)
             {
-                if (module.ModuleName == module.FriendlyName)
-                    sb.AppendLine($"  [{index}] {module}");
-                else
-                    sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
-                index++;
-            });
-            return sb.ToString();
+                _sb.AppendLine("模块链条：");
+                int index = 0;
+                ModuleChain.ForEach(module =>
+                {
+                    if (module.ModuleName == module.FriendlyName)
+                        _sb.AppendLine($"  [{index}] {module}");
+                    else
+                        _sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
+                    index++;
+                });
+                return _sb.ToString();
+            }
         }
         /// <summary>
         /// 返回字符串，其中列出当前监听群组的列表
         /// </summary>
         public string GetListeningGroupListString()
         {
-            StringBuilder sb = new StringBuilder("监听群组列表:\n");
-            int index = 0;
-            foreach (var target in TargetGroupIDList)
+            lock (_sb)
             {
-                sb.AppendLine($"  [{index}]  {target}");
-                index++;
+                _sb.AppendLine("监听群组列表：");
+                int index = 0;
+                foreach (var target in TargetGroupIDList)
+                {
+                    _sb.AppendLine($"  [{index}]  {target}");
+                    index++;
+                }
+                return _sb.ToString();
             }
-            return sb.ToString();
         }
         /// <summary>
         /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
         /// </summary>
         public string GetModuleStatusString()
         {
-            StringBuilder sb = new StringBuilder("模块状态：\n");
-            foreach (var module in ModuleChain)
+            lock (_sb)
             {
-                sb.AppendLine($"<{module.ModuleID}>");
-                Type type = module.GetType();
-                List<MemberInfo> members = new List<MemberInfo>();
-                members.AddRange(type.GetProperties_All().Reverse());
-                members.AddRange(type.GetFields_All().Reverse());
-                foreach (var member in members)
+                _sb.AppendLine("模块状态：");
+                foreach (var module in ModuleChain)
                 {
-                    if (member.IsNonHiddenModuleStatus())
+                    _sb.AppendLine($"<{module.ModuleID}>");
+                    Type type = module.GetType();
+                    List<MemberInfo> members = new List<MemberInfo>();
+                    members.AddRange(type.GetProperties_All().Reverse());
+                    members.AddRange(type.GetFields_All().Reverse());
+                    foreach (var member in members)
                     {
-                        member.TryGetValue(module, out object value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
-                        sb.AppendLine($" {member.Name.ToString().PadRight(10)} = {value}");
+                        if (member.IsNonHiddenModuleStatus())
+                        {
+                            member.TryGetValue(module, out object value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
+                            _sb.AppendLine($" {member.Name,-10} = {value}");
+                        }
                     }
                 }
+                return _sb.ToString();
             }
-            return sb.ToString();
         }
 
         private void CreateDirectoryIfNotExist(string path, string dir_description)

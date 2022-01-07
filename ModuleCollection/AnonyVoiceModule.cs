@@ -1,6 +1,5 @@
 ﻿using klbotlib.Modules.ModuleUtils;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -19,7 +18,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     private readonly Dictionary<long, long> _targetGroups = new();
     private const string _url = "https://ai.baidu.com/aidemo";
     private const string _prefix = "data:audio/x-mpeg;base64,";
-    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$");
+    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$", RegexOptions.Compiled);
     private readonly Dictionary<string, string> _perByName = new()
     {
         { "可爱女童", "4103" },
@@ -74,9 +73,9 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
-        switch (filter_out)
+        switch (filterOut)
         {
             case "request":     //临时会话 发起请求
                 ToWaitForTextState(msg.SenderID, msg.GroupID);
@@ -88,8 +87,8 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
             case "content":
                 _userStat[msg.SenderID] = UserStatus.Idle;
                 Messaging.ReplyMessage(msg, "正在薅羊毛...");
-                string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(msg.Text.Trim())}";
-                string json = _httpHelper.PostStringAsync(_url, body).Result;
+                string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={msg.Text.Trim()}";
+                string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
                 JReply reply = JsonConvert.DeserializeObject<JReply>(json);
                 if (reply.errno != 0)
                     return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
@@ -118,8 +117,8 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     /// <returns>转换后语音的Base64编码</returns>
     public string TextToSpeech(string text)
     {
-        string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={Uri.EscapeDataString(text.Trim())}";
-        string json = _httpHelper.PostStringAsync(_url, body).Result;
+        string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={text.Trim()}";
+        string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
         JReply reply = JsonConvert.DeserializeObject<JReply>(json);
         if (reply.errno != 0)
             return $"匿名语音模块TTS API错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
@@ -128,16 +127,16 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     }
 
     private bool IsNewOrIdleUser(long id) => !_userStat.ContainsKey(id) || _userStat[id] == UserStatus.Idle;
-    private void ToWaitForTextState(long user_id, long group_id)    //转移至等待输入文本状态
+    private void ToWaitForTextState(long userId, long groupId)    //转移至等待输入文本状态
     {
-        if (!_userStat.ContainsKey(user_id))
-            _userStat.Add(user_id, UserStatus.ReadyToSendVoice);
+        if (!_userStat.ContainsKey(userId))
+            _userStat.Add(userId, UserStatus.ReadyToSendVoice);
         else
-            _userStat[user_id] = UserStatus.ReadyToSendVoice;
-        if (!_targetGroups.ContainsKey(user_id))
-            _targetGroups.Add(user_id, group_id);
+            _userStat[userId] = UserStatus.ReadyToSendVoice;
+        if (!_targetGroups.ContainsKey(userId))
+            _targetGroups.Add(userId, groupId);
         else
-            _targetGroups[user_id] = group_id;
+            _targetGroups[userId] = groupId;
 
     }
 

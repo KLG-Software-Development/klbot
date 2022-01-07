@@ -15,6 +15,12 @@ public interface IMessageServer
     /// <returns>消息列表</returns>
     List<Message> FetchMessages();
     /// <summary>
+    /// 根据消息ID，从服务器获取给定消息
+    /// </summary>
+    /// <param name="id">消息ID</param>
+    /// <returns>相应的消息对象</returns>
+    Message GetMessageFromID(long id);
+    /// <summary>
     /// 发送消息接口
     /// </summary>
     /// <param name="module">编译MsgMarker时使用的模块</param>

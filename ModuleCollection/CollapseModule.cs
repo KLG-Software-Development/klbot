@@ -12,8 +12,8 @@ namespace klbotlib.Modules;
 /// </summary>
 public class CollapseModule : SingleTypeModule<MessagePlain>
 {
-    private readonly Regex _collapsePat = new(@"塌\s+(.+)");
-    private readonly Regex _stepPat = new(@"过程\s+(.+)");
+    private readonly Regex _collapsePat = new(@"塌\s+(.+)", RegexOptions.Compiled);
+    private readonly Regex _stepPat = new(@"过程\s+(.+)", RegexOptions.Compiled);
     private readonly HttpHelper _helper = new();
     private readonly XmlDocument _xmlLoader = new();
 
@@ -22,8 +22,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     /// </summary>
     public CollapseModule()
     {
-        _helper.ContentType = "application/x-www-form-urlencoded";
-        _helper.UA = "Wolfram Android App/1.3.0.5403760";
+        //_helper.UA = "Wolfram Android App/1.3.0.5403760";
         _helper.Headers.Add("Cookie", "WR_SID=fb447e9e.5cd2d52be64ed");
         _helper.Headers.Add("Cookie2", "$Version=1");
     }
@@ -49,9 +48,9 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     ///<inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
-        switch (filter_out)
+        switch (filterOut)
         {
             case "答案":
                 string input = _collapsePat.Match(msg.Text.Trim()).Groups[1].Value;
@@ -110,7 +109,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         return true;
     }
     //XML解析：答案
-    private string ProcessXML(Message msg, string xml)
+    private string ProcessXML(MessageCommon msg, string xml)
     {
         if (!TryGetResultRoot(xml, out XmlNode queryresult))
             return "塌了！查询失败，内容可能不合法";
@@ -130,7 +129,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         return "没塌！";
     }
     //XML解析：中间过程
-    private string ProcessXMLStepByStep(Message msg, string xml, string input)
+    private string ProcessXMLStepByStep(MessageCommon msg, string xml, string input)
     {
         if (!TryGetResultRoot(xml, out XmlNode queryresult))
             return "塌了！查询失败，内容可能不合法";

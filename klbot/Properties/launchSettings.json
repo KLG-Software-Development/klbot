@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "klbot": {
+      "commandName": "Project",
+      "commandLineArgs": "http://mp:3356"
+    }
+  }
+}

@@ -1,22 +1,16 @@
-﻿#pragma warning disable CS1066 
-using Gleee.Consoleee;
+﻿using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.Internal;
 using klbotlib.Json;
+using klbotlib.Reflection;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using klbotlib.Reflection;
 using System.Net;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
@@ -81,9 +75,9 @@ namespace klbotlib.Modules
         /// 处理器(Message -> string)。模块通过这个函数处理所有(通过了过滤器的)消息。
         /// </summary>
         /// <param name="msg">待处理消息</param>
-        /// <param name="filter_out">过滤器的输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
+        /// <param name="filterOut">过滤器的输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
         /// <returns>用字符串表示的处理结果。如果你的模块不打算输出/回复处理结果，应返回null或空字符串</returns>
-        public abstract string Processor(Message msg, string filter_out);
+        public abstract string Processor(Message msg, string filterOut);
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
@@ -103,15 +97,15 @@ namespace klbotlib.Modules
         /// <summary>
         /// 缓存操作接口
         /// </summary>
-        public IFileAPI Cache { get => (IFileAPI)this; }
+        public IFileAPI Cache { get => this; }
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public IMessagingAPI Messaging { get => (IMessagingAPI)this; }
+        public IMessagingAPI Messaging { get => this; }
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public IModuleAccessAPI ModuleAccess { get => (IModuleAccessAPI)this; }
+        public IModuleAccessAPI ModuleAccess { get => this; }
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -139,10 +133,10 @@ namespace klbotlib.Modules
         /// <param name="prefix">要在消息类型标识前附上的内容</param>
         public void ModulePrint(string message, ConsoleMessageType msgType = ConsoleMessageType.Info, string prefix = "") 
             => HostBot.ObjectPrint(this, message, msgType, prefix);
-        T IModuleAccessAPI.GetModule<T>(int index = 0) => HostBot.GetModule<T>(index);
+        T IModuleAccessAPI.GetModule<T>(int index) => HostBot.GetModule<T>(index);
         bool IModuleAccessAPI.TryGetFieldAndProperty<T>(string name, out T value)
         {
-            value = default(T);
+            value = default;
             Type type = GetType();
             var p = type.GetProperty(name);
             if (p != null)
@@ -248,9 +242,11 @@ namespace klbotlib.Modules
             else
                 File.Delete(path);
         }
+        Message IMessagingAPI.GetMessageFromID(long id)
+            => HostBot.GetMessageFromID(id);
         void IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
             => HostBot.SendMessage(this, context, userId, groupId, content);
-        void IMessagingAPI.ReplyMessage(Message originMsg, string content)
+        void IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)
         {
             //统一Assert
             AssertAttachedStatus(true);
@@ -370,10 +366,10 @@ namespace klbotlib.Modules
         internal void SaveModuleStatus(bool printInfo = true)
         {
             string json = JsonConvert.SerializeObject(ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
-            string file_path = HostBot.GetModuleStatusPath(this);
+            string filePath = HostBot.GetModuleStatusPath(this);
             if (printInfo)
-                ModulePrint($"正在保存状态至\"{file_path}\"...", ConsoleMessageType.Task);
-            File.WriteAllText(file_path, json);
+                ModulePrint($"正在保存状态至\"{filePath}\"...", ConsoleMessageType.Task);
+            File.WriteAllText(filePath, json);
         }
 
         //helper 
@@ -382,21 +378,21 @@ namespace klbotlib.Modules
         /// </summary>
         private Dictionary<string, object> ExportMemberWithAttribute(Type attributeType)
         {
-            Dictionary<string, object> properties_dict = new Dictionary<string, object>();
+            Dictionary<string, object> propertiesDict = new Dictionary<string, object>();
             Type type = GetType();
             //export C# properties
             PropertyInfo[] properties = type.GetProperties_All().Where(x => x.GetCustomAttribute(attributeType) != null).ToArray();
             foreach (var property in properties)
             {
-                properties_dict.Add(property.Name, property.GetValue(this));
+                propertiesDict.Add(property.Name, property.GetValue(this));
             }
             //export C# fields
             FieldInfo[] fields = type.GetFields_All().Where(x => x.GetCustomAttribute(attributeType) != null).ToArray();
             foreach (var field in fields)
             {
-                properties_dict.Add(field.Name, field.GetValue(this));
+                propertiesDict.Add(field.Name, field.GetValue(this));
             }
-            return properties_dict;
+            return propertiesDict;
         }
         // 检查此模块的附加情况是否与预期相同。如果没有将抛出异常
         private void AssertAttachedStatus(bool expected)
@@ -417,7 +413,7 @@ namespace klbotlib.Modules
             bool hasError = false;
             try   //对处理器的异常控制
             {
-                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]等待处理器完成...");
+                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
                 output = Processor(msg, filterOut);
                 DiagData.StopMeasurement();
@@ -429,9 +425,9 @@ namespace klbotlib.Modules
                 DiagData.LastException = ex;
                 //网络错误统一处理
                 if (ex is WebException)
-                    output = $"{this.ModuleID}模块表示自己不幸遭遇了网络错误：{ex.Message}";
+                    output = $"{ModuleID}模块表示自己不幸遭遇了网络错误：{ex.Message}";
                 else
-                    output = $"{this.ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
+                    output = $"{ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
             }
             if (!string.IsNullOrEmpty(output))  //处理器输出不为空时
             {
@@ -444,10 +440,10 @@ namespace klbotlib.Modules
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
                 _hostBot.ReplyMessage(this, msg, signature + output);
-                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 已调用回复接口.");
+                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else
-                ModulePrint($"[{DateTime.Now.ToString("HH:mm:ss")}][{Thread.CurrentThread.ManagedThreadId}]任务结束, 无回复内容.");
+                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 无回复内容.");
             //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
             if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
                 _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));

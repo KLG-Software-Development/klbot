@@ -12,12 +12,12 @@ namespace klbotlib.Extensions
         /// <param name="type">类型</param>
         public static Type GetRootBaseType(this Type type)
         {
-            Type base_type = type;
-            while (base_type != null && base_type.BaseType != typeof(object))
+            Type baseType = type;
+            while (baseType != null && baseType.BaseType != typeof(object))
             {
-                base_type = base_type.BaseType;
+                baseType = baseType.BaseType;
             }
-            return base_type;
+            return baseType;
         }
         /// <summary>
         /// 获取所有属性字段

@@ -3,7 +3,7 @@
     /// <summary>
     /// 纯文本消息类
     /// </summary>
-    public class MessagePlain : Message
+    public class MessagePlain : MessageCommon
     {
         /// <summary>
         /// 此消息的文本内容
@@ -12,10 +12,10 @@
         /// <summary>
         /// 创建纯文本消息
         /// </summary>
-        /// <param name="sender_id">发送者ID（若存在）</param>
-        /// <param name="group_id">所在群聊ID（若存在）</param>
+        /// <param name="senderId">发送者ID（若存在）</param>
+        /// <param name="groupId">所在群聊ID（若存在）</param>
         /// <param name="text">文本内容</param>
-        public MessagePlain(long sender_id, long group_id, string text = "") : base(sender_id, group_id)
+        public MessagePlain(long senderId, long groupId, string text = "") : base(senderId, groupId)
         {
             Text = text;
         }

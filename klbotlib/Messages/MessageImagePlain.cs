@@ -1,36 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace klbotlib
 {
     /// <summary>
     /// 图文消息
     /// </summary>
-    public class MessageImagePlain : Message
+    public class MessageImagePlain : MessageCommon
     {
-        private readonly List<string> _url_list = new List<string>();
+        private readonly List<string> _urlList = new List<string>();
 
         /// <summary>
         /// 图像的Url
         /// </summary>
-        public IReadOnlyList<string> UrlList { get => _url_list; }
+        public IReadOnlyList<string> UrlList { get => _urlList; }
         /// <summary>
         /// 随图像一同发送的文字
         /// </summary>
         public string Text { get; }
 
-        internal MessageImagePlain(long sender_id, long group_id, string text = "") : base(sender_id, group_id)
+        internal MessageImagePlain(long senderId, long groupId, string text = "") : base(senderId, groupId)
         {
             Text = text;
         }
-        internal MessageImagePlain(long sender_id, long group_id, string text, IEnumerable<string> url_list) : base(sender_id, group_id)
+        internal MessageImagePlain(long senderId, long groupId, string text, IEnumerable<string> urlList) : base(senderId, groupId)
         {
             Text = text;
-            AddRange(url_list);
+            AddRange(urlList);
         }
 
-        internal void Add(params string[] url) => _url_list.AddRange(url);
-        internal void AddRange(IEnumerable<string> url) => _url_list.AddRange(url);
+        internal void Add(params string[] url) => _urlList.AddRange(url);
+        internal void AddRange(IEnumerable<string> url) => _urlList.AddRange(url);
     }
 }

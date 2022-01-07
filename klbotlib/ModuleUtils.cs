@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ImgEncoder = System.Drawing.Imaging.Encoder;
 
 namespace klbotlib.Modules.ModuleUtils
 {
@@ -33,26 +29,6 @@ namespace klbotlib.Modules.ModuleUtils
                     _client.Timeout = new TimeSpan(0, 0, 0, value, 0);
             } 
         }
-        /// <summary>
-        /// 进行所有请求时使用的UA标识
-        /// </summary>
-        public string UA 
-        { 
-            get => _client.DefaultRequestHeaders.UserAgent.First().ToString(); 
-            set 
-            {
-                lock (_client)
-                {
-                    _client.DefaultRequestHeaders.UserAgent.Clear();
-                    if (!_client.DefaultRequestHeaders.UserAgent.TryParseAdd(value))
-                        Console.WriteLine($"警告: 设置UA标识为\"{value}\"失败。UA标识未改变");
-                }
-            } 
-        }
-        /// <summary>
-        /// 进行所有请求时使用的ContentType
-        /// </summary>
-        public string ContentType { get; set; }
         /// <summary>
         /// 进行所有请求时使用的编码
         /// </summary>
@@ -77,13 +53,11 @@ namespace klbotlib.Modules.ModuleUtils
         /// 创建新的HttpHelper对象
         /// </summary>
         /// <param name="timeout">超时(毫秒)</param>
-        /// <param name="ua">UA标识</param>
-        /// <param name="contentType">默认ContentType</param>
-        public HttpHelper(int timeout = 15, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0", string contentType = "application/x-www-form-urlencoded")
+        /// <param name="contentEncoding">默认Encoding</param>
+        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8")
         {
             Timeout = timeout;
-            UA = ua;
-            ContentType = contentType;
+            ContentEncoding = contentEncoding;
         }
 
         /// <summary>
@@ -124,7 +98,36 @@ namespace klbotlib.Modules.ModuleUtils
                 if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            StringContent content = new StringContent(body, System.Text.Encoding.GetEncoding(ContentEncoding));
+            StringContent content = new(body, Encoding.GetEncoding(ContentEncoding));
+            return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
+        }
+        /// <summary>
+        /// 向指定地址POST一组x-www-form-urlencoded内容
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        public async Task<string> PostFormUrlEncodedAsync(string url, string body)
+        {
+            foreach (var kvp in Headers)
+            {
+                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
+            }
+            if (body.StartsWith("?"))
+                body = body[1..];
+            //解析formUrlEncoded
+            List<KeyValuePair<string, string>> form = new();
+            string[] kvps = body.Split('&');
+            foreach (var kvpString in kvps)
+            {
+                string[] kvp = kvpString.Split('=');
+                if (kvp.Length >= 2)
+                    form.Add(new KeyValuePair<string, string>(kvp[0], kvp[1]));
+                else
+                    form.Add(new KeyValuePair<string,string>(kvp[0], ""));
+            }
+            FormUrlEncodedContent content = new(form);
             return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
     }
@@ -188,18 +191,18 @@ namespace klbotlib.Modules.ModuleUtils
         /// 缩放一张图片，使其最大可能大小不超过某个值
         /// </summary>
         /// <param name="bmp">待缩放图片</param>
-        /// <param name="size_limit">大小限制（字节）</param>
-        public Bitmap ResizeToLimit(Bitmap bmp, int size_limit)
+        /// <param name="sizeLimit">大小限制（字节）</param>
+        public Bitmap ResizeToLimit(Bitmap bmp, int sizeLimit)
         {
             //计算当前最大可能占用空间
-            float current_size = bmp.Width * bmp.Height * 3f;
+            float currentSize = bmp.Width * bmp.Height * 3f;
             //如果未达到限制，不用缩放直接返回
-            if (current_size < size_limit)
+            if (currentSize < sizeLimit)
                 return bmp;
             //边缩放比例 = Sqrt(体积缩放比例)
-            double diag_factor = Math.Sqrt(size_limit / current_size);
-            int _width = (int)(bmp.Width * diag_factor);
-            int _height = (int)(bmp.Height * diag_factor);
+            double diagFactor = Math.Sqrt(sizeLimit / currentSize);
+            int _width = (int)(bmp.Width * diagFactor);
+            int _height = (int)(bmp.Height * diagFactor);
             return Resize(bmp, _width, _height);
         }
     }

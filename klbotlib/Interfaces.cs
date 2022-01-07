@@ -1,8 +1,4 @@
 ﻿using klbotlib.Modules;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace klbotlib
 {
@@ -14,38 +10,38 @@ namespace klbotlib
         /// <summary>
         /// 返回模块缓存目录中是否存在某个文件
         /// </summary>
-        /// <param name="relative_path">对模块缓存目录的相对路径</param>
-        bool FileExist(string relative_path);
+        /// <param name="relativePath">对模块缓存目录的相对路径</param>
+        bool FileExist(string relativePath);
         /// <summary>
         /// 保存文本到模块缓存目录
         /// </summary>
-        /// <param name="relative_path">对模块缓存目录的相对路径</param>
+        /// <param name="relativePath">对模块缓存目录的相对路径</param>
         /// <param name="text">保存的内容</param>
-        void SaveFileAsString(string relative_path, string text);
+        void SaveFileAsString(string relativePath, string text);
         /// <summary>
         /// 保存二进制到模块缓存目录
         /// </summary>
-        /// <param name="relative_path">对模块缓存目录的相对路径</param>
+        /// <param name="relativePath">对模块缓存目录的相对路径</param>
         /// <param name="bin">保存的内容</param>
-        void SaveFileAsBinary(string relative_path, byte[] bin);
+        void SaveFileAsBinary(string relativePath, byte[] bin);
         /// <summary>
         /// 从模块缓存目录里读取文本
         /// </summary>
-        /// <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
-        string ReadFileAsString(string relative_path);
+        /// <param name="relativePath">要读取的文件对模块缓存目录的相对路径</param>
+        string ReadFileAsString(string relativePath);
         /// <summary>
         /// 从模块缓存目录里读取二进制
         /// </summary>
-        /// <param name="relative_path">要读取的文件对模块缓存目录的相对路径</param>
-        byte[] ReadFileAsBinary(string relative_path);
+        /// <param name="relativePath">要读取的文件对模块缓存目录的相对路径</param>
+        byte[] ReadFileAsBinary(string relativePath);
         /// <summary>
         /// 从模块缓存目录里删除文件
         /// </summary>
-        /// <param name="relative_path">要删除的文件对模块缓存目录的相对路径</param>
-        void DeleteFile(string relative_path);
+        /// <param name="relativePath">要删除的文件对模块缓存目录的相对路径</param>
+        void DeleteFile(string relativePath);
     }
     /// <summary>
-    /// 发送消息API
+    /// 消息API
     /// </summary>
     public interface IMessagingAPI
     {
@@ -53,35 +49,35 @@ namespace klbotlib
         /// 发送消息接口
         /// </summary>
         /// <param name="context">发送的消息上下文类型</param>
-        /// <param name="user_id">用户ID</param>
-        /// <param name="group_id">群组ID</param>
+        /// <param name="userId">用户ID</param>
+        /// <param name="groupId">群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendMessage(MessageContext context, long user_id, long group_id, string content);
+        void SendMessage(MessageContext context, long userId, long groupId, string content);
         /// <summary>
         /// 回复消息接口
         /// </summary>
-        /// <param name="origin_msg">待回复的原始消息</param>
+        /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        void ReplyMessage(Message origin_msg, string content);
+        void ReplyMessage(MessageCommon originMsg, string content);
         /// <summary>
         /// 发送群消息接口
         /// </summary>
-        /// <param name="group_id">目标群组ID</param>
+        /// <param name="groupId">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendGroupMessage(long group_id, string content);
+        void SendGroupMessage(long groupId, string content);
         /// <summary>
         /// 发送临时消息接口
         /// </summary>
-        /// <param name="user_id">目标用户ID</param>
-        /// <param name="group_id">通过的群组的ID</param>
+        /// <param name="userId">目标用户ID</param>
+        /// <param name="groupId">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendTempMessage(long user_id, long group_id, string content);
+        void SendTempMessage(long userId, long groupId, string content);
         /// <summary>
         /// 发送私聊消息接口
         /// </summary>
-        /// <param name="user_id">目标用户ID</param>
+        /// <param name="userId">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendPrivateMessage(long user_id, string content);
+        void SendPrivateMessage(long userId, string content);
         /// <summary>
         /// 上传文件接口
         /// </summary>
@@ -90,6 +86,12 @@ namespace klbotlib
         /// <param name="uploadPath">上传路径</param>
         /// <param name="filePath">文件本地路径</param>
         void UploadFile(MessageContext context, long target, string uploadPath, string filePath);
+        /// <summary>
+        /// 根据消息ID获取消息接口
+        /// </summary>
+        /// <param name="id">消息ID</param>
+        /// <returns>消息对象</returns>
+        Message GetMessageFromID(long id);
     }
     /// <summary>
     /// 模块访问API

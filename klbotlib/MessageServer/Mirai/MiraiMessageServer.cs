@@ -39,19 +39,70 @@ public class MiraiMessageServer : IMessageServer
     /// <returns></returns>
     public List<Message> FetchMessages()
     {
-        List<Message> msgs = new List<Message>();
-        JMiraiFetchMessageResponse obj;
+        List<Message> msgs = new();
+        JMiraiFetchMessageResponse obj = null;
         do
         {
             string response = MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
-            //构建直接JSON对象
-            obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
-            //初步过滤
-            var jmsgs = obj.data.ToList();
-            jmsgs.ForEach(jmsg => msgs.Add(MiraiMessageFactory.BuildMessage(jmsg)));
+            try
+            {
+                //构建直接JSON对象
+                obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"JSON解析失败：{ex.Message}");
+                File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+                Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+                Console.Write("> ");
+                continue;
+            }
+            List<JMiraiMessagePackage> jmsgs = obj.data.ToList();
+            foreach (JMiraiMessagePackage jmsg in jmsgs)
+            {
+                try
+                {
+                    msgs.Add(MiraiMessageFactory.BuildMessage(jmsg));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Message对象构造失败：{ex.Message}");
+                    File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+                    Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+                    Console.Write("> ");
+                    continue;
+                }
+            }
         }
-        while (obj.data.Count != 0);   //无限轮询直到拿下所有消息
+        while (obj != null && obj.data.Count != 0);   //无限轮询直到拿下所有消息
         return msgs.Where(x => !(x is MessageEmpty)).ToList(); //预过滤空消息
+    }
+    /// <inheritdoc/>
+    public Message GetMessageFromID(long id)
+    {
+        string response = MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, id);
+        JMiraiGetMessageFromIdResponse obj = null;
+        try
+        {
+            obj = JsonConvert.DeserializeObject<JMiraiGetMessageFromIdResponse>(response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"JSON解析失败：{ex.Message}");
+            File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+            Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+        }
+        try
+        {
+            return MiraiMessageFactory.BuildMessage(obj.data);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Message对象构造失败：{ex.Message}");
+            File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+            Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+            throw ex;
+        }
     }
     /// <summary>
     /// 发送消息

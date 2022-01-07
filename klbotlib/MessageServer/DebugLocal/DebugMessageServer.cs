@@ -1,9 +1,6 @@
 ﻿using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace klbotlib.MessageServer.Debug;
 
@@ -12,7 +9,8 @@ namespace klbotlib.MessageServer.Debug;
 /// </summary>
 public class DebugMessageServer : IMessageServer
 {
-    private readonly List<Message> _msgBuffer = new();
+    private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
+    private readonly List<MessageCommon> _msgBuffer = new();
 
     /// <summary>
     /// 消息缓冲区加入新消息时触发的回调。参数为从消息生成的调试信息
@@ -43,7 +41,7 @@ public class DebugMessageServer : IMessageServer
     /// <inheritdoc/>
     public List<Message> FetchMessages()
     {
-        List<Message> msgs = new List<Message>(_msgBuffer);
+        List<Message> msgs = new(_msgBuffer);
         _msgBuffer.Clear();  //清理缓冲区
         return msgs;
     }
@@ -63,9 +61,13 @@ public class DebugMessageServer : IMessageServer
     /// 向消息服务器中添加未读消息
     /// </summary>
     /// <param name="msgs">待加入的消息</param>
-    public void AddReceivedMessage(params Message[] msgs)
+    public void AddReceivedMessage(params MessageCommon[] msgs)
     {
         _msgBuffer.AddRange(msgs);
+        foreach (var msg in msgs)
+        {
+            _msgCache.Add(_msgCache.Count, msg);
+        }
         foreach (var msg in msgs)
         {
             AddMessageCallback.Invoke(GetMessageDebugInfo(msg));
@@ -76,7 +78,7 @@ public class DebugMessageServer : IMessageServer
     /// 生成消息的调试信息字符串
     /// </summary>
     /// <returns>消息的调试信息</returns>
-    private string GetMessageDebugInfo(Message msg)
+    private string GetMessageDebugInfo(MessageCommon msg)
     {
         string content;
         if (msg is MessagePlain pmsg)
@@ -89,17 +91,13 @@ public class DebugMessageServer : IMessageServer
             content = $"[语音消息]";
         else
             content = $"[未知类型消息：{msg}]";
-        switch (msg.Context)
+        return msg.Context switch
         {
-            case MessageContext.Group:
-                return $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Temp:
-                return $"* 用户[{msg.SenderID}]通过群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Private:
-                return $"* 用户[{msg.SenderID}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            default:
-                return $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]或机器人发送了未知类型[{msg.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------";
-        }
+            MessageContext.Group => $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Temp => $"* 用户[{msg.SenderID}]通过群组[{msg.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Private => $"* 用户[{msg.SenderID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 用户[{msg.SenderID}]向群组[{msg.GroupID}]或机器人发送了未知类型[{msg.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+        };
     }
     /// <summary>
     /// 生成消息的调试信息字符串
@@ -112,17 +110,13 @@ public class DebugMessageServer : IMessageServer
     /// <returns>消息的调试信息</returns>
     private string GetMessageDebugInfo(Module module, MessageContext context, long userId, long groupId, string content)
     {
-        switch (context)
+        return context switch
         {
-            case MessageContext.Group:
-                return $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Temp:
-                return $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            case MessageContext.Private:
-                return $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------";
-            default:
-                return $"* 模块[{module}]向群组[{groupId}]或用户[{userId}]发送了未知类型[{context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------";
-        }
+            MessageContext.Group => $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Temp => $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Private => $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 模块[{module}]向群组[{groupId}]或用户[{userId}]发送了未知类型[{context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+        };
     }
     /// <summary>
     /// 生成消息的调试信息字符串
@@ -135,5 +129,10 @@ public class DebugMessageServer : IMessageServer
     private string GetUploadDebugInfo(Module module, long groupId, string uploadPath, string filePath)
     {
         return $"* 模块[{module}]向群组[{groupId}]上传文件[{filePath}]到群文件夹[{uploadPath}]";
+    }
+    /// <inheritdoc/>
+    public Message GetMessageFromID(long id)
+    {
+        return _msgCache[id];
     }
 }

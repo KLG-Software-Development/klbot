@@ -59,15 +59,15 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     /// 处理器：内容包含上号且不长于五个字符，则复读内容；
     /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
     /// </summary>
-    public sealed override string Processor(MessagePlain msg, string filter_out)
+    public sealed override string Processor(MessagePlain msg, string filterOut)
     {
-        string msg_text = msg.Text.Trim();
-        return filter_out switch
+        string msgText = msg.Text.Trim();
+        return filterOut switch
         {
-            "上号" => msg_text,
+            "上号" => msgText,
             "蛤儿" => @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}",
-            "跟风" => msg_text,
-            _ => throw new Exception($"意外遇到未实现的过滤器输出\"{filter_out}\""),
+            "跟风" => msgText,
+            _ => throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\""),
         };
     }
 }

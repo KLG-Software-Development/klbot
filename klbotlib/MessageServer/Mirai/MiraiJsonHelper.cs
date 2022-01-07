@@ -45,5 +45,4 @@ namespace klbotlib.MessageServer.Mirai
                 => "{\"type\":\"Voice\",\"" + key + "\":\"" + HttpUtility.JavaScriptStringEncode(value) + "\"}";
         }
     }
-
 }

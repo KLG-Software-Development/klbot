@@ -5,6 +5,6 @@ namespace klbotlib.Extensions
 {
     public static class TimeSpanExtension
     {
-        public static string ToMsString(this TimeSpan time_span, int decimals = 4) => time_span.TotalMilliseconds.ToString("f" + decimals) + "ms";
+        public static string ToMsString(this TimeSpan timeSpan, int decimals = 4) => timeSpan.TotalMilliseconds.ToString("f" + decimals) + "ms";
     }
 }

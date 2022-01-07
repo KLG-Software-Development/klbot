@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace klbotlib.MessageServer.Mirai;
 
@@ -31,10 +27,15 @@ internal class MiraiNetworkHelper
     //返回获取消息的url
     internal static string GetFetchMessageUrl(string serverUrl)
         => $"{serverUrl}/fetchMessage";
-    internal static string FetchMessageListJSON(string serverUrl, string encoding = "utf-8")
+    //返回从ID获取消息的url
+    internal static string GetMessageFromIDUrl(string serverUrl)
+    => $"{serverUrl}/messageFromId";
+    internal static string FetchMessageListJSON(string serverUrl)
     {
-        _client.DefaultRequestHeaders.AcceptEncoding.Clear();
-        _client.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(encoding);
         return _client.GetStringAsync(GetFetchMessageUrl(serverUrl)).Result;
+    }
+    internal static string GetMessageByIdJSON(string serverUrl, long id)
+    {
+        return _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + "?id=" + id).Result;
     }
 }
