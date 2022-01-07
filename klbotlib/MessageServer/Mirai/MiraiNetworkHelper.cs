@@ -34,8 +34,8 @@ internal class MiraiNetworkHelper
     {
         return _client.GetStringAsync(GetFetchMessageUrl(serverUrl)).Result;
     }
-    internal static string GetMessageByIdJSON(string serverUrl)
+    internal static string GetMessageByIdJSON(string serverUrl, long id)
     {
-        return _client.GetStringAsync(GetMessageFromIDUrl(serverUrl)).Result;
+        return _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + "?id=" + id).Result;
     }
 }

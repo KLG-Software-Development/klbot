@@ -232,7 +232,9 @@ namespace klbotlib
             }
         }
 
-        //消息发送内部API
+        //消息内部API
+        internal Message GetMessageFromID(long id)
+            => _msgServer.GetMessageFromID(id);
         /// <summary>
         /// 发送消息
         /// </summary>

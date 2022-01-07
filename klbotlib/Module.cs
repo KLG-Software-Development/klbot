@@ -97,15 +97,15 @@ namespace klbotlib.Modules
         /// <summary>
         /// 缓存操作接口
         /// </summary>
-        public IFileAPI Cache { get => (IFileAPI)this; }
+        public IFileAPI Cache { get => this; }
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public IMessagingAPI Messaging { get => (IMessagingAPI)this; }
+        public IMessagingAPI Messaging { get => this; }
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public IModuleAccessAPI ModuleAccess { get => (IModuleAccessAPI)this; }
+        public IModuleAccessAPI ModuleAccess { get => this; }
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -242,6 +242,8 @@ namespace klbotlib.Modules
             else
                 File.Delete(path);
         }
+        Message IMessagingAPI.GetMessageFromID(long id)
+            => HostBot.GetMessageFromID(id);
         void IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
             => HostBot.SendMessage(this, context, userId, groupId, content);
         void IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)

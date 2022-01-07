@@ -80,7 +80,7 @@ public class MiraiMessageServer : IMessageServer
     /// <inheritdoc/>
     public Message GetMessageFromID(long id)
     {
-        string response = MiraiNetworkHelper.GetMessageByIdJSON(ServerURL);
+        string response = MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, id);
         JMiraiGetMessageFromIdResponse obj = null;
         try
         {
