@@ -15,9 +15,9 @@ public class TestReflectionHelper
     [TestMethod]
     public void RestoreTypes()
     {
-        string test_str = "test";
+        string testStr = "test";
         //原地还原
-        Assert.IsTrue((string)ReflectionHelper.RestoreType(typeof(string), test_str) == test_str);
+        Assert.IsTrue((string)ReflectionHelper.RestoreType(typeof(string), testStr) == testStr);
         //还原数字
         Assert.IsTrue((byte)ReflectionHelper.RestoreType(typeof(byte), "42") == 42);
         Assert.IsTrue((short)ReflectionHelper.RestoreType(typeof(short), "42") == 42);

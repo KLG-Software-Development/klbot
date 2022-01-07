@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ImgEncoder = System.Drawing.Imaging.Encoder;
 
 namespace klbotlib.Modules.ModuleUtils
 {
@@ -102,7 +98,7 @@ namespace klbotlib.Modules.ModuleUtils
                 if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            StringContent content = new(body, System.Text.Encoding.GetEncoding(ContentEncoding));
+            StringContent content = new(body, Encoding.GetEncoding(ContentEncoding));
             return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
         /// <summary>
@@ -195,18 +191,18 @@ namespace klbotlib.Modules.ModuleUtils
         /// 缩放一张图片，使其最大可能大小不超过某个值
         /// </summary>
         /// <param name="bmp">待缩放图片</param>
-        /// <param name="size_limit">大小限制（字节）</param>
-        public Bitmap ResizeToLimit(Bitmap bmp, int size_limit)
+        /// <param name="sizeLimit">大小限制（字节）</param>
+        public Bitmap ResizeToLimit(Bitmap bmp, int sizeLimit)
         {
             //计算当前最大可能占用空间
-            float current_size = bmp.Width * bmp.Height * 3f;
+            float currentSize = bmp.Width * bmp.Height * 3f;
             //如果未达到限制，不用缩放直接返回
-            if (current_size < size_limit)
+            if (currentSize < sizeLimit)
                 return bmp;
             //边缩放比例 = Sqrt(体积缩放比例)
-            double diag_factor = Math.Sqrt(size_limit / current_size);
-            int _width = (int)(bmp.Width * diag_factor);
-            int _height = (int)(bmp.Height * diag_factor);
+            double diagFactor = Math.Sqrt(sizeLimit / currentSize);
+            int _width = (int)(bmp.Width * diagFactor);
+            int _height = (int)(bmp.Height * diagFactor);
             return Resize(bmp, _width, _height);
         }
     }

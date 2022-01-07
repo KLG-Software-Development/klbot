@@ -3,9 +3,6 @@ using klbotlib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace klbotlib
 {
@@ -21,12 +18,12 @@ namespace klbotlib
         IEnumerator<Module> IEnumerable<Module>.GetEnumerator() => _modules.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _modules.GetEnumerator();
         //计算模块ID
-        internal string CalcModuleID(string module_name, int module_index)
+        internal string CalcModuleID(string module_name, int moduleIndex)
         {
-            if (module_index == 0)
+            if (moduleIndex == 0)
                 return module_name;
             else
-                return $"{module_name}#{module_index}";
+                return $"{module_name}#{moduleIndex}";
         }
         //计算模块ID
         internal string CalcModuleID(Module module)
@@ -57,8 +54,8 @@ namespace klbotlib
         /// <summary>
         /// 返回模块链条中是否含有某个ID的模块
         /// </summary>
-        /// <param name="module_id">模块ID</param>
-        public bool ContainsModule(string module_id) => _moduleCountByName.ContainsKey(module_id);
+        /// <param name="moduleId">模块ID</param>
+        public bool ContainsModule(string moduleId) => _moduleCountByName.ContainsKey(moduleId);
         /// <summary>
         /// 模块链条中模块的数量
         /// </summary>
@@ -66,38 +63,38 @@ namespace klbotlib
         /// <summary>
         /// 获取模块实例
         /// </summary>
-        /// <param name="module_id">模块ID</param>
-        public Module this[string module_id]
+        /// <param name="moduleId">模块ID</param>
+        public Module this[string moduleId]
         {
             get
             {
-                if (!_indexById.ContainsKey(module_id))
-                    throw new ModuleMissingException($"在模块链条中不存在模块\"{module_id}\"");
-                return _modules[_indexById[module_id]];
+                if (!_indexById.ContainsKey(moduleId))
+                    throw new ModuleMissingException($"在模块链条中不存在模块\"{moduleId}\"");
+                return _modules[_indexById[moduleId]];
             }
             set
             {
-                if (!_indexById.ContainsKey(module_id))
-                    throw new ModuleMissingException($"在模块链条中不存在模块\"{module_id}\"");
-                _modules[_moduleCountByName[module_id]] = value;
+                if (!_indexById.ContainsKey(moduleId))
+                    throw new ModuleMissingException($"在模块链条中不存在模块\"{moduleId}\"");
+                _modules[_moduleCountByName[moduleId]] = value;
             }
         }
         /// <summary>
         /// 获取模块实例。当你不关心目标模块的类型时，使用此方法。等价于直接使用ModuleChain[module_id]。
         /// 成功时会返回true，失败时会返回false。
         /// </summary>
-        /// <param name="module_id">模块ID</param>
+        /// <param name="moduleId">模块ID</param>
         /// <param name="module">获取到的模块对象。失败时为null</param>
-        public bool TryGetModule(string module_id, out Module module)
+        public bool TryGetModule(string moduleId, out Module module)
         {
-            if (!_indexById.ContainsKey(module_id))
+            if (!_indexById.ContainsKey(moduleId))
             {
                 module = null;
                 return false;
             }
             else
             {
-                module = _modules[_indexById[module_id]];
+                module = _modules[_indexById[moduleId]];
                 return true;
             }
         }
@@ -110,13 +107,13 @@ namespace klbotlib
         /// <param name="module">目标模块对象。失败时为null</param>
         public bool TryGetModule<T>(int index, out T module) where T : Module
         {
-            string module_id = CalcModuleID(typeof(T).Name, index);
-            if (!_indexById.ContainsKey(module_id))
+            string moduleId = CalcModuleID(typeof(T).Name, index);
+            if (!_indexById.ContainsKey(moduleId))
             {
                 module = null;
                 return false;
             }
-            else if (_modules[_indexById[module_id]] is T tmodule)
+            else if (_modules[_indexById[moduleId]] is T tmodule)
             {
                 module = tmodule;
                 return true;
@@ -130,16 +127,16 @@ namespace klbotlib
         /// <summary>
         /// 获取模块实例。当你不关心目标模块的类型时，使用此方法。等价于直接使用ModuleChain[module_id]。
         /// </summary>
-        /// <param name="module_id">模块ID</param>
-        public Module GetModule(string module_id) => this[module_id];
+        /// <param name="moduleId">模块ID</param>
+        public Module GetModule(string moduleId) => this[moduleId];
         /// <summary>
         /// 获取模块实例。当你需要获取某个类型的特定模块时，使用此方法。
         /// </summary>
         /// <typeparam name="T">目标模块的类型</typeparam>
-        /// <param name="module_index">目标模块的索引。默认为0</param>
-        public T GetModule<T>(int module_index = 0) where T : Module
+        /// <param name="moduleIndex">目标模块的索引。默认为0</param>
+        public T GetModule<T>(int moduleIndex = 0) where T : Module
         {
-            return (T)this[CalcModuleID(typeof(T).Name, module_index)];
+            return (T)this[CalcModuleID(typeof(T).Name, moduleIndex)];
         }
         ///<inheritdoc/>
         public void ForEach(Action<Module> action) => _modules.ForEach(action);

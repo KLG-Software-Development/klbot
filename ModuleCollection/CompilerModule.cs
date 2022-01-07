@@ -43,7 +43,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         return msg.Text.StartsWith(_onlineCommand) ? "compile_ol" : msg.Text.StartsWith(_localCommand) ? "compile" : null;
     }
     ///<inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
         string text = msg.Text.TrimStart();
         int ptr = 4;
@@ -52,7 +52,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         if (ptr == text.Length) //到最后也没遇到 骂人
             return ModuleAccess.GetModule<FuckModule>().SingleSentence();
         string code = text[ptr..];
-        switch (filter_out)
+        switch (filterOut)
         {
             case "compile_ol":
                 string language = text[_onlineCommand.Length..ptr].Trim().ToLower();
@@ -77,7 +77,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
                     return $"语言\"{language}\"暂时无法本地编译，改用\"{_onlineCommand} \"尝试在线编译";
                 throw new NotImplementedException();
             default:
-                throw new Exception($"意外遭遇未知过滤器输出\"{filter_out}\"。添加该输出的对应处理");
+                throw new Exception($"意外遭遇未知过滤器输出\"{filterOut}\"。添加该输出的对应处理");
         }
     }
 

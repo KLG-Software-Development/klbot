@@ -28,9 +28,9 @@ public class TimeModule : SingleTypeModule<MessagePlain>
     }
 
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filter_out)
+    public override string Processor(MessagePlain msg, string filterOut)
     {
-        switch (filter_out)
+        switch (filterOut)
         {
             case "报时":
                 return DateTime.UtcNow.AddHours(_timeZone).ToString() + @"{\face:大哭}";
@@ -43,7 +43,7 @@ public class TimeModule : SingleTypeModule<MessagePlain>
                 else
                     return $"错误：你输了什么狗屁东西？";
             default:
-                return $"意外收到未知过滤器输出\"{filter_out}\"";
+                return $"意外收到未知过滤器输出\"{filterOut}\"";
         }
     }
 }
