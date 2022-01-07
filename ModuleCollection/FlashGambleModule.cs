@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 
 namespace klbotlib.Modules;
@@ -7,7 +6,7 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 闪照赌博模块
 /// </summary>
-public class FlashGambleModule : SingleTypeModule<MessageFlashImage>
+public class FlashGambleModule : Module
 {
     private readonly Random _ro = new();
 
@@ -15,25 +14,31 @@ public class FlashGambleModule : SingleTypeModule<MessageFlashImage>
     private int _prob = 50;
 
     /// <inheritdoc/>
-    public override string FriendlyName => "闪照赌博模块";
+    public override string FriendlyName => "犯贱赌博模块";
     /// <inheritdoc/>
     public override bool IsTransparent => true;
     /// <inheritdoc/>
     public override bool UseSignature => false;
 
     /// <inheritdoc/>
-    public override string Filter(MessageFlashImage msg)
+    public override string Filter(Message msg)
     {
         int i = _ro.Next(100);
-        Debug.Print(i.ToString());
         if (i < _prob)
-            return "yes";
+        {
+            if (msg is MessageRecall)
+                return "recall";
+            else if (msg is MessageFlashImage)
+                return "flash";
+            else
+                return null;
+        }
         else
             return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessageFlashImage msg, string filterOut)
+    public override string Processor(Message msg, string filterOut)
     {
-        return @"\image:\url:" + msg.UrlList.First();
+        return null;
     }
 }
