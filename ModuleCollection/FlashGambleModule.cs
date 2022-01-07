@@ -10,7 +10,7 @@ public class FlashGambleModule : Module
     private readonly Random _ro = new();
 
     [ModuleStatus]
-    private int _prob = 50;
+    private int _prob = 5;
 
     /// <inheritdoc/>
     public override string FriendlyName => "犯贱赌博模块";
