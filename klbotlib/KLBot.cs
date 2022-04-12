@@ -682,6 +682,7 @@ namespace klbotlib
         /// </summary>
         public string GetModuleChainString()
         {
+            _sb.Clear();
             lock (_sb)
             {
                 _sb.AppendLine("模块链条：");
@@ -702,6 +703,7 @@ namespace klbotlib
         /// </summary>
         public string GetListeningGroupListString()
         {
+            _sb.Clear();
             lock (_sb)
             {
                 _sb.AppendLine("监听群组列表：");
@@ -719,6 +721,7 @@ namespace klbotlib
         /// </summary>
         public string GetModuleStatusString()
         {
+            _sb.Clear();
             lock (_sb)
             {
                 _sb.AppendLine("模块状态：");
