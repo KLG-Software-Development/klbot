@@ -17,29 +17,20 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TieredCompilation>True</TieredCompilation>
     <NeutralLanguage>zh-CN</NeutralLanguage>
+    <PublishSingleFile>true</PublishSingleFile>
+    <AotAssemblies>true</AotAssemblies>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <TargetFrameworks>net6.0</TargetFrameworks>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <Optimize>True</Optimize>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|AnyCPU'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|ARM64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-    
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|x64'">
+  <PropertyGroup Condition="'$(Configuration)'=='Ref_Only'">
     <Optimize>True</Optimize>
   </PropertyGroup>
   

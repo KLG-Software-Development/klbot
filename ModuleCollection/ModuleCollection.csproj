@@ -33,9 +33,4 @@
       <HintPath>..\..\Gleee\GleeeConsole\bin\Release\netstandard2.0\GleeeConsole.dll</HintPath>
     </Reference>
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="&quot;C:\A\Programming\Projects\klbot\copy_mc.bat&quot;" />
-  </Target>
-
 </Project>

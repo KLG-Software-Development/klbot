@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -129,6 +130,23 @@ namespace klbotlib.Modules.ModuleUtils
             }
             FormUrlEncodedContent content = new(form);
             return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
+        }
+        /// <summary>
+        /// 向指定地址POST一段JSON内容
+        /// </summary>
+        /// <typeparam name="T">待序列化对象的类型</typeparam>
+        /// <param name="url"></param>
+        /// <param name="body">待序列化的对象</param>
+        /// <returns></returns>
+        public async Task<string> PostJsonAsync<T>(string url, T body)
+        {
+            foreach (var kvp in Headers)
+            {
+                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
+            }
+            JsonContent content = JsonContent.Create(body);
+            return await _client.PostAsJsonAsync(url, body).Result.Content.ReadAsStringAsync();
         }
     }
     /// <summary>
