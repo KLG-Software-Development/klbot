@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-    <TargetFrameworks>net7.0</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
     <AssemblyVersion>1.6.*</AssemblyVersion>
     <FileVersion>1.6</FileVersion>
     <Deterministic>false</Deterministic>
@@ -26,6 +26,7 @@
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <Optimize>True</Optimize>
   </PropertyGroup>
 
