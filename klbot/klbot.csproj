@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <AssemblyVersion>1.6.*</AssemblyVersion>
     <FileVersion>1.6</FileVersion>
     <Deterministic>false</Deterministic>
@@ -21,6 +21,10 @@
     <AotAssemblies>true</AotAssemblies>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <TargetFrameworks>net6.0</TargetFrameworks>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <Optimize>True</Optimize>
   </PropertyGroup>
