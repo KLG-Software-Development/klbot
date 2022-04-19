@@ -17,7 +17,7 @@ public class TestMessage
         int length = 0;
         long id = 0;
         long[] ids = new long[] { 1, 2, 3};
-        MessagePlain plain = new(2, 3, MessageContext.Group, ro.Next().ToString());
+        MessagePlain plain = new(MessageContext.Group, 2, 3, ro.Next().ToString());
         Assert.AreEqual(0, plain.TargetID.Count, "默认情况下@目标数量应为0");
         plain.AddTargetID(id);
         length++;
