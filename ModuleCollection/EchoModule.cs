@@ -8,8 +8,6 @@ public class EchoModule : Module
 {
     /// <inheritdoc/>
     public override string FriendlyName => "回显模块";
-    /// <inheritdoc/>
-    public override bool UseSignature => false;
 
     /// <inheritdoc/>
     public override string Filter(Message msg)

@@ -3,6 +3,7 @@ using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
+using ModuleCollection;
 using System.Reflection;
 using Module = klbotlib.Modules.Module;
 
@@ -27,8 +28,8 @@ start:
         KLBot lcb = null;
         try
         {
-            
             lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
+            lcb.AddModule(new EchoModule());
             lcb.AddModule(new RollinModule());
             lcb.AddModule(new CollapseModule());
             lcb.AddModule(new CompilerModule());
