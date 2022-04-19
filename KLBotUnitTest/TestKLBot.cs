@@ -34,15 +34,13 @@ public class TestKLBot
         Assert.AreEqual(0, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(0, bot.DiagData.SuccessPackageCount);
-        MessagePlain msg = new(-1, -1, "some non-sense");
-        msg.Context = MessageContext.Group;
+        MessagePlain msg = new(MessageContext.Group, -1, -1, "some non-sense");
         server.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages());
         Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(1, bot.DiagData.SuccessPackageCount);
-        msg = new(-1, -1, "##help");
-        msg.Context = MessageContext.Group;
+        msg = new(MessageContext.Group, -1, -1, "##help");
         server.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages());
         Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
