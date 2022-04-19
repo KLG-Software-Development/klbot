@@ -47,11 +47,13 @@ public class MessageFlashImage : MessageCommon
         if (UrlList.Count != 0)
         {
             StringBuilder sb = new();
-            sb.AppendLine(base.ToString());
+            sb.Append(base.ToString());
+            sb.Append('\n');
             for (int i = 0; i < UrlList.Count; i++)
             {
                 sb.AppendFormat("Url[{0}]: {1}\n", i, UrlList[i]);
             }
+            sb.Length--;
             return sb.ToString();
         }
         else
