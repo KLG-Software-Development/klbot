@@ -19,7 +19,19 @@ namespace klbotlib
         /// <summary>
         /// 此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
         /// </summary>
-        public IReadOnlyList<long> TargetID { get => _targetList; internal set => _targetList = (List<long>)value; }
+        public IReadOnlyList<long> TargetID 
+        { 
+            get => _targetList;
+            internal set
+            {
+                _targetList = (List<long>)value;
+                _targetHashSet = new();
+                foreach (long id in _targetList)
+                {
+                    _targetHashSet.Add(id);
+                }
+            }
+        }
         /// <summary>
         /// 返回此消息是否@了某个ID
         /// </summary>

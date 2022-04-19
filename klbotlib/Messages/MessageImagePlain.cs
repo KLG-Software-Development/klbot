@@ -10,7 +10,7 @@ namespace klbotlib
         /// <summary>
         /// 图像的Url
         /// </summary>
-        public List<string> UrlList { get; internal set; }
+        public List<string> UrlList { get; internal set; } = new();
         /// <summary>
         /// 随图像一同发送的文字
         /// </summary>

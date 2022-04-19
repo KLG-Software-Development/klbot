@@ -10,7 +10,7 @@ namespace klbotlib
         /// <summary>
         /// 图像的Url的列表，顺序从先到后
         /// </summary>
-        public List<string> UrlList { get; internal set; }
+        public List<string> UrlList { get; internal set; } = new();
 
         /// <summary>
         /// 构造图片消息
