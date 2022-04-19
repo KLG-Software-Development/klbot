@@ -1,4 +1,4 @@
-﻿namespace klbotlib;
+namespace klbotlib;
 
 /// <summary>
 /// klbot内部使用的消息抽象类。所有QQ消息都继承此类
@@ -24,6 +24,14 @@ public abstract class Message
         CopyReferenceTypeMember(copy);
         return copy;
     }
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return (Context == MessageContext.Group || Context == MessageContext.Temp)
+            ? $"Type: {GetType().Name}\nContext: {Context}\nGroup: {GroupID}"
+            : $"Type: {GetType().Name}\nContext: {Context}";
+    }
+  
     internal static MessageEmpty Empty = new MessageEmpty();
     /// <summary>
     /// 将此消息中的引用类型字段拷贝到目标消息中

@@ -14,9 +14,19 @@
         /// </summary>
         /// <param name="senderId">发送者ID（若存在）</param>
         /// <param name="groupId">所在群聊ID（若存在）</param>
+        /// <param name="text">文本内容</param>
+        public MessagePlain(long senderId, long groupId, string text = "") : base(senderId, groupId)
+        {
+            Text = text;
+        }
+        /// <summary>
+        /// 创建纯文本消息
+        /// </summary>
+        /// <param name="senderId">发送者ID（若存在）</param>
+        /// <param name="groupId">所在群聊ID（若存在）</param>
         /// <param name="context">消息上下文（默认为群聊）</param>
         /// <param name="text">文本内容</param>
-        public MessagePlain(long senderId, long groupId, MessageContext context = MessageContext.Group, string text = "") : base(senderId, groupId)
+        public MessagePlain(MessageContext context, long senderId, long groupId, string text = "") : base(senderId, groupId)
         {
             Text = text;
             Context = context;

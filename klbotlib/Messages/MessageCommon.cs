@@ -1,4 +1,4 @@
-﻿using klbotlib.Json;
+using klbotlib.Json;
 using System;
 using System.Collections.Generic;
 
@@ -65,6 +65,21 @@ namespace klbotlib
         {
             _targetList.Clear();
             _targetHashSet.Clear();
+        }
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            StringBuilder sb = new();
+            sb.AppendLine(base.ToString());
+            sb.AppendFormat("From: {0}\n", SenderID);
+            int targetIndex = 0;
+            foreach (var targetID in TargetID)
+            {
+                sb.AppendFormat("Target[{0}]: {1}\n", targetIndex, targetID);
+                targetIndex++;
+            }
+            sb.Length -= 1; //删除多余的\n
+            return sb.ToString();
         }
 
         internal MessageCommon(long senderId, long groupId)
