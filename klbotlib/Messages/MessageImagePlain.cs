@@ -49,6 +49,7 @@ namespace klbotlib
         /// <param name="urlList">图片URL集合</param>
         public MessageImagePlain(MessageContext context, long senderId, long groupId, string text, IEnumerable<string> urlList) : base(senderId, groupId)
         {
+            Context = context;
             Text = text;
             UrlList.AddRange(urlList);
         }

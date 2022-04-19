@@ -81,7 +81,7 @@ public class TestMessage
             // MessageImagePlain
             m = new MessageImagePlain(context, senderId, groupId, text, urlList);
             s = m.ToString();
-            //Assert.AreEqual($"Type: MessageImagePlain\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nText: {text}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImagePlain.ToString()");
+            Assert.AreEqual($"Type: MessageImagePlain\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nText: {text}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImagePlain.ToString()");
             // MessageVoice
             m = new MessageVoice(context, senderId, groupId, urlList[1]);
             s = m.ToString();
