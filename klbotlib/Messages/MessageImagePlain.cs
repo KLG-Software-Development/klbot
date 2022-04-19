@@ -57,14 +57,15 @@ namespace klbotlib
         public override string ToString()
         {
             StringBuilder sb = new();
-            sb.AppendLine(base.ToString());
-            sb.AppendFormat("Text: {0}\n", Text);
+            sb.Append(base.ToString());
+            sb.AppendFormat("\nText: {0}\n", Text);
             int urlIndex = 0;
             foreach (var url in UrlList)
             {
                 sb.AppendFormat("Url[{0}]: {1}\n", urlIndex, url);
                 urlIndex++;
             }
+            sb.Length--;
             return sb.ToString();
         }
 

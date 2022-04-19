@@ -71,8 +71,8 @@ namespace klbotlib
         public override string ToString()
         {
             StringBuilder sb = new();
-            sb.AppendLine(base.ToString());
-            sb.AppendFormat("From: {0}\n", SenderID);
+            sb.Append(base.ToString());
+            sb.AppendFormat("\nFrom: {0}\n", SenderID);
             int targetIndex = 0;
             foreach (var targetID in TargetID)
             {

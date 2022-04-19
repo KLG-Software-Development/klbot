@@ -9,7 +9,90 @@ namespace KLBotUnitTest;
 [TestClass]
 public class TestMessage
 {
-    // 测试TargetID
+    // 测试Message*.ToString()
+    [TestMethod]
+    public void TestToString()
+    {
+        Random ro = new();
+        //Context = Private
+        {
+            long senderId = ro.NextInt64();
+            long groupId = ro.NextInt64();
+            long targetId = ro.NextInt64();
+            long authorId = ro.NextInt64();
+            long msgId = ro.NextInt64();
+            string text = ro.NextInt64().ToString();
+            MessageContext context = MessageContext.Private;
+            string[] urlList = new string[] { ro.NextDouble().ToString(), ro.NextDouble().ToString() };
+            // MessagePlain
+            Message m = new MessagePlain(context, senderId, groupId, text);
+            string s = m.ToString();
+            Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nFrom: {senderId}\nText: {text}", s, "检查MessagePlain.ToString()");
+            var p = m as MessagePlain;
+            p.AddTargetID(targetId);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nFrom: {senderId}\nTarget[0]: {targetId}\nText: {text}", s, "检查MessagePlain.ToString()");
+            p.AddTargetID(msgId);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nFrom: {senderId}\nTarget[0]: {targetId}\nTarget[1]: {msgId}\nText: {text}", s, "检查MessagePlain.ToString()");
+            // MessageImage
+            m = new MessageImage(context, senderId, groupId, urlList);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageImage\nContext: {context}\nFrom: {senderId}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImage.ToString()");
+            // MessageFlashImage
+            m = new MessageFlashImage(context, senderId, groupId, urlList);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageFlashImage\nContext: {context}\nFrom: {senderId}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageFlashImage.ToString()");
+            // MessageImagePlain
+            m = new MessageImagePlain(context, senderId, groupId, text, urlList);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageImagePlain\nContext: {context}\nFrom: {senderId}\nText: {text}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImagePlain.ToString()");
+            // MessageVoice
+            m = new MessageVoice(context, senderId, groupId, urlList[1]);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageVoice\nContext: {context}\nFrom: {senderId}\nUrl: {urlList[1]}", s, "检查MessageVoice.ToString()");
+            //MessageRecall
+            MessageRecall recall = new(context, authorId, senderId, groupId, msgId);
+            s = recall.ToString();
+            Assert.AreEqual($"Type: MessageRecall\nContext: {context}\nOperator: {senderId}\nMessageID: {msgId}\nAuthor: {authorId}", s, "检查MessageRecall.ToString()");
+        }
+        //Context = Group || Temp
+        for (int i = 1; i <= 2; i++)
+        {
+            long senderId = ro.NextInt64();
+            long groupId = ro.NextInt64();
+            long authorId = ro.NextInt64();
+            long msgId = ro.NextInt64();
+            string text = ro.NextInt64().ToString();
+            MessageContext context = (MessageContext)i;
+            string[] urlList = new string[] { ro.NextDouble().ToString(), ro.NextDouble().ToString() };
+            // MessagePlain
+            Message m = new MessagePlain(context, senderId, groupId, text);
+            string s = m.ToString();
+            Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nText: {text}", s, "检查MessagePlain.ToString()");
+            // MessageImage
+            m = new MessageImage(context, senderId, groupId, urlList);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageImage\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImage.ToString()");
+            // MessageFlashImage
+            m = new MessageFlashImage(context, senderId, groupId, urlList);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageFlashImage\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageFlashImage.ToString()");
+            // MessageImagePlain
+            m = new MessageImagePlain(context, senderId, groupId, text, urlList);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageImagePlain\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nText: {text}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImagePlain.ToString()");
+            // MessageVoice
+            m = new MessageVoice(context, senderId, groupId, urlList[1]);
+            s = m.ToString();
+            Assert.AreEqual($"Type: MessageVoice\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nUrl: {urlList[1]}", s, "检查MessageVoice.ToString()");
+            //MessageRecall
+            MessageRecall recall = new(context, authorId, senderId, groupId, msgId);
+            s = recall.ToString();
+            Assert.AreEqual($"Type: MessageRecall\nContext: {context}\nGroup: {groupId}\nOperator: {senderId}\nMessageID: {msgId}\nAuthor: {authorId}", s, "检查MessageRecall.ToString()");
+        }
+    }
+    // 测试MessageCommon.TargetID
     [TestMethod]
     public void TestTargetID()
     {
