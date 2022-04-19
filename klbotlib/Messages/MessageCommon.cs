@@ -1,4 +1,4 @@
-﻿using klbotlib.Json;
+using klbotlib.Json;
 using System;
 using System.Collections.Generic;
 
@@ -9,7 +9,9 @@ namespace klbotlib
     /// </summary>
     public abstract class MessageCommon : Message
     {
-        private readonly List<long> _targetId = new List<long>();
+        private HashSet<long> _targetHashSet = new();
+        private List<long> _targetList = new();
+
         /// <summary>
         /// 发送者的ID（QQ号）。如果没有则为-1
         /// </summary>
@@ -17,25 +19,73 @@ namespace klbotlib
         /// <summary>
         /// 此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
         /// </summary>
-        public IEnumerable<long> TargetID { get => _targetId; }
+        public IReadOnlyList<long> TargetID 
+        { 
+            get => _targetList;
+            internal set
+            {
+                _targetList = (List<long>)value;
+                _targetHashSet = new();
+                foreach (long id in _targetList)
+                {
+                    _targetHashSet.Add(id);
+                }
+            }
+        }
         /// <summary>
         /// 返回此消息是否@了某个ID
         /// </summary>
         /// <param name="id">待判断ID</param>
-        public bool TargetContains(long id) => _targetId.Contains(id);
+        public bool ContainsTargetID(long id) => _targetHashSet.Contains(id);
+        /// <summary>
+        /// 添加目标@ID
+        /// </summary>
+        /// <param name="id">目标ID</param>
+        public void AddTargetID(long id)
+        {
+            _targetHashSet.Add(id);
+            _targetList.Add(id);
+        }
+        /// <summary>
+        /// 添加多个目标@ID
+        /// </summary>
+        /// <param name="ids">目标ID集合</param>
+        public void AddTargetID(IEnumerable<long> ids)
+        {
+            foreach (var id in ids)
+            {
+                _targetHashSet.Add(id);
+            }
+            _targetList.AddRange(ids);
+        }
+        /// <summary>
+        /// 清空目标@ID列表
+        /// </summary>
+        public void ClearTargetID()
+        {
+            _targetList.Clear();
+            _targetHashSet.Clear();
+        }
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            StringBuilder sb = new();
+            sb.AppendLine(base.ToString());
+            sb.AppendFormat("From: {0}\n", SenderID);
+            int targetIndex = 0;
+            foreach (var targetID in TargetID)
+            {
+                sb.AppendFormat("Target[{0}]: {1}\n", targetIndex, targetID);
+                targetIndex++;
+            }
+            sb.Length -= 1; //删除多余的\n
+            return sb.ToString();
+        }
 
         internal MessageCommon(long senderId, long groupId)
         {
             SenderID = senderId;
             GroupID = groupId;
-        }
-        internal void AddTargetID(params long[] ids)
-        {
-            _targetId.AddRange(ids);
-        }
-        internal void AddTargetID(IEnumerable<long> ids)
-        {
-            _targetId.AddRange(ids);
         }
         internal string BuildReplyMessageJson(string chain)
         {
@@ -47,6 +97,15 @@ namespace klbotlib
             else if (context == MessageContext.Temp)
                 return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(SenderID, GroupID, chain);
             else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
+        }
+        internal override void CopyReferenceTypeMember(Message dstMsg)
+        {
+            var dst = dstMsg as MessageCommon;
+            dst.TargetID = new List<long>();
+            foreach (var id in TargetID)
+            {
+                dst.AddTargetID(id);
+            }
         }
     }
 

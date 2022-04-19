@@ -1,4 +1,4 @@
-﻿namespace klbotlib;
+namespace klbotlib;
 
 /// <summary>
 /// 撤回消息Message类
@@ -17,6 +17,7 @@ public class MessageRecall : Message
     /// 撤回者的ID
     /// </summary>
     public long OperatorID { get; }
+    
     /// <summary>
     /// 构造一条撤回消息
     /// </summary>
@@ -31,4 +32,27 @@ public class MessageRecall : Message
         GroupID = groupId;
         MessageID = msgId;
     }
+    /// <summary>
+    /// 构造一条撤回消息
+    /// </summary>
+    /// <param name="context">撤回发生的消息上下文</param>
+    /// <param name="authorId">被撤回消息的发送者ID</param>
+    /// <param name="operatorId">消息撤回者ID</param>
+    /// <param name="groupId">撤回所在群的ID（如果存在）</param>
+    /// <param name="msgId">被撤回的消息ID</param>
+    public MessageRecall(MessageContext context, long authorId, long operatorId, long groupId, long msgId)
+    {
+        Context = context;
+        AuthorID = authorId;
+        OperatorID = operatorId;
+        GroupID = groupId;
+        MessageID = msgId;
+    }
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return $"{base.ToString()}\nOperator: {OperatorID}\nMessageID: {MessageID}\nAuthor: {AuthorID}";
+    }
+    
+    internal override void CopyReferenceTypeMember(Message dstMsg) { }
 }

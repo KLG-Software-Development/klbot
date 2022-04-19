@@ -29,7 +29,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
     public override string Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
-        if (text == "抽奖" && msg.TargetContains(HostBot.SelfID))
+        if (text == "抽奖" && msg.ContainsTargetID(HostBot.SelfID))
         {
             if (msg.TargetID.Count() == 1)  //只@了机器人，主动加入
                 return "rollStart";
