@@ -17,6 +17,7 @@ public class MessageRecall : Message
     /// 撤回者的ID
     /// </summary>
     public long OperatorID { get; }
+    
     /// <summary>
     /// 构造一条撤回消息
     /// </summary>

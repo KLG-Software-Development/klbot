@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace klbotlib
 {
@@ -41,20 +40,7 @@ namespace klbotlib
         {
             UrlList.AddRange(urlList);
         }
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            StringBuilder sb = new();
-            sb.AppendLine(base.ToString());
-            int urlIndex = 0;
-            foreach (var url in UrlList)
-            {
-                sb.AppendFormat("Url[{0}]: {1}\n", urlIndex, url);
-                urlIndex++;
-            }
-            return sb.ToString();
-        }
-        
+
         internal override void CopyReferenceTypeMember(Message dstMsg)
         {
             MessageImage dst = dstMsg as MessageImage;

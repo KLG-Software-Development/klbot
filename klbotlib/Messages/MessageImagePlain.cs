@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
+using System.Collections.Generic;
 
 namespace klbotlib
 {
@@ -52,7 +51,6 @@ namespace klbotlib
             Text = text;
             UrlList.AddRange(urlList);
         }
-
         /// <inheritdoc/>
         public override string ToString()
         {
