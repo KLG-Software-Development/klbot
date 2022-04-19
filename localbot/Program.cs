@@ -3,6 +3,7 @@ using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
+using ModuleCollection;
 using System.Reflection;
 
 namespace localbot;
@@ -30,18 +31,19 @@ start:
         {
             
             lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
-            lcb.AddModule(new RollinModule());
-            lcb.AddModule(new CollapseModule());
-            lcb.AddModule(new CompilerModule());
-            lcb.AddModule(new ImageModule());
-            lcb.AddModule(new IMGPModule());
-            lcb.AddModule(new InvisibleModule());
-            lcb.AddModule(new WelcomekxggModule());
-            lcb.AddModule(new AnonyVoiceModule());
-            lcb.AddModule(new TimeModule());
-            lcb.AddModule(new 上号Module());
-            lcb.AddModule(new ChatQYKModule());
-            lcb.AddModule(new FuckModule());
+            lcb.AddModule(new ZombieeeModule());
+            //lcb.AddModule(new RollinModule());
+            //lcb.AddModule(new CollapseModule());
+            //lcb.AddModule(new CompilerModule());
+            //lcb.AddModule(new ImageModule());
+            //lcb.AddModule(new IMGPModule());
+            //lcb.AddModule(new InvisibleModule());
+            //lcb.AddModule(new WelcomekxggModule());
+            //lcb.AddModule(new AnonyVoiceModule());
+            //lcb.AddModule(new TimeModule());
+            //lcb.AddModule(new 上号Module());
+            //lcb.AddModule(new ChatQYKModule());
+            //lcb.AddModule(new FuckModule());
             Console.WriteLine(lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。输入命令开始调试");
             while (true)
