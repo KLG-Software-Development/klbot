@@ -19,8 +19,8 @@ public abstract class Message
     public override string ToString()
     {
         return (Context == MessageContext.Group || Context == MessageContext.Temp)
-            ? $"{GetType().Name}\nContext: {Context}\nGroup: {GroupID}"
-            : $"{GetType().Name}\nContext: {Context}";
+            ? $"Type: {GetType().Name}\nContext: {Context}\nGroup: {GroupID}"
+            : $"Type: {GetType().Name}\nContext: {Context}";
     }
 
     /// <summary>

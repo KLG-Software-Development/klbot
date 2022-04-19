@@ -14,13 +14,11 @@ public class Program
     private static long _userId = 2044164212;    //调试时发出的所有消息的用户ID
     private static long _groupId = 7355608;   //调试时发出的所有消息的群组ID
     private static MessageContext _context = MessageContext.Group;   //调试时发出的所有消息的上下文类型。默认为群组
+    private static bool _tagMe = false;
+    private static bool _verbose = false;
 
     public static void Main()
     {
-        Console.WriteLine("localbot Debug environment");
-        Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");           //Disable AOT
-        Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");            //Turn on layered PGO
-        Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");  //Enable Quick Jit for loop
         Console.ResetColor();
         long queryCounterCache = 0;
         int fatalFailureCounter = 0;
@@ -43,16 +41,37 @@ start:
             lcb.AddModule(new ChatQYKModule());
             lcb.AddModule(new FuckModule());
             Console.WriteLine(lcb.GetModuleChainString());
-            Console.WriteLine("初始化完成。输入命令开始调试");
+            Console.WriteLine("初始化完成。命令调用格式：<命令> <值>");
+            PrintHelp();
+            Console.WriteLine("输入命令开始调试");
             while (true)
             {
-                Console.Write("> ");
                 string s = Console.ReadLine();
                 if (s == null)
-                    continue;
+                    Console.Write('>'); ;
                 string[] cmdToken = s.Split();
-                if (cmdToken.Length != 2)
-                    continue;
+                if (cmdToken.Length == 1)
+                {
+                    switch (cmdToken[0])
+                    {
+                        case "help":
+                            PrintHelp();
+                            break;
+                        case "tag-me":
+                            _tagMe = !_tagMe;
+                            string status = _tagMe ? "开启" : "关闭";
+                            Console.WriteLine($"Tag Me模式已{status}");
+                            break;
+                        case "verbose":
+                            _verbose = !_verbose;
+                            status = _verbose ? "开启" : "关闭";
+                            Console.WriteLine($"详细模式已{status}");
+                            break;
+                        default:
+                            Console.Write('>');
+                            break;
+                    }
+                }
                 else if (cmdToken.Length == 2)
                 {
                     switch (cmdToken[0])
@@ -95,12 +114,23 @@ start:
                                     continue;
                             }
                         case "send-plain":
-                            MessagePlain msg = new(_userId, _groupId, _context, cmdToken[1]);
-                            _localServer.AddReceivedMessage(msg);
+                            SendMessageCommonAndPrint(lcb, new MessagePlain(_userId, _groupId, _context, cmdToken[1]));
+                            break;
+                        case "send-image":
+                            string[] urls = cmdToken[1].Split(',');
+                            SendMessageCommonAndPrint(lcb, new MessageImage(_userId, _groupId, _context, urls));
+                            break;
+                        case "send-flashimage":
+                            urls = cmdToken[1].Split(',');
+                            SendMessageCommonAndPrint(lcb, new MessageFlashImage(_userId, _groupId, _context, urls));
+                            break;
+                        case "send-voice":
+                            SendMessageCommonAndPrint(lcb, new MessageVoice(_userId, _groupId, _context, cmdToken[1]));
                             break;
                     }
                 }
-                Console.WriteLine("\n");
+                else
+                    Console.Write('>');
                 lcb.ProcessMessages(lcb.FetchMessages());
                 Thread.Sleep(1000);
             }
@@ -153,5 +183,30 @@ start:
     private static void PrintInfo(string msgInfo)
     {
         Console.WriteLine($"{msgInfo}");
+    }
+    private static void PrintHelp()
+    {
+        Console.WriteLine("help                                 打印帮助信息");
+        Console.WriteLine("verbose                              开启详细模式");
+        Console.WriteLine("tag-me                               开启Tag Me模式（自动@机器人）");
+        Console.WriteLine("set-user-id <id>                     设置全局用户ID");
+        Console.WriteLine("set-group-id <id>                    设置全局群聊ID");
+        Console.WriteLine("set-context <private|group|temp>     设置全局消息上下文");
+        Console.WriteLine("send-plain <text>                    发送纯文本消息");
+        Console.WriteLine("send-image <URL1,URL2,URL3...>       发送图像消息");
+        Console.WriteLine("send-flashimage <URL1,URL2,URL3...>  发送图像消息");
+        Console.WriteLine("send-voice <URL>                     发送语音消息\n");
+    }
+    private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
+    {
+        if (_tagMe)
+            msg.AddTargetID(lcb.SelfID);
+        _localServer.AddReceivedMessage(msg);
+        if (_verbose)
+        {
+            Console.WriteLine("\n详细信息：");
+            Console.WriteLine(msg.ToString());
+            Console.WriteLine();
+        }
     }
 }

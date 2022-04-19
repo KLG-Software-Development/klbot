@@ -20,6 +20,18 @@ public class MessageFlashImage : MessageCommon
     /// <param name="groupId">群聊ID</param>
     public MessageFlashImage(long senderId, long groupId) : base(senderId, groupId) { }
     /// <summary>
+    /// 构造图片消息
+    /// </summary>
+    /// <param name="senderId">发送者ID</param>
+    /// <param name="groupId">群聊ID</param>
+    /// <param name="context">消息上下文</param>
+    /// <param name="urlList">图片URL集合</param>
+    public MessageFlashImage(long senderId, long groupId, MessageContext context, IEnumerable<string> urlList) : base(senderId, groupId)
+    {
+        Context = context;
+        UrlList.AddRange(urlList);
+    }
+    /// <summary>
     /// 构造闪照消息
     /// </summary>
     /// <param name="senderId">发送者ID</param>

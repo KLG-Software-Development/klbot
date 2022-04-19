@@ -79,6 +79,7 @@ namespace klbotlib
                 sb.AppendFormat("Target[{0}]: {1}\n", targetIndex, targetID);
                 targetIndex++;
             }
+            sb.Length -= 1; //删除多余的\n
             return sb.ToString();
         }
 
