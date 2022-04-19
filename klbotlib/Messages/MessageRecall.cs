@@ -31,4 +31,6 @@ public class MessageRecall : Message
         GroupID = groupId;
         MessageID = msgId;
     }
+
+    internal override void CopyReferenceTypeMember(Message dstMsg) { }
 }

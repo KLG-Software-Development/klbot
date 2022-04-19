@@ -95,8 +95,7 @@ start:
                                     continue;
                             }
                         case "send-plain":
-                            MessagePlain msg = new(_userId, _groupId, cmdToken[1]);
-                            msg.Context = _context;
+                            MessagePlain msg = new(_userId, _groupId, _context, cmdToken[1]);
                             _localServer.AddReceivedMessage(msg);
                             break;
                     }
