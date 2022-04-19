@@ -24,7 +24,7 @@ public class TestStatusAutoSave
         bot.AddModule(module);
         bool initState = module.Enabled;
         //通过命令模块修改启用状态
-        MessagePlain msg = new(-1, -1, MessageContext.Group, "##fuckmod enabled"); //unit_test_config.json中应将-1设置为监听群
+        MessagePlain msg = new(MessageContext.Group, -1, -1, "##fuckmod enabled"); //unit_test_config.json中应将-1设置为监听群
         server.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages());   
         Thread.Sleep(25);//等待命令处理完成
