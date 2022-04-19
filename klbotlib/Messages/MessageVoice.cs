@@ -14,5 +14,10 @@
         {
             Url = url;
         }
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{base.ToString()}\nUrl: {Url}";
+        }
     }
 }

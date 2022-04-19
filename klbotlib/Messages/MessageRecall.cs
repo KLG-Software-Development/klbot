@@ -31,4 +31,9 @@ public class MessageRecall : Message
         GroupID = groupId;
         MessageID = msgId;
     }
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return $"{base.ToString()}\nOperator: {OperatorID}\nMessageID: {MessageID}\nAuthor: {AuthorID}";
+    }
 }

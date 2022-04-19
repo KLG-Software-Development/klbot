@@ -19,6 +19,11 @@
         {
             Text = text;
         }
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{base.ToString()}\nText: {Text}";
+        }
 
         internal void AppendText(string text) => Text += text;
     }

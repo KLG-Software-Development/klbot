@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace klbotlib;
 
@@ -14,6 +15,19 @@ public class MessageFlashImage : MessageCommon
     public IReadOnlyList<string> UrlList { get => _urlList; }
 
     internal MessageFlashImage(long senderId, long groupId) : base(senderId, groupId) { }
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        StringBuilder sb = new();
+        sb.AppendLine(base.ToString());
+        int urlIndex = 0;
+        foreach (var url in UrlList)
+        {
+            sb.AppendFormat("Url[{0}]: {1}\n", urlIndex, url);
+            urlIndex++;
+        }
+        return sb.ToString();
+    }
 
     internal void Add(params string[] url) => _urlList.AddRange(url);
     internal void AddRange(IEnumerable<string> url) => _urlList.AddRange(url);
