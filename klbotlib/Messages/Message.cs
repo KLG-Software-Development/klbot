@@ -14,5 +14,20 @@ public abstract class Message
     /// </summary>
     public long GroupID { get; internal set; } = -1;
 
+    /// <summary>
+    /// 返回消息对象的一个深拷贝
+    /// </summary>
+    /// <returns></returns>
+    internal Message DeepCopy()
+    {
+        Message copy = MemberwiseClone() as Message;
+        CopyReferenceTypeMember(copy);
+        return copy;
+    }
     internal static MessageEmpty Empty = new MessageEmpty();
+    /// <summary>
+    /// 将此消息中的引用类型字段拷贝到目标消息中
+    /// </summary>
+    /// <param name="dstMsg">目标消息</param>
+    internal abstract void CopyReferenceTypeMember(Message dstMsg);
 }

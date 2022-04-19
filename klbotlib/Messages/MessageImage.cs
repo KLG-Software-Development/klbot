@@ -7,15 +7,33 @@ namespace klbotlib
     /// </summary>
     public class MessageImage : MessageCommon
     {
-        private readonly List<string> _urlList = new List<string>();
         /// <summary>
         /// 图像的Url的列表，顺序从先到后
         /// </summary>
-        public IReadOnlyList<string> UrlList { get => _urlList; }
+        public List<string> UrlList { get; internal set; }
 
-        internal MessageImage(long senderId, long groupId) : base(senderId, groupId) { }
+        /// <summary>
+        /// 构造图片消息
+        /// </summary>
+        /// <param name="senderId">发送者ID</param>
+        /// <param name="groupId">群聊ID</param>
+        public MessageImage(long senderId, long groupId) : base(senderId, groupId) { }
+        /// <summary>
+        /// 构造图片消息
+        /// </summary>
+        /// <param name="senderId">发送者ID</param>
+        /// <param name="groupId">群聊ID</param>
+        /// <param name="urlList">图片URL集合</param>
+        public MessageImage(long senderId, long groupId, IEnumerable<string> urlList) : base(senderId, groupId)
+        {
+            UrlList.AddRange(urlList);
+        }
 
-        internal void Add(params string[] url) => _urlList.AddRange(url);
-        internal void AddRange(IEnumerable<string> url) => _urlList.AddRange(url);
+        internal override void CopyReferenceTypeMember(Message dstMsg)
+        {
+            MessageImage dst = dstMsg as MessageImage;
+            dst.UrlList = new();
+            dst.UrlList.AddRange(UrlList);
+        }
     }
 }

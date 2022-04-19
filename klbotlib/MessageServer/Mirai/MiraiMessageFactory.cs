@@ -150,7 +150,7 @@ namespace klbotlib.MessageServer.Mirai
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Image")
-                    ret.Add(subMsg.url);
+                    ret.UrlList.Add(subMsg.url);
             return ret;
         }
         private static MessageFlashImage BuildFlashImage(JMiraiMessagePackage msgPackage)
@@ -159,7 +159,7 @@ namespace klbotlib.MessageServer.Mirai
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "FlashImage")
-                    ret.Add(subMsg.url);
+                    ret.UrlList.Add(subMsg.url);
             return ret;
         }
         private static MessageVoice BuildVoice(JMiraiMessagePackage msgPackage)

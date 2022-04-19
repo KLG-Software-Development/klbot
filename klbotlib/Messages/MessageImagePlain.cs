@@ -7,28 +7,43 @@ namespace klbotlib
     /// </summary>
     public class MessageImagePlain : MessageCommon
     {
-        private readonly List<string> _urlList = new List<string>();
-
         /// <summary>
         /// 图像的Url
         /// </summary>
-        public IReadOnlyList<string> UrlList { get => _urlList; }
+        public List<string> UrlList { get; internal set; }
         /// <summary>
         /// 随图像一同发送的文字
         /// </summary>
         public string Text { get; }
 
-        internal MessageImagePlain(long senderId, long groupId, string text = "") : base(senderId, groupId)
+        /// <summary>
+        /// 构造图文消息
+        /// </summary>
+        /// <param name="senderId">发送者ID</param>
+        /// <param name="groupId">群聊ID</param>
+        /// <param name="text">文本内容</param>
+        public MessageImagePlain(long senderId, long groupId, string text = "") : base(senderId, groupId)
         {
             Text = text;
         }
-        internal MessageImagePlain(long senderId, long groupId, string text, IEnumerable<string> urlList) : base(senderId, groupId)
+        /// <summary>
+        /// 构造图文消息
+        /// </summary>
+        /// <param name="senderId">发送者ID</param>
+        /// <param name="groupId">群聊ID</param>
+        /// <param name="text">文本内容</param>
+        /// <param name="urlList">图片URL集合</param>
+        public MessageImagePlain(long senderId, long groupId, string text, IEnumerable<string> urlList) : base(senderId, groupId)
         {
             Text = text;
-            AddRange(urlList);
+            UrlList.AddRange(urlList);
         }
 
-        internal void Add(params string[] url) => _urlList.AddRange(url);
-        internal void AddRange(IEnumerable<string> url) => _urlList.AddRange(url);
+        internal override void CopyReferenceTypeMember(Message dstMsg)
+        {
+            MessageImagePlain dst = dstMsg as MessageImagePlain;
+            dst.UrlList = new();
+            dst.UrlList.AddRange(UrlList);
+        }
     }
 }
