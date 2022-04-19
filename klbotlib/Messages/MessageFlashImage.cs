@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace klbotlib;
 
@@ -39,6 +40,22 @@ public class MessageFlashImage : MessageCommon
     public MessageFlashImage(long senderId, long groupId, IEnumerable<string> urlList) : base(senderId, groupId)
     {
         UrlList.AddRange(urlList);
+    }
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        if (UrlList.Count != 0)
+        {
+            StringBuilder sb = new();
+            sb.AppendLine(base.ToString());
+            for (int i = 0; i < UrlList.Count; i++)
+            {
+                sb.AppendFormat("Url[{0}]: {1}\n", i, UrlList[i]);
+            }
+            return sb.ToString();
+        }
+        else
+            return base.ToString();
     }
 
     internal override void CopyReferenceTypeMember(Message dstMsg)
