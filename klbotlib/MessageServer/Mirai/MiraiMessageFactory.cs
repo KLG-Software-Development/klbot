@@ -40,7 +40,10 @@ namespace klbotlib.MessageServer.Mirai
                 return Message.Empty;
             if (retCommon != null)
             {
-                retCommon.AddTargetID(targets);
+                foreach (var id in targets)
+                {
+                    retCommon.TargetID.Add(id);
+                }
                 ret = retCommon;
             }
             //加工合适的上下文和ID

@@ -32,6 +32,7 @@ namespace klbotlib
         internal override void CopyReferenceTypeMember(Message dstMsg)
         {
             MessageImage dst = dstMsg as MessageImage;
+            base.CopyReferenceTypeMember(dst);
             dst.UrlList = new();
             dst.UrlList.AddRange(UrlList);
         }

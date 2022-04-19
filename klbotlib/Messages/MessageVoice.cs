@@ -20,6 +20,9 @@
             Url = url;
         }
 
-        internal override void CopyReferenceTypeMember(Message dstMsg) { }
+        internal override void CopyReferenceTypeMember(Message dstMsg) 
+        {
+            base.CopyReferenceTypeMember(dstMsg);
+        }
     }
 }

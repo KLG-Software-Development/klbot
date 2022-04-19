@@ -21,6 +21,9 @@
         }
 
         internal void AppendText(string text) => Text += text;
-        internal override void CopyReferenceTypeMember(Message dstMsg) { }
+        internal override void CopyReferenceTypeMember(Message dstMsg) 
+        {
+            base.CopyReferenceTypeMember(dstMsg);
+        }
     }
 }
