@@ -1,7 +1,6 @@
-using klbotlib.Json;
+﻿using klbotlib.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace klbotlib
 {
@@ -67,20 +66,6 @@ namespace klbotlib
             _targetList.Clear();
             _targetHashSet.Clear();
         }
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            StringBuilder sb = new();
-            sb.AppendLine(base.ToString());
-            sb.AppendFormat("From: {0}\n", SenderID);
-            int targetIndex = 0;
-            foreach (var targetID in TargetID)
-            {
-                sb.AppendFormat("Target[{0}]: {1}\n", targetIndex, targetID);
-                targetIndex++;
-            }
-            return sb.ToString();
-        }
 
         internal MessageCommon(long senderId, long groupId)
         {
@@ -107,5 +92,24 @@ namespace klbotlib
                 dst.AddTargetID(id);
             }
         }
+    }
+
+    /// <summary>
+    /// 消息上下文枚举，包括私聊、临时、群聊
+    /// </summary>
+    public enum MessageContext
+    {
+        /// <summary>
+        /// 私聊
+        /// </summary>
+        Private,  
+        /// <summary>
+        /// 临时会话
+        /// </summary>
+        Temp, 
+        /// <summary>
+        /// 群组
+        /// </summary>
+        Group
     }
 }
