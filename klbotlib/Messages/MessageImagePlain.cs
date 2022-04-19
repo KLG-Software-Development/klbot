@@ -39,6 +39,20 @@ namespace klbotlib
             Text = text;
             UrlList.AddRange(urlList);
         }
+        /// <summary>
+        /// 构造图文消息
+        /// </summary>
+        /// <param name="context">消息上下文</param>
+        /// <param name="senderId">发送者ID</param>
+        /// <param name="groupId">群聊ID</param>
+        /// <param name="text">文本内容</param>
+        /// <param name="urlList">图片URL集合</param>
+        public MessageImagePlain(MessageContext context, long senderId, long groupId, string text, IEnumerable<string> urlList) : base(senderId, groupId)
+        {
+            Text = text;
+            UrlList.AddRange(urlList);
+        }
+
         /// <inheritdoc/>
         public override string ToString()
         {

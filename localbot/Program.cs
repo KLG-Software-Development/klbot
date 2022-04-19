@@ -4,6 +4,7 @@ using klbotlib.Exceptions;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
 using System.Reflection;
+using Module = klbotlib.Modules.Module;
 
 namespace localbot;
 
@@ -46,9 +47,10 @@ start:
             Console.WriteLine("输入命令开始调试");
             while (true)
             {
+                Console.Write("\n>");
                 string s = Console.ReadLine();
                 if (s == null)
-                    Console.Write('>'); ;
+                    continue;
                 string[] cmdToken = s.Split();
                 if (cmdToken.Length == 1)
                 {
@@ -56,20 +58,19 @@ start:
                     {
                         case "help":
                             PrintHelp();
-                            break;
+                            continue;
                         case "tag-me":
                             _tagMe = !_tagMe;
                             string status = _tagMe ? "开启" : "关闭";
                             Console.WriteLine($"Tag Me模式已{status}");
-                            break;
+                            continue;
                         case "verbose":
                             _verbose = !_verbose;
                             status = _verbose ? "开启" : "关闭";
                             Console.WriteLine($"详细模式已{status}");
-                            break;
+                            continue;
                         default:
-                            Console.Write('>');
-                            break;
+                            continue;
                     }
                 }
                 else if (cmdToken.Length == 2)
@@ -114,23 +115,61 @@ start:
                                     continue;
                             }
                         case "send-plain":
-                            SendMessageCommonAndPrint(lcb, new MessagePlain(_userId, _groupId, _context, cmdToken[1]));
+                            SendMessageCommonAndPrint(lcb, new MessagePlain(_context, _userId, _groupId, cmdToken[1]));
                             break;
                         case "send-image":
                             string[] urls = cmdToken[1].Split(',');
-                            SendMessageCommonAndPrint(lcb, new MessageImage(_userId, _groupId, _context, urls));
+                            SendMessageCommonAndPrint(lcb, new MessageImage(_context, _userId, _groupId, urls));
                             break;
                         case "send-flashimage":
                             urls = cmdToken[1].Split(',');
-                            SendMessageCommonAndPrint(lcb, new MessageFlashImage(_userId, _groupId, _context, urls));
+                            SendMessageCommonAndPrint(lcb, new MessageFlashImage(_context, _userId, _groupId, urls));
                             break;
                         case "send-voice":
-                            SendMessageCommonAndPrint(lcb, new MessageVoice(_userId, _groupId, _context, cmdToken[1]));
+                            SendMessageCommonAndPrint(lcb, new MessageVoice(_context, _userId, _groupId, cmdToken[1]));
+                            break;
+                        case "recall":
+                            string[] ss = cmdToken[1].Split(',');
+                            if (ss.Length < 2)
+                            {
+                                Console.WriteLine("参数不足。应有2个参数：消息发送者ID,消息ID");
+                                return;
+                            }
+                            if (!long.TryParse(ss[0], out long authorId))
+                            {
+                                Console.WriteLine("无效发送者ID");
+                                return;
+                            }
+                            if (!long.TryParse(ss[1], out long msgId))
+                            {
+                                Console.WriteLine("无效消息ID");
+                                return;
+                            }
+                            MessageRecall recall = new(_context, authorId, _userId, _groupId, msgId);
+                            _localServer.AddReceivedMessage(recall);
+                            if (_verbose)
+                            {
+                                Console.WriteLine("\n详细信息：");
+                                Console.WriteLine(recall.ToString());
+                                Console.WriteLine();
+                            }
                             break;
                     }
                 }
+                else if (cmdToken.Length == 3)
+                {
+                    switch (cmdToken[0])
+                    {
+                        case "send-imageplain":
+                            string[] urls = cmdToken[1].Split(',');
+                            string text = cmdToken[2];
+                            SendMessageCommonAndPrint(lcb, new MessageImagePlain(_context, _userId, _groupId, text, urls));
+                            break;
+
+                    }
+                }
                 else
-                    Console.Write('>');
+                    continue;
                 lcb.ProcessMessages(lcb.FetchMessages());
                 Thread.Sleep(1000);
             }
@@ -180,10 +219,12 @@ start:
             }
         }
     }
-    private static void PrintInfo(string msgInfo)
-    {
-        Console.WriteLine($"{msgInfo}");
-    }
+    private static void PrintInfo(Message msg)
+        => Console.WriteLine(GetMessageDebugInfo(msg));
+    private static void PrintInfo(Module module, MessageContext context, long userId, long groupId, string content)
+        => Console.WriteLine(GetMessageDebugInfo(module, context, userId, groupId, content));
+    private static void PrintInfo(Module module, long groupId, string uploadPath, string filePath)
+        => Console.WriteLine(GetUploadDebugInfo(module, groupId, uploadPath, filePath));
     private static void PrintHelp()
     {
         Console.WriteLine("help                                 打印帮助信息");
@@ -195,7 +236,8 @@ start:
         Console.WriteLine("send-plain <text>                    发送纯文本消息");
         Console.WriteLine("send-image <URL1,URL2,URL3...>       发送图像消息");
         Console.WriteLine("send-flashimage <URL1,URL2,URL3...>  发送图像消息");
-        Console.WriteLine("send-voice <URL>                     发送语音消息\n");
+        Console.WriteLine("send-voice <URL>                     发送语音消息");
+        Console.WriteLine("recall <author id>,<message id>      撤回指定消息");
     }
     private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
     {
@@ -208,5 +250,79 @@ start:
             Console.WriteLine(msg.ToString());
             Console.WriteLine();
         }
+    }
+    /// <summary>
+    /// 生成消息的调试信息字符串
+    /// </summary>
+    /// <returns>消息的调试信息</returns>
+    private static string GetMessageDebugInfo(Message msg)
+    {
+        string content;
+        if (msg is MessageCommon msgCommon)
+        {
+            if (msgCommon is MessagePlain pmsg)
+                content = pmsg.Text;
+            else if (msgCommon is MessageImage imsg)
+                content = $"[图片x{imsg.UrlList.Count}]";
+            else if (msgCommon is MessageFlashImage fmsg)
+                content = $"[闪照x{fmsg.UrlList.Count}]";
+            else if (msgCommon is MessageImagePlain ipmsg)
+                content = $"[图片x{ipmsg.UrlList.Count}]{ipmsg.Text}";
+            else if (msgCommon is MessageVoice vmsg)
+                content = $"[语音消息]";
+            else
+                content = $"[未知类型消息：{msgCommon}]";
+            return msgCommon.Context switch
+            {
+                MessageContext.Group => $"* 用户[{msgCommon.SenderID}]向群组[{msgCommon.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+                MessageContext.Temp => $"* 用户[{msgCommon.SenderID}]通过群组[{msgCommon.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+                MessageContext.Private => $"* 用户[{msgCommon.SenderID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+                _ => $"* 用户[{msgCommon.SenderID}]向群组[{msgCommon.GroupID}]或机器人发送了未知类型[{msgCommon.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+            };
+        }
+        else if (msg is MessageRecall msgRecall)
+        {
+            string person = msgRecall.AuthorID == msgRecall.OperatorID ? "自己" : $"用户[{msgRecall.AuthorID}]";
+            return msgRecall.Context switch
+            {
+                MessageContext.Group => $"用户[{msgRecall.OperatorID}]在群聊[{msgRecall.GroupID}]中撤回了{person}发送的消息[{msgRecall.MessageID}]",
+                MessageContext.Temp => $"* 用户[{msgRecall.OperatorID}]在通过群组[{msgRecall.GroupID}]的临时会话中撤回了{person}发送的消息[{msgRecall.MessageID}]",
+                MessageContext.Private => $"* 用户[{msgRecall.OperatorID}]撤回了{person}发送的消息[{msgRecall.MessageID}]",
+                _ => $"* 用户[{msgRecall.OperatorID}]在机器人可感知的范围内撤回了{person}发送的消息[{msgRecall.MessageID}]"
+            };
+        }
+        else
+            return $"[未知类型消息：{msg}]";
+    }
+    /// <summary>
+    /// 生成消息的调试信息字符串
+    /// </summary>
+    /// <param name="module">模块</param>
+    /// <param name="context">消息上下文</param>
+    /// <param name="userId">目标用户ID</param>
+    /// <param name="groupId">目标群组ID</param>
+    /// <param name="content">MsgMarker内容</param>
+    /// <returns>消息的调试信息</returns>
+    private static string GetMessageDebugInfo(Module module, MessageContext context, long userId, long groupId, string content)
+    {
+        return context switch
+        {
+            MessageContext.Group => $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Temp => $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Private => $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 模块[{module}]向群组[{groupId}]或用户[{userId}]发送了未知类型[{context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+        };
+    }
+    /// <summary>
+    /// 生成消息的调试信息字符串
+    /// </summary>
+    /// <param name="module">模块</param>
+    /// <param name="groupId">目标群组ID</param>
+    /// <param name="uploadPath"></param>
+    /// <param name="filePath"></param>
+    /// <returns>消息的调试信息</returns>
+    private static string GetUploadDebugInfo(Module module, long groupId, string uploadPath, string filePath)
+    {
+        return $"* 模块[{module}]向群组[{groupId}]上传文件[{filePath}]到群文件夹[{uploadPath}]";
     }
 }
