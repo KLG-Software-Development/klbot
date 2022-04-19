@@ -21,6 +21,11 @@
             Text = text;
             Context = context;
         }
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{base.ToString()}\nText: {Text}";
+        }
 
         internal void AppendText(string text) => Text += text;
         internal override void CopyReferenceTypeMember(Message dstMsg) 
