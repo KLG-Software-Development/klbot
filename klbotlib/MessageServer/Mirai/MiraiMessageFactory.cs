@@ -42,7 +42,7 @@ namespace klbotlib.MessageServer.Mirai
             {
                 foreach (var id in targets)
                 {
-                    retCommon.TargetID.Add(id);
+                    retCommon.AddTargetID(id);
                 }
                 ret = retCommon;
             }

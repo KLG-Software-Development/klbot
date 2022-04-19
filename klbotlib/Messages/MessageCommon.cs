@@ -9,6 +9,9 @@ namespace klbotlib
     /// </summary>
     public abstract class MessageCommon : Message
     {
+        private HashSet<long> _targetHashSet = new();
+        private List<long> _targetList = new();
+
         /// <summary>
         /// 发送者的ID（QQ号）。如果没有则为-1
         /// </summary>
@@ -16,12 +19,41 @@ namespace klbotlib
         /// <summary>
         /// 此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
         /// </summary>
-        public HashSet<long> TargetID { get; internal set; }
+        public IReadOnlyList<long> TargetID { get => _targetList; internal set => _targetList = (List<long>)value; }
         /// <summary>
         /// 返回此消息是否@了某个ID
         /// </summary>
         /// <param name="id">待判断ID</param>
-        public bool TargetContains(long id) => TargetID.Contains(id);
+        public bool ContainsTargetID(long id) => _targetHashSet.Contains(id);
+        /// <summary>
+        /// 添加目标@ID
+        /// </summary>
+        /// <param name="id">目标ID</param>
+        public void AddTargetID(long id)
+        {
+            _targetHashSet.Add(id);
+            _targetList.Add(id);
+        }
+        /// <summary>
+        /// 添加多个目标@ID
+        /// </summary>
+        /// <param name="ids">目标ID集合</param>
+        public void AddTargetID(IEnumerable<long> ids)
+        {
+            foreach (var id in ids)
+            {
+                _targetHashSet.Add(id);
+            }
+            _targetList.AddRange(ids);
+        }
+        /// <summary>
+        /// 清空目标@ID列表
+        /// </summary>
+        public void ClearTargetID()
+        {
+            _targetList.Clear();
+            _targetHashSet.Clear();
+        }
 
         internal MessageCommon(long senderId, long groupId)
         {
@@ -42,10 +74,10 @@ namespace klbotlib
         internal override void CopyReferenceTypeMember(Message dstMsg)
         {
             var dst = dstMsg as MessageCommon;
-            dst.TargetID = new();
+            dst.TargetID = new List<long>();
             foreach (var id in TargetID)
             {
-                dst.TargetID.Add(id);
+                dst.AddTargetID(id);
             }
         }
     }

@@ -133,7 +133,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     /// <inheritdoc/>
     public override string Filter(MessageImagePlain msg)
     {
-        if (msg.TargetContains(HostBot.SelfID))  //图文消息
+        if (msg.ContainsTargetID(HostBot.SelfID))  //图文消息
         {
             string text = msg.Text.Trim();
             if (msg.UrlList.Count == 1)   //单图文
