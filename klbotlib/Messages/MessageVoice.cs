@@ -1,4 +1,4 @@
-namespace klbotlib
+﻿namespace klbotlib
 {
     /// <summary>
     /// 语音消息
@@ -9,7 +9,6 @@ namespace klbotlib
         /// 语音的url
         /// </summary>
         public string Url { get; internal set; }
-        
         /// <summary>
         /// 构造语音消息
         /// </summary>
@@ -19,11 +18,6 @@ namespace klbotlib
         public MessageVoice(long senderId, long groupId, string url = "") : base(senderId, groupId)
         {
             Url = url;
-        }
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return $"{base.ToString()}\nUrl: {Url}";
         }
 
         internal override void CopyReferenceTypeMember(Message dstMsg) 
