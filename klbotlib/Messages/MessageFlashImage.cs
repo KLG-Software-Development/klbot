@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text;
 
 namespace klbotlib;
@@ -8,13 +8,27 @@ namespace klbotlib;
 /// </summary>
 public class MessageFlashImage : MessageCommon
 {
-    private readonly List<string> _urlList = new List<string>();
     /// <summary>
     /// 图像的Url的列表，顺序从先到后
     /// </summary>
-    public IReadOnlyList<string> UrlList { get => _urlList; }
+    public List<string> UrlList { get; internal set; } = new();
 
-    internal MessageFlashImage(long senderId, long groupId) : base(senderId, groupId) { }
+    /// <summary>
+    /// 构造闪照消息
+    /// </summary>
+    /// <param name="senderId">发送者ID</param>
+    /// <param name="groupId">群聊ID</param>
+    public MessageFlashImage(long senderId, long groupId) : base(senderId, groupId) { }
+    /// <summary>
+    /// 构造闪照消息
+    /// </summary>
+    /// <param name="senderId">发送者ID</param>
+    /// <param name="groupId">群聊ID</param>
+    /// <param name="urlList">图片URL集合</param>
+    public MessageFlashImage(long senderId, long groupId, IEnumerable<string> urlList) : base(senderId, groupId)
+    {
+        UrlList.AddRange(urlList);
+    }
     /// <inheritdoc/>
     public override string ToString()
     {
@@ -29,6 +43,11 @@ public class MessageFlashImage : MessageCommon
         return sb.ToString();
     }
 
-    internal void Add(params string[] url) => _urlList.AddRange(url);
-    internal void AddRange(IEnumerable<string> url) => _urlList.AddRange(url);
+    internal override void CopyReferenceTypeMember(Message dstMsg)
+    {
+        MessageFlashImage dst = dstMsg as MessageFlashImage;
+        base.CopyReferenceTypeMember(dst);
+        dst.UrlList = new();
+        dst.UrlList.AddRange(UrlList);
+    }
 }

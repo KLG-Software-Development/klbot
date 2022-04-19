@@ -1,4 +1,4 @@
-﻿namespace klbotlib;
+namespace klbotlib;
 
 /// <summary>
 /// 撤回消息Message类
@@ -36,4 +36,6 @@ public class MessageRecall : Message
     {
         return $"{base.ToString()}\nOperator: {OperatorID}\nMessageID: {MessageID}\nAuthor: {AuthorID}";
     }
+    
+    internal override void CopyReferenceTypeMember(Message dstMsg) { }
 }
