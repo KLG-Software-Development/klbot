@@ -13,6 +13,8 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public override string FriendlyName => "僵尸文学模块";
     /// <inheritdoc/>
     public override bool IsTransparent => false;
+    /// <inheritdoc/>
+    public override string HelpInfo => "@机器人并发送“生成僵尸文学”，可以生成一句僵尸句";
 
     /// <inheritdoc/>
     public override string Filter(MessagePlain msg)
