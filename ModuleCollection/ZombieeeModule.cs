@@ -150,6 +150,19 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
         ModulePrint($"反射种子：{seed}");
         return TryReflect(_reflectNum, seed, out message, out result);
     }
+    /// <summary>
+    /// 尝试快速生成一短句僵尸文学。
+    /// 此方法中句子长度锁定为1，反射次数锁定为2，以保证速度。
+    /// </summary>
+    /// <param name="message">错误信息</param>
+    /// <param name="result">生成结果</param>
+    /// <returns>生成是否成功</returns>
+    public bool TryFastGenerate(out string message, out string result)
+    {
+        string seed = GenerateSingleSentence();
+        ModulePrint($"反射种子：{seed}");
+        return TryReflect(2, seed, out message, out result);
+    }
 
     private string GetRequestUrl(string query, string srcLang, string dstLang, string salt, string sign)
         => $"{_baseUrl}?q={Uri.EscapeDataString(query)}&from={srcLang}&to={dstLang}&appid={_appID}&salt={salt}&sign={sign}";
