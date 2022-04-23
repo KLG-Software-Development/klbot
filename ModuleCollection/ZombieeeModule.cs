@@ -225,7 +225,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
         result = query;
         for (int n = 0; n < reflectNum; n++)
         {
-            ModulePrint($"反射#{n}：");
+            ModulePrint($"正在进行反射#{n}...");
             if (!TryReflect(query, out message, out result))
                 return false;
             Thread.Sleep(1000);
