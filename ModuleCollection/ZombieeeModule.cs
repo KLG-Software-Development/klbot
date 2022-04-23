@@ -251,6 +251,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
             else
                 _sb.Append(pattern[n]);
         }
+        _sb.Append(_marks[_ro.Next(_marks.Length)]);
         return _sb.ToString();
     }
     private string GenerateSentences(int numSentenceCount)
