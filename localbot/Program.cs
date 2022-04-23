@@ -29,19 +29,20 @@ start:
         try
         {
             lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
-            lcb.AddModule(new EchoModule());
-            lcb.AddModule(new RollinModule());
-            lcb.AddModule(new CollapseModule());
-            lcb.AddModule(new CompilerModule());
-            lcb.AddModule(new ImageModule());
-            lcb.AddModule(new IMGPModule());
-            lcb.AddModule(new InvisibleModule());
-            lcb.AddModule(new WelcomekxggModule());
-            lcb.AddModule(new AnonyVoiceModule());
-            lcb.AddModule(new TimeModule());
-            lcb.AddModule(new 上号Module());
-            lcb.AddModule(new ChatQYKModule());
-            lcb.AddModule(new FuckModule());
+            lcb.AddModule(new ZombieeeModule());
+            //lcb.AddModule(new RollinModule());
+            //lcb.AddModule(new CollapseModule());
+            //lcb.AddModule(new CompilerModule());
+            //lcb.AddModule(new ImageModule());
+            //lcb.AddModule(new IMGPModule());
+            //lcb.AddModule(new InvisibleModule());
+            //lcb.AddModule(new WelcomekxggModule());
+            //lcb.AddModule(new AnonyVoiceModule());
+            //lcb.AddModule(new TimeModule());
+            //lcb.AddModule(new 上号Module());
+            //lcb.AddModule(new ChatQYKModule());
+            //lcb.AddModule(new FuckModule());
+
             Console.WriteLine(lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。命令调用格式：<命令> <值>");
             PrintHelp();

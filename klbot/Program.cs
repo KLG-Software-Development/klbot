@@ -3,6 +3,7 @@ using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.MessageServer.Mirai;
 using klbotlib.Modules;
+using ModuleCollection;
 using System;
 using System.Reflection;
 
@@ -35,6 +36,7 @@ start:
             else
                 miraiServer = new(args[0]);
             klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+            klg.AddModule(new ZombieeeModule());
             klg.AddModule(new FlashGambleModule());
             klg.AddModule(new RollinModule());
             klg.AddModule(new CollapseModule());
