@@ -30,6 +30,11 @@ namespace klbotlib
         /// <param name="relativePath">要读取的文件对模块缓存目录的相对路径</param>
         string ReadFileAsString(string relativePath);
         /// <summary>
+        /// 从模块缓存目录里按行读取文本到字符串数组
+        /// </summary>
+        /// <param name="relativePath">要读取的文件对模块缓存目录的相对路径</param>
+        string[] ReadFileAsStringArrayByLines(string relativePath);
+        /// <summary>
         /// 从模块缓存目录里读取二进制
         /// </summary>
         /// <param name="relativePath">要读取的文件对模块缓存目录的相对路径</param>

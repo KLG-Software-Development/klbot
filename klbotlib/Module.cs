@@ -222,6 +222,17 @@ namespace klbotlib.Modules
             }
             return File.ReadAllText(path);
         }
+        string[] IFileAPI.ReadFileAsStringArrayByLines(string relativePath)
+        {
+            string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
+            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            if (!File.Exists(path))
+            {
+                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
+            }
+            return File.ReadAllLines(path);
+        }
         byte[] IFileAPI.ReadFileAsBinary(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
