@@ -102,6 +102,8 @@ namespace klbotlib
             {
                 throw new KLBotInitializationException($"核心模块加载失败异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
             }
+            if (moduleCollection != null)
+                Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
             _console.WriteLn($"成功初始化KLBot: ");
             if (_msgServer is MiraiMessageServer miraiServer)
                 _console.WriteLn($"Url: {miraiServer.ServerURL}");
