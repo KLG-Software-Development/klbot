@@ -11,5 +11,7 @@
         public long target;
         public string text;
         public string url;
+        public string faceId;
+        public string name;
     }
 }
