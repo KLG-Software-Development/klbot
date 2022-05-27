@@ -316,7 +316,8 @@ namespace klbotlib.Modules
             }
             catch (Exception ex)    //过滤器存在问题
             {
-                throw new ModuleException(this, $"模块过滤器产生异常：{ex.Message}");
+                ModulePrint($"模块过滤器产生异常：{ex.Message}\n已跳过该模块。", ConsoleMessageType.Error);
+                return false;
             }
             if (string.IsNullOrEmpty(filterOut))    //过滤器输出空，表示不处理
                 return false;
