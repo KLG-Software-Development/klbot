@@ -6,5 +6,6 @@
         public string memberName;
         public string permission;
         public JMiraiGroup group;
+        public int GroupId { get => group == null ? -1 : group.id; }
     }
 }

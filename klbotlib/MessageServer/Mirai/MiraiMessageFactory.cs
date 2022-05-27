@@ -128,10 +128,7 @@ namespace klbotlib.MessageServer.Mirai
         {
             bool isAfterAt = false;
             MessagePlain ret;
-            if (msgPackage.sender.group == null)
-                ret = new MessagePlain(msgPackage.sender.id, -1);
-            else
-                ret = new MessagePlain(msgPackage.sender.id, msgPackage.sender.group.id);
+            ret = new MessagePlain(msgPackage.sender.id, msgPackage.sender.GroupId);
             foreach (JMiraiMessage subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Plain")
                 {
@@ -151,7 +148,7 @@ namespace klbotlib.MessageServer.Mirai
         }
         private static MessageImage BuildImage(JMiraiMessagePackage msgPackage)
         {
-            MessageImage ret = new MessageImage(msgPackage.sender.id, msgPackage.sender.group.id);
+            MessageImage ret = new MessageImage(msgPackage.sender.id, msgPackage.sender.GroupId);
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Image")
@@ -160,7 +157,7 @@ namespace klbotlib.MessageServer.Mirai
         }
         private static MessageFlashImage BuildFlashImage(JMiraiMessagePackage msgPackage)
         {
-            MessageFlashImage ret = new MessageFlashImage(msgPackage.sender.id, msgPackage.sender.group.id);
+            MessageFlashImage ret = new MessageFlashImage(msgPackage.sender.id, msgPackage.sender.GroupId);
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "FlashImage")
@@ -169,7 +166,7 @@ namespace klbotlib.MessageServer.Mirai
         }
         private static MessageVoice BuildVoice(JMiraiMessagePackage msgPackage)
         {
-            MessageVoice ret = new MessageVoice(msgPackage.sender.id, msgPackage.sender.group.id);
+            MessageVoice ret = new MessageVoice(msgPackage.sender.id, msgPackage.sender.GroupId);
             //只关心音频子消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Voice")
@@ -184,7 +181,7 @@ namespace klbotlib.MessageServer.Mirai
             var imgPart = BuildImage(msgPackage); //按图像解析，得到图像部分
             var plainPart = BuildPlain(msgPackage);   //按纯文本解析，得到文字部分
             //结合两个部分生成图文消息
-            return new MessageImagePlain(msgPackage.sender.id, msgPackage.sender.group.id, plainPart.Text, imgPart.UrlList);
+            return new MessageImagePlain(msgPackage.sender.id, msgPackage.sender.GroupId, plainPart.Text, imgPart.UrlList);
         }
     }
 }
