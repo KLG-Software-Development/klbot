@@ -132,8 +132,9 @@ namespace klbotlib.MessageServer.Mirai
                 ret = new MessagePlain(msgPackage.sender.id, -1);
             else
                 ret = new MessagePlain(msgPackage.sender.id, msgPackage.sender.group.id);
-            foreach (var subMsg in msgPackage.messageChain)
+            foreach (JMiraiMessage subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Plain")
+                {
                     if (isAfterAt)           //意味着之前还有别的Plain消息，而且上一条子消息是At消息。用Substring()处理@后面无缘无故冒出来的傻逼空格
                     {
                         ret.AppendText(subMsg.text.Substring(1));
@@ -141,8 +142,9 @@ namespace klbotlib.MessageServer.Mirai
                     }
                     else                            //意味着之前还有别的Plain消息。则简单将文本追加到已有对象的文本中
                         ret.AppendText(subMsg.text);
+                }
                 else if (subMsg.type == "Face")
-                    ret.AppendText(subMsg.text);
+                    ret.AppendText(@$"{{\face:{subMsg.name}}}");
                 else if (subMsg.type == "At")
                     isAfterAt = true;
             return ret;
