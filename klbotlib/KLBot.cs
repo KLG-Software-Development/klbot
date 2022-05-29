@@ -128,9 +128,9 @@ namespace klbotlib
                     throw new KLBotInitializationException($"KLBot初始化失败：KLBot配置文件{configPath}不存在");
                 }
                 JKLBotConfig Config = JsonConvert.DeserializeObject<JKLBotConfig>(File.ReadAllText(configPath));
-                if (Config.HasNull(out string field_name))
+                if (Config.HasNull(out string fieldName))
                 {
-                    _console.WriteLn($"KLBot配置文件解析结果中的{field_name}字段为null。请检查配置文件", ConsoleMessageType.Error);
+                    _console.WriteLn($"KLBot配置文件解析结果中的{fieldName}字段为null。请检查配置文件", ConsoleMessageType.Error);
                     throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件中含有null");
                 }
                 _console.WriteLn($"加载配置...", ConsoleMessageType.Info);
@@ -323,14 +323,14 @@ namespace klbotlib
             while (_cmdStat == CmdLoopStatus.Output)
             { Thread.Sleep(1); }
 
-            string source_name = source is Module m ? m.ModuleID : source.GetType().Name;
+            string sourceName = source is Module m ? m.ModuleID : source.GetType().Name;
             if (_cmdStat == CmdLoopStatus.ReadLn)
             {
-                _console.WriteLn($"[{source_name}] {message}", msgType, "\b" + prefix);
+                _console.WriteLn($"[{sourceName}] {message}", msgType, "\b" + prefix);
                 _console.Write("> ", ConsoleColor.DarkYellow);
             }
             else
-                _console.WriteLn($"[{source_name}] {message}", msgType, prefix);
+                _console.WriteLn($"[{sourceName}] {message}", msgType, prefix);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
@@ -415,7 +415,7 @@ namespace klbotlib
                     else  //未知异常
                     {
                         _console.WriteLn($"调用栈：\n{ex.StackTrace}");
-                        if (successCounterCache == DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                        if (successCounterCache == DiagData.SuccessPackageCount)   //sucessCounter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                             continuousErrorCounter++;
                         else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
                             continuousErrorCounter = 0;
@@ -611,36 +611,36 @@ namespace klbotlib
         private void SaveModuleSetup(Module module, bool printInfo = true)
         {
             string json = JsonConvert.SerializeObject(module.ExportSetupDict(), JsonHelper.JsonSettings.FileSetting);
-            string file_path = GetModuleSetupPath(module);
+            string filePath = GetModuleSetupPath(module);
             if (printInfo)
-                _console.WriteLn($"正在保存模块{module}的配置至\"{file_path}\"...", ConsoleMessageType.Task);
-            File.WriteAllText(file_path, json);
+                _console.WriteLn($"正在保存模块{module}的配置至\"{filePath}\"...", ConsoleMessageType.Task);
+            File.WriteAllText(filePath, json);
         }
         //保存模块的状态
         private void SaveModuleStatus(Module module, bool printInfo = true)
         {
             string json = JsonConvert.SerializeObject(module.ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
-            string file_path = GetModuleStatusPath(module);
+            string filePath = GetModuleStatusPath(module);
             if (printInfo)
             {
                 //由于涉及并行处理 需要加锁输出
-                _console.WriteLn($"正在保存模块{module}的状态至\"{file_path}\"...", ConsoleMessageType.Task);
+                _console.WriteLn($"正在保存模块{module}的状态至\"{filePath}\"...", ConsoleMessageType.Task);
             }
-            File.WriteAllText(file_path, json);
+            File.WriteAllText(filePath, json);
         }
         //载入模块的状态
         private void LoadModuleStatus(Module module, bool printInfo = true)
         {
             try
             {
-                string file_path = GetModuleStatusPath(module);
-                if (File.Exists(file_path))
+                string filePath = GetModuleStatusPath(module);
+                if (File.Exists(filePath))
                 {
                     if (printInfo)
-                        _console.WriteLn($"正在从\"{file_path}\"加载模块{module}的状态...", ConsoleMessageType.Task);
-                    var status_dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(file_path), JsonHelper.JsonSettings.FileSetting);
-                    if (status_dict != null)
-                        module.ImportDict(status_dict);
+                        _console.WriteLn($"正在从\"{filePath}\"加载模块{module}的状态...", ConsoleMessageType.Task);
+                    var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting);
+                    if (statusDict != null)
+                        module.ImportDict(statusDict);
                 }
             }
             catch (Exception ex)
@@ -747,11 +747,11 @@ namespace klbotlib
             }
         }
 
-        private void CreateDirectoryIfNotExist(string path, string dir_description)
+        private void CreateDirectoryIfNotExist(string path, string dirDescription)
         {
             if (!Directory.Exists(path))
             {
-                _console.WriteLn($"{dir_description}\"{path}\"不存在。正在自动创建...", ConsoleMessageType.Warning);
+                _console.WriteLn($"{dirDescription}\"{path}\"不存在。正在自动创建...", ConsoleMessageType.Warning);
                 Directory.CreateDirectory(path);
             }
         }
