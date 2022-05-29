@@ -211,6 +211,7 @@ internal class HelpCmd : InfoCommand
 internal class InfoCmd : InfoCommand
 {
     private readonly StringBuilder _sb = new();     //调用者清理
+    private readonly Stopwatch _sw = new();
     private readonly Regex _multiWhite = new(@"\s+", RegexOptions.Compiled);
     private string GetCoreUtilization()
     {
@@ -278,6 +279,10 @@ internal class InfoCmd : InfoCommand
             return $"暂时不支持获取此平台下的内存占用信息";
     }
 
+    public InfoCmd()
+    {
+        _sw.Start();
+    }
     public override string CommandString => "info";
     public override string InfoDescription => "硬件和软件信息";
     public override string GetInfo(KLBot bot)
@@ -304,6 +309,8 @@ internal class InfoCmd : InfoCommand
         _sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
         _sb.AppendLine($"线程数量：{process.Threads.Count}");
         _sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}");
+        TimeSpan elapsed = _sw.Elapsed;
+        _sb.Append($"\n已运行：{elapsed.Days}天，{elapsed.Hours}小时{elapsed.Minutes}分钟{elapsed.Seconds}秒");
         return _sb.ToString();
     }
 }

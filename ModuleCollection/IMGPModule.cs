@@ -77,11 +77,63 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     private static readonly StringBuilder _sb = new();  //caller clear
     private static string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
     private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
+    private bool TryMergeWithBase64(MessageImagePlain msg, out string result)
+    {
+        string b641 = _imgHelper.DownloadAsBase64(msg.UrlList[0]);
+        //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
+        string b642 = _imgHelper.DownloadAsBase64(msg.UrlList[1]);
+        string queryString = "?type=merge&apiType=face";
+        JMergeRequest request = new(new(b642, "BASE64"), new(b641, "BASE64"), "2.0");
+        //string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
+        string json = _httpHelper.PostJsonAsync(_postUrl + queryString, request).Result;
+        JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+        //错误检查
+        if (reply.errno != 0)
+        {
+            result = ErrorString(reply.errno, reply.msg);
+            return false;
+        }
+        else if (reply.data.error_code != 0)
+        {
+            result = ErrorString(reply.data.error_code, reply.data.error_msg);
+            return false;
+        }
+        else
+        {
+            result = $@"\image:\base64:{reply.data.result.merge_image}";
+            return true;
+        }
+    }
+    private bool TryMergeWithUrl(MessageImagePlain msg, out string result)
+    {
+        string queryString = "?type=merge&apiType=face";
+        string url0 = JsonConvert.ToString(msg.UrlList[0]);
+        string url1 = JsonConvert.ToString(msg.UrlList[1]);
+        string body = "{\"image_template\":{\"image\":" + url0 + ",\"image_type\":\"URL\"},\"image_target\":{\"image\":" + url1 + ",\"image_type\":\"URL\"},\"version\":\"2.0\"}";
+        string json = _httpHelper.PostStringAsync(_postUrl + queryString, body).Result;
+        JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+        //错误检查
+        if (reply.errno != 0)
+        {
+            result = ErrorString(reply.errno, reply.msg);
+            return false;
+        }
+        else if (reply.data.error_code != 0)
+        {
+            result = ErrorString(reply.data.error_code, reply.data.error_msg);
+            return false;
+        }
+        else
+        {
+            result = $@"\image:\base64:{reply.data.result.merge_image}";
+            return true;
+        }
+    }
 
     /// <inheritdoc/>
     public override string Filter(MessageImagePlain msg)
     {
-        if (msg.TargetContains(HostBot.SelfID))  //图文消息
+        if (msg.ContainsTargetID(HostBot.SelfID))  //图文消息
         {
             string text = msg.Text.Trim();
             if (msg.UrlList.Count == 1)   //单图文
@@ -110,22 +162,16 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         switch (filterOut)
         {
             case "merge":
+                _httpHelper.Headers.Clear();
+                _httpHelper.Headers.Add("Referer", "https://ai.baidu.com/tech/face/merge");
                 Messaging.ReplyMessage(msg, "转换中...");
-                //HostBot.ReplyPlainMessage(this, msg, "正在下载父本并转换为base64...");
-                string b641 = _imgHelper.DownloadAsBase64(msg.UrlList[0]);
-                //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
-                string b642 = _imgHelper.DownloadAsBase64(msg.UrlList[1]);
-                string queryString = "?type=merge&apiType=face";
-                string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
-                string json = _httpHelper.PostFormUrlEncodedAsync(_postUrl + queryString, body).Result;
-                JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
-                //错误检查
-                if (reply.errno != 0)
-                    return ErrorString(reply.errno, reply.msg);
-                if (reply.data.error_code != 0)
-                    return ErrorString(reply.data.error_code, reply.data.error_msg);
-                string b64 = reply.data.result.merge_image;
-                return $@"\image:\base64:{b64}";
+                bool isSuccess = TryMergeWithBase64(msg, out string result);
+                if (!isSuccess)
+                {
+                    return $"使用BASE64合成失败：\n{result}";
+                }
+                else
+                    return result;
         }
         //以下都是单图文消息 可以统一把图片Url拿出来做URL encode
         string escUrl = msg.UrlList[0];
@@ -218,4 +264,8 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
 
     private class JProcReply : JReply { public JProcData data; }
     private class JProcData { public string image; }
+
+    private record JMergeRequest (JImage image_target, JImage image_template, string version);
+    private record JImage (string image, string image_type);
+    
 }

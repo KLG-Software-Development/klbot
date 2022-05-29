@@ -1,7 +1,7 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
+using klbotlib.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Gleee.Consoleee;
 
@@ -215,18 +215,4 @@ public interface IConsole
     ConsoleColor ForeColor { get; set; }
     ConsoleColor BackColor { get; set; }
     void SetCursorPos(int left, int top);
-}
-
-static class StringExtension
-{
-    private readonly static StringBuilder _sb = new();
-    public static string Repeat(this string value, int count)
-    {
-        lock (_sb)
-        {
-            _sb.Clear();
-            _sb.Insert(0, value, count);
-            return _sb.ToString();
-        }
-    }
 }

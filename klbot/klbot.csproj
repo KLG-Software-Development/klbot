@@ -2,7 +2,6 @@
   
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyVersion>1.6.*</AssemblyVersion>
     <FileVersion>1.6</FileVersion>
@@ -12,34 +11,20 @@
     <Company>KLG Science</Company>
     <Version>1.6</Version>
     <Platforms>AnyCPU;ARM64;x64</Platforms>
-    <Configurations>Debug;Release;Ref_Only</Configurations>
+    <Configurations>Debug;Release</Configurations>
     <PackageId>KLG.PaleMutant</PackageId>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TieredCompilation>True</TieredCompilation>
     <NeutralLanguage>zh-CN</NeutralLanguage>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>True</Optimize>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <TargetFrameworks>net6.0</TargetFrameworks>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|AnyCPU'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|ARM64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-    
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|x64'">
+  
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <TargetFrameworks>net7.0</TargetFrameworks>
     <Optimize>True</Optimize>
   </PropertyGroup>
   

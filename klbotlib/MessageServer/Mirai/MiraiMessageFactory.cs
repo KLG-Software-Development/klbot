@@ -11,8 +11,8 @@ namespace klbotlib.MessageServer.Mirai
         {
             { "Plain", 0 },
             { "Image", 1 },
-            { "FlashImage", 1 },    //闪照和正常图片统一按图片处理
             { "Voice", 2 },
+            { "FlashImage", 3 },
         };
         private static readonly HashSet<string> _commonMessageTypes = new() { "GroupMessage", "TempMessage", "FriendMessage" };
 
@@ -30,6 +30,8 @@ namespace klbotlib.MessageServer.Mirai
                 retCommon = BuildImage(msgPackage);
             else if (type == typeof(MessageVoice))
                 retCommon = BuildVoice(msgPackage);
+            else if (type == typeof(MessageFlashImage))
+                retCommon = BuildFlashImage(msgPackage);
             else if (type == typeof(MessageImagePlain))
                 retCommon = BuildImagePlain(msgPackage);
             else if (type == typeof(MessageRecall))
@@ -38,7 +40,10 @@ namespace klbotlib.MessageServer.Mirai
                 return Message.Empty;
             if (retCommon != null)
             {
-                retCommon.AddTargetID(targets);
+                foreach (var id in targets)
+                {
+                    retCommon.AddTargetID(id);
+                }
                 ret = retCommon;
             }
             //加工合适的上下文和ID
@@ -63,9 +68,11 @@ namespace klbotlib.MessageServer.Mirai
                         count[_indexOf[sub_msg.type]]++;
                     else if (sub_msg.type == "At")
                         targets.Add(sub_msg.target);
+
                 bool hasPlain = count[_indexOf["Plain"]] != 0;
                 bool hasImg = count[_indexOf["Image"]] != 0;
                 bool hasVoice = count[_indexOf["Voice"]] != 0;
+                bool hasFlashImg = count[_indexOf["FlashImage"]] != 0;
 
                 //根据统计结果判断消息类型
                 if (hasPlain)
@@ -77,6 +84,8 @@ namespace klbotlib.MessageServer.Mirai
                     return typeof(MessageImage);
                 else if (hasVoice)
                     return typeof(MessageVoice);
+                else if (hasFlashImg)
+                    return typeof(MessageFlashImage);
                 else
                     return typeof(MessageEmpty);
             }
@@ -119,12 +128,10 @@ namespace klbotlib.MessageServer.Mirai
         {
             bool isAfterAt = false;
             MessagePlain ret;
-            if (msgPackage.sender.group == null)
-                ret = new MessagePlain(msgPackage.sender.id, -1);
-            else
-                ret = new MessagePlain(msgPackage.sender.id, msgPackage.sender.group.id);
-            foreach (var subMsg in msgPackage.messageChain)
+            ret = new MessagePlain(msgPackage.sender.id, msgPackage.sender.GroupId);
+            foreach (JMiraiMessage subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Plain")
+                {
                     if (isAfterAt)           //意味着之前还有别的Plain消息，而且上一条子消息是At消息。用Substring()处理@后面无缘无故冒出来的傻逼空格
                     {
                         ret.AppendText(subMsg.text.Substring(1));
@@ -132,24 +139,34 @@ namespace klbotlib.MessageServer.Mirai
                     }
                     else                            //意味着之前还有别的Plain消息。则简单将文本追加到已有对象的文本中
                         ret.AppendText(subMsg.text);
+                }
                 else if (subMsg.type == "Face")
-                    ret.AppendText(subMsg.text);
+                    ret.AppendText(@$"{{\face:{subMsg.name}}}");
                 else if (subMsg.type == "At")
                     isAfterAt = true;
             return ret;
         }
         private static MessageImage BuildImage(JMiraiMessagePackage msgPackage)
         {
-            MessageImage ret = new MessageImage(msgPackage.sender.id, msgPackage.sender.group.id);
+            MessageImage ret = new MessageImage(msgPackage.sender.id, msgPackage.sender.GroupId);
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Image")
-                    ret.Add(subMsg.url);
+                    ret.UrlList.Add(subMsg.url);
+            return ret;
+        }
+        private static MessageFlashImage BuildFlashImage(JMiraiMessagePackage msgPackage)
+        {
+            MessageFlashImage ret = new MessageFlashImage(msgPackage.sender.id, msgPackage.sender.GroupId);
+            //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
+            foreach (var subMsg in msgPackage.messageChain)
+                if (subMsg.type == "FlashImage")
+                    ret.UrlList.Add(subMsg.url);
             return ret;
         }
         private static MessageVoice BuildVoice(JMiraiMessagePackage msgPackage)
         {
-            MessageVoice ret = new MessageVoice(msgPackage.sender.id, msgPackage.sender.group.id);
+            MessageVoice ret = new MessageVoice(msgPackage.sender.id, msgPackage.sender.GroupId);
             //只关心音频子消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
                 if (subMsg.type == "Voice")
@@ -164,7 +181,7 @@ namespace klbotlib.MessageServer.Mirai
             var imgPart = BuildImage(msgPackage); //按图像解析，得到图像部分
             var plainPart = BuildPlain(msgPackage);   //按纯文本解析，得到文字部分
             //结合两个部分生成图文消息
-            return new MessageImagePlain(msgPackage.sender.id, msgPackage.sender.group.id, plainPart.Text, imgPart.UrlList);
+            return new MessageImagePlain(msgPackage.sender.id, msgPackage.sender.GroupId, plainPart.Text, imgPart.UrlList);
         }
     }
 }

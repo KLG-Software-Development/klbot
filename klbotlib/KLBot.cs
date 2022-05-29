@@ -102,6 +102,8 @@ namespace klbotlib
             {
                 throw new KLBotInitializationException($"核心模块加载失败异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
             }
+            if (moduleCollection != null)
+                Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
             _console.WriteLn($"成功初始化KLBot: ");
             if (_msgServer is MiraiMessageServer miraiServer)
                 _console.WriteLn($"Url: {miraiServer.ServerURL}");
@@ -232,7 +234,9 @@ namespace klbotlib
             }
         }
 
-        //消息发送内部API
+        //消息内部API
+        internal Message GetMessageFromID(long id)
+            => _msgServer.GetMessageFromID(id);
         /// <summary>
         /// 发送消息
         /// </summary>
@@ -344,7 +348,7 @@ namespace klbotlib
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
             List<Message> msgs = _msgServer.FetchMessages().Where(msg => 
-            msg.Context != MessageContext.Group || msg.Context != MessageContext.Temp   //非私聊、非临时会话时无需过滤
+            (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
             || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
             return msgs;
@@ -453,7 +457,7 @@ namespace klbotlib
             {
                 _console.Write("> ", ConsoleColor.DarkYellow);
                 _cmdStat = CmdLoopStatus.ReadLn;
-                string cmd = _console.BufferedReadLn().Trim();
+                string cmd = _console.ReadLn();
                 _cmdStat = CmdLoopStatus.Output;
                 try
                 {
@@ -680,6 +684,7 @@ namespace klbotlib
         /// </summary>
         public string GetModuleChainString()
         {
+            _sb.Clear();
             lock (_sb)
             {
                 _sb.AppendLine("模块链条：");
@@ -700,6 +705,7 @@ namespace klbotlib
         /// </summary>
         public string GetListeningGroupListString()
         {
+            _sb.Clear();
             lock (_sb)
             {
                 _sb.AppendLine("监听群组列表：");
@@ -717,6 +723,7 @@ namespace klbotlib
         /// </summary>
         public string GetModuleStatusString()
         {
+            _sb.Clear();
             lock (_sb)
             {
                 _sb.AppendLine("模块状态：");

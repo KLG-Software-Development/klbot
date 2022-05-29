@@ -32,6 +32,14 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     };
     private readonly HttpHelper _httpHelper = new();
 
+    /// <summary>
+    /// 构造匿名语音模块
+    /// </summary>
+    public AnonyVoiceModule()
+    {
+        _httpHelper.Headers.Add("Referer", "https://ai.baidu.com/tech/speech/tts_online");
+    }
+
     /// <inheritdoc/>
     public sealed override bool UseSignature => false;
     /// <inheritdoc/>

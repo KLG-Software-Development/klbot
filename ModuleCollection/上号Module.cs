@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ModuleCollection;
+using System;
 using System.Collections.Generic;
 
 namespace klbotlib.Modules;
@@ -9,7 +10,8 @@ namespace klbotlib.Modules;
 public class 上号Module : SingleTypeModule<MessagePlain>
 {
     //应被忽略的不支持消息
-    private readonly HashSet<string> _downgradedMsgKeywords = new() { "[QQ红包]", "[视频游戏]", "你的QQ暂不支持查看视频短片"}; 
+    private readonly HashSet<string> _downgradedMsgKeywords = new() { "[QQ红包]", "[视频游戏]", "你的QQ暂不支持查看视频短片"};
+    private const string _halReply = @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}！";
     [ModuleStatus(IsHidden = true)]
     private string _lastMsg = "";
     [ModuleStatus(IsHidden = true)]
@@ -62,12 +64,18 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     public sealed override string Processor(MessagePlain msg, string filterOut)
     {
         string msgText = msg.Text.Trim();
-        return filterOut switch
+        switch (filterOut)
         {
-            "上号" => msgText,
-            "蛤儿" => @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}",
-            "跟风" => msgText,
-            _ => throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\""),
-        };
+            case "上号":
+            case "跟风":
+                return msgText;
+            case "蛤儿":
+                if (!ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate(out _, out string salt))
+                    return _halReply;
+                else
+                    return salt + _halReply;
+            default:
+                throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\"");
+        }
     }
 }

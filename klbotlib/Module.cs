@@ -97,15 +97,15 @@ namespace klbotlib.Modules
         /// <summary>
         /// 缓存操作接口
         /// </summary>
-        public IFileAPI Cache { get => (IFileAPI)this; }
+        public IFileAPI Cache { get => this; }
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public IMessagingAPI Messaging { get => (IMessagingAPI)this; }
+        public IMessagingAPI Messaging { get => this; }
         /// <summary>
         /// 发送消息操作接口
         /// </summary>
-        public IModuleAccessAPI ModuleAccess { get => (IModuleAccessAPI)this; }
+        public IModuleAccessAPI ModuleAccess { get => this; }
 
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
@@ -206,7 +206,7 @@ namespace klbotlib.Modules
         void IFileAPI.SaveFileAsBinary(string relativePath, byte[] bin)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"Saving \"{Path.GetFileName(path)}\" to \"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
             if (File.Exists(path))
                 HostBot.ObjectPrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
             File.WriteAllBytes(path, bin);
@@ -214,7 +214,7 @@ namespace klbotlib.Modules
         string IFileAPI.ReadFileAsString(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
                 HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
@@ -222,10 +222,21 @@ namespace klbotlib.Modules
             }
             return File.ReadAllText(path);
         }
+        string[] IFileAPI.ReadFileAsStringArrayByLines(string relativePath)
+        {
+            string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
+            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
+            if (!File.Exists(path))
+            {
+                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
+            }
+            return File.ReadAllLines(path);
+        }
         byte[] IFileAPI.ReadFileAsBinary(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
                 HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
@@ -242,6 +253,8 @@ namespace klbotlib.Modules
             else
                 File.Delete(path);
         }
+        Message IMessagingAPI.GetMessageFromID(long id)
+            => HostBot.GetMessageFromID(id);
         void IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
             => HostBot.SendMessage(this, context, userId, groupId, content);
         void IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)
@@ -303,7 +316,8 @@ namespace klbotlib.Modules
             }
             catch (Exception ex)    //过滤器存在问题
             {
-                throw new ModuleException(this, $"模块过滤器产生异常：{ex.Message}");
+                ModulePrint($"模块过滤器产生异常：{ex.Message}\n已跳过该模块。", ConsoleMessageType.Error);
+                return false;
             }
             if (string.IsNullOrEmpty(filterOut))    //过滤器输出空，表示不处理
                 return false;
