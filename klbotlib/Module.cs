@@ -206,7 +206,7 @@ namespace klbotlib.Modules
         void IFileAPI.SaveFileAsBinary(string relativePath, byte[] bin)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"Saving \"{Path.GetFileName(path)}\" to \"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
             if (File.Exists(path))
                 HostBot.ObjectPrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
             File.WriteAllBytes(path, bin);
@@ -214,7 +214,7 @@ namespace klbotlib.Modules
         string IFileAPI.ReadFileAsString(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
                 HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
@@ -225,7 +225,7 @@ namespace klbotlib.Modules
         string[] IFileAPI.ReadFileAsStringArrayByLines(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
                 HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
@@ -236,7 +236,7 @@ namespace klbotlib.Modules
         byte[] IFileAPI.ReadFileAsBinary(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
             if (!File.Exists(path))
             {
                 HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
