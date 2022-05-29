@@ -21,6 +21,8 @@ public class ImageModule : SingleTypeModule<MessagePlain>
 
     [ModuleSetup]
     private readonly string _url = "https://image.baidu.com/search/acjson";
+    [ModuleSetup]
+    private readonly HashSet<string> _enhanceKeyword = new();
     [ModuleStatus(IsHidden = true)]
     private readonly Dictionary<string, int> _listNumCache = new();  //缓存每个搜索词的结果数量
     [ModuleStatus]
@@ -81,6 +83,8 @@ public class ImageModule : SingleTypeModule<MessagePlain>
             "来点X图" => _pattern.Match(text).Groups[1].Value,
             _ => throw new Exception("意外遇到未实现的情况。检查处理器实现是否完整"),
         };
+        if (_enhanceKeyword.Contains(word))
+            return $@"\image:\url:{ModuleAccess.GetModule<PLJJModule>().GetRandomUrl()}";
         //每次都使用上一次缓存的list_num（如果存在）
         bool isCached = false;
         int listNum = 0;
