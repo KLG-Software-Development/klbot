@@ -457,7 +457,7 @@ namespace klbotlib
             {
                 _console.Write("> ", ConsoleColor.DarkYellow);
                 _cmdStat = CmdLoopStatus.ReadLn;
-                string cmd = _console.BufferedReadLn().Trim();
+                string cmd = _console.ReadLn();
                 _cmdStat = CmdLoopStatus.Output;
                 try
                 {
