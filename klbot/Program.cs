@@ -33,6 +33,7 @@ start:
             else
                 miraiServer = new(args[0]);
             klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+            klg.AddModule(new PLJJModule());
             klg.AddModule(new ZombieeeModule());
             klg.AddModule(new FlashGambleModule());
             klg.AddModule(new RollinModule());
