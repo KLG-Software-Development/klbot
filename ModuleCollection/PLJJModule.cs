@@ -21,9 +21,7 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public override string Filter(MessagePlain msg)
     {
-        _urlList = Cache.ReadFileAsStringArrayByLines("urlList.txt");
-        string text = msg.Text.Trim();
-        if (text == "早安")
+        if (msg.Text.Trim() == "早安" && DateTime.Now.Date != _lastActivateTime.Date)
             return "每日一图";
         else
             return null;
@@ -32,7 +30,16 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
     public override string Processor(MessagePlain msg, string filterOut)
     {
         _lastActivateTime = DateTime.Now;
-        Messaging.ReplyMessage(msg, $@"\image:\url:{_urlList[_ro.Next(_urlList.Length)]}");
-        return "早安！";
+        Messaging.ReplyMessage(msg, "早安！");
+        return $@"\image:\url:{_urlList[_ro.Next(_urlList.Length)]}";
+    }
+
+    /// <summary>
+    /// 随机返回一条图库内的URL
+    /// </summary>
+    /// <returns>图片URL</returns>
+    public string GetRandomUrl()
+    {
+        return _urlList[_ro.Next(_urlList.Length)];
     }
 }
