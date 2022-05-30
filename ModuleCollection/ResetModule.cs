@@ -56,7 +56,7 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                 {
                     _lastUpdatedDays.Add(msg.SenderID, DateTime.Now);
                     _bestRecords.Add(msg.SenderID, new TimeSpan());
-                    return @$"成功为用户{{\tag:{msg.SenderID}}}创建数据";
+                    return @$"成功为用户[{{\tag:{msg.SenderID}}}]创建数据";
                 }
                 else
                 {
@@ -67,13 +67,13 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                     if (dt > record)
                     {
                         _bestRecords[msg.SenderID] = dt;
-                        return @$"{{\tag:{msg.SenderID}}}成功创造了{TimeSpanToString(_bestRecords[msg.SenderID])}的新纪录！";
+                        return @$"[{{\tag:{msg.SenderID}}}]成功创造了{TimeSpanToString(_bestRecords[msg.SenderID])}的新纪录！";
                     }
                     else
                     {
                         TimeSpan distanceToGoal = record - dt;
                         if (distanceToGoal < _smallTimeSpan)
-                            return @$"已重置数据。非常可惜，你距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}";
+                            return $"已重置数据。\n非常可惜，[{{\\tag:{msg.SenderID}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}";
                         else
                             return "已重置数据";
                     }
