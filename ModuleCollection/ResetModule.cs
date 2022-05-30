@@ -18,6 +18,8 @@ public class ResetModule : SingleTypeModule<MessagePlain>
 
     /// <inheritdoc/>
     public override string FriendlyName => "Reset模块";
+    /// <inheritdoc/>
+    public override string HelpInfo => "@机器人并：\n发送“day?”可以查询数据；发送“reset”或“day0”可以重置数据";
 
     /// <inheritdoc/>
     public override string Filter(MessagePlain msg)
