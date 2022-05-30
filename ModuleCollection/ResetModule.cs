@@ -10,7 +10,7 @@ namespace klbotlib.Modules;
 public class ResetModule : SingleTypeModule<MessagePlain>
 {
     [ModuleSetup]
-    private static readonly TimeSpan _smallTimeSpan = new(12, 0, 0);
+    private readonly TimeSpan _smallTimeSpan = new(12, 0, 0);
     [ModuleStatus]
     private readonly Dictionary<long, DateTime> _lastUpdatedDays = new();
     [ModuleStatus]
