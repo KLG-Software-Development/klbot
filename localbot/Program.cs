@@ -29,7 +29,7 @@ start:
         try
         {
             lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
-            lcb.AddModule(new ZombieeeModule());
+            lcb.AddModule(new SharpReviewModule());
             //lcb.AddModule(new RollinModule());
             //lcb.AddModule(new CollapseModule());
             //lcb.AddModule(new CompilerModule());
