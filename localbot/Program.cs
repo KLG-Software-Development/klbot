@@ -34,7 +34,7 @@ start:
             //lcb.AddModule(new CollapseModule());
             //lcb.AddModule(new CompilerModule());
             //lcb.AddModule(new ImageModule());
-            //lcb.AddModule(new IMGPModule());
+            lcb.AddModule(new IMGPModule());
             //lcb.AddModule(new InvisibleModule());
             //lcb.AddModule(new WelcomekxggModule());
             //lcb.AddModule(new AnonyVoiceModule());

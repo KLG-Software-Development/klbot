@@ -180,8 +180,10 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
             case "recogn": //识别
                 string word = msg.Text.Trim()[2..];
                 if (!_typeByWordRecg.ContainsKey(word))
-                    return ModuleAccess.GetModule<FuckModule>().SingleSentence() + "，这个不会";
+                    return GetFuck() + "，这个不会";
                 string type = _typeByWordRecg[word];
+                _httpHelper.Headers.Clear();
+                _httpHelper.Headers.Add("Referer", $"https://ai.baidu.com/tech/imagerecognition/{type}");
                 string body = $"image&image_url={escUrl}&type={type}&show=true";
                 Messaging.ReplyMessage(msg, "识别中...");
                 if (type == "landmark")
