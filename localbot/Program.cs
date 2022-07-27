@@ -162,12 +162,11 @@ start:
                 {
                     switch (cmdToken[0])
                     {
-                        case "send-imageplain":
+                        case "send-image-plain":
                             string[] urls = cmdToken[1].Split(',');
                             string text = cmdToken[2];
                             SendMessageCommonAndPrint(lcb, new MessageImagePlain(_context, _userId, _groupId, text, urls));
                             break;
-
                     }
                 }
                 else
@@ -229,17 +228,18 @@ start:
         => Console.WriteLine(GetUploadDebugInfo(module, groupId, uploadPath, filePath));
     private static void PrintHelp()
     {
-        Console.WriteLine("help                                 打印帮助信息");
-        Console.WriteLine("verbose                              开启详细模式");
-        Console.WriteLine("tag-me                               开启Tag Me模式（自动@机器人）");
-        Console.WriteLine("set-user-id <id>                     设置全局用户ID");
-        Console.WriteLine("set-group-id <id>                    设置全局群聊ID");
-        Console.WriteLine("set-context <private|group|temp>     设置全局消息上下文");
-        Console.WriteLine("send-plain <text>                    发送纯文本消息");
-        Console.WriteLine("send-image <URL1,URL2,URL3...>       发送图像消息");
-        Console.WriteLine("send-flashimage <URL1,URL2,URL3...>  发送图像消息");
-        Console.WriteLine("send-voice <URL>                     发送语音消息");
-        Console.WriteLine("recall <author id>,<message id>      撤回指定消息");
+        Console.WriteLine("help                                             打印帮助信息");
+        Console.WriteLine("verbose                                          开启详细模式");
+        Console.WriteLine("tag-me                                           开启Tag Me模式（自动@机器人）");
+        Console.WriteLine("set-user-id <id>                                 设置全局用户ID");
+        Console.WriteLine("set-group-id <id>                                设置全局群聊ID");
+        Console.WriteLine("set-context <private|group|temp>                 设置全局消息上下文");
+        Console.WriteLine("send-plain <text>                                发送纯文本消息");
+        Console.WriteLine("send-image <URL1,URL2,URL3...>                   发送图像消息");
+        Console.WriteLine("send-flashimage <URL1,URL2,URL3...>              发送闪照消息");
+        Console.WriteLine("send-image-plain <URL1,URL2,URL3...> <text>      发送图文消息");
+        Console.WriteLine("send-voice <URL>                                 发送语音消息");
+        Console.WriteLine("recall <author id>,<message id>                  撤回指定消息");
     }
     private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
     {
@@ -269,7 +269,7 @@ start:
             else if (msgCommon is MessageFlashImage fmsg)
                 content = $"[闪照x{fmsg.UrlList.Count}]";
             else if (msgCommon is MessageImagePlain ipmsg)
-                content = $"[图片x{ipmsg.UrlList.Count}]{ipmsg.Text}";
+                content = $"[图片x{ipmsg.UrlList.Count}] {ipmsg.Text}";
             else if (msgCommon is MessageVoice vmsg)
                 content = $"[语音消息]";
             else
