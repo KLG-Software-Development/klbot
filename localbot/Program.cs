@@ -53,124 +53,113 @@ start:
                 string s = Console.ReadLine();
                 if (s == null)
                     continue;
-                string[] cmdToken = s.Split();
-                if (cmdToken.Length == 1)
+                SplitCommand(s, out string cmd, out string arg);
+                switch (cmd)
                 {
-                    switch (cmdToken[0])
-                    {
-                        case "help":
-                            PrintHelp();
-                            continue;
-                        case "tag-me":
-                            _tagMe = !_tagMe;
-                            string status = _tagMe ? "开启" : "关闭";
-                            Console.WriteLine($"Tag Me模式已{status}");
-                            continue;
-                        case "verbose":
-                            _verbose = !_verbose;
-                            status = _verbose ? "开启" : "关闭";
-                            Console.WriteLine($"详细模式已{status}");
-                            continue;
-                        default:
-                            continue;
-                    }
+                    case "help":
+                        PrintHelp();
+                        continue;
+                    case "tag-me":
+                        _tagMe = !_tagMe;
+                        string status = _tagMe ? "开启" : "关闭";
+                        Console.WriteLine($"Tag Me模式已{status}");
+                        continue;
+                    case "verbose":
+                        _verbose = !_verbose;
+                        status = _verbose ? "开启" : "关闭";
+                        Console.WriteLine($"详细模式已{status}");
+                        continue;
+                    case "set-user-id":
+                        if (long.TryParse(arg, out long userId))
+                        {
+                            _userId = userId;
+                            Console.WriteLine($"消息发送者ID已设置为[{_userId}]");
+                        }
+                        else
+                            Console.WriteLine($"{arg}不是有效的ID");
+                        continue;
+                    case "set-group-id":
+                        if (long.TryParse(arg, out long groupId))
+                        {
+                            _groupId = groupId;
+                            Console.WriteLine($"消息发送所在群ID已设置为[{_groupId}]");
+                        }
+                        else
+                            Console.WriteLine($"{arg}不是有效的ID");
+                        continue;
+                    case "set-context":
+                        switch (arg.ToLower())
+                        {
+                            case "group":
+                                _context = MessageContext.Group;
+                                Console.WriteLine($"会话上下文已设置为群聊");
+                                continue;
+                            case "temp":
+                                _context = MessageContext.Temp;
+                                Console.WriteLine($"会话上下文已设置为临时会话");
+                                continue;
+                            case "private":
+                                _context = MessageContext.Private;
+                                Console.WriteLine($"会话上下文已设置为私聊");
+                                continue;
+                            default:
+                                Console.WriteLine("未知上下文类型。已忽略");
+                                continue;
+                        }
+                    case "send-plain":
+                        SendMessageCommonAndPrint(lcb, new MessagePlain(_context, _userId, _groupId, arg));
+                        break;
+                    case "send-image":
+                        string[] urls = arg.Split(',');
+                        SendMessageCommonAndPrint(lcb, new MessageImage(_context, _userId, _groupId, urls));
+                        break;
+                    case "send-flashimage":
+                        urls = arg.Split(',');
+                        SendMessageCommonAndPrint(lcb, new MessageFlashImage(_context, _userId, _groupId, urls));
+                        break;
+                    case "send-voice":
+                        SendMessageCommonAndPrint(lcb, new MessageVoice(_context, _userId, _groupId, arg));
+                        break;
+                    case "recall":
+                        string[] args = arg.Split(',');
+                        if (args.Length < 2)
+                        {
+                            Console.WriteLine("参数不足。应有2个参数：消息发送者ID,消息ID");
+                            return;
+                        }
+                        if (!long.TryParse(args[0], out long authorId))
+                        {
+                            Console.WriteLine("无效发送者ID");
+                            return;
+                        }
+                        if (!long.TryParse(args[1], out long msgId))
+                        {
+                            Console.WriteLine("无效消息ID");
+                            return;
+                        }
+                        MessageRecall recall = new(_context, authorId, _userId, _groupId, msgId);
+                        _localServer.AddReceivedMessage(recall);
+                        if (_verbose)
+                        {
+                            Console.WriteLine("\n详细信息：");
+                            Console.WriteLine(recall.ToString());
+                            Console.WriteLine();
+                        }
+                        break;
+                    case "send-image-plain":
+                        args = arg.Split();
+                        if (args.Length != 2)
+                        {
+                            Console.WriteLine("参数不足。应有2个参数：图片URL(s), 文本内容");
+                            return;
+                        }
+                        urls = args[0].Split(',');
+                        string text = args[1];
+                        SendMessageCommonAndPrint(lcb, new MessageImagePlain(_context, _userId, _groupId, text, urls));
+                        break;
+                    default:
+                        continue;
                 }
-                else if (cmdToken.Length == 2)
-                {
-                    switch (cmdToken[0])
-                    {
-                        case "set-user-id":
-                            if (long.TryParse(cmdToken[1], out long userId))
-                            {
-                                _userId = userId;
-                                Console.WriteLine($"消息发送者ID已设置为[{_userId}]");
-                            }
-                            else
-                                Console.WriteLine($"{cmdToken[1]}不是有效的ID");
-                            continue;
-                        case "set-group-id":
-                            if (long.TryParse(cmdToken[1], out long groupId))
-                            {
-                                _groupId = groupId;
-                                Console.WriteLine($"消息发送所在群ID已设置为[{_groupId}]");
-                            }
-                            else
-                                Console.WriteLine($"{cmdToken[1]}不是有效的ID");
-                            continue;
-                        case "set-context":
-                            switch (cmdToken[1].ToLower())
-                            {
-                                case "group":
-                                    _context = MessageContext.Group;
-                                    Console.WriteLine($"会话上下文已设置为群聊");
-                                    continue;
-                                case "temp":
-                                    _context = MessageContext.Temp;
-                                    Console.WriteLine($"会话上下文已设置为临时会话");
-                                    continue;
-                                case "private":
-                                    _context = MessageContext.Private;
-                                    Console.WriteLine($"会话上下文已设置为私聊");
-                                    continue;
-                                default:
-                                    Console.WriteLine("未知上下文类型。已忽略");
-                                    continue;
-                            }
-                        case "send-plain":
-                            SendMessageCommonAndPrint(lcb, new MessagePlain(_context, _userId, _groupId, cmdToken[1]));
-                            break;
-                        case "send-image":
-                            string[] urls = cmdToken[1].Split(',');
-                            SendMessageCommonAndPrint(lcb, new MessageImage(_context, _userId, _groupId, urls));
-                            break;
-                        case "send-flashimage":
-                            urls = cmdToken[1].Split(',');
-                            SendMessageCommonAndPrint(lcb, new MessageFlashImage(_context, _userId, _groupId, urls));
-                            break;
-                        case "send-voice":
-                            SendMessageCommonAndPrint(lcb, new MessageVoice(_context, _userId, _groupId, cmdToken[1]));
-                            break;
-                        case "recall":
-                            string[] ss = cmdToken[1].Split(',');
-                            if (ss.Length < 2)
-                            {
-                                Console.WriteLine("参数不足。应有2个参数：消息发送者ID,消息ID");
-                                return;
-                            }
-                            if (!long.TryParse(ss[0], out long authorId))
-                            {
-                                Console.WriteLine("无效发送者ID");
-                                return;
-                            }
-                            if (!long.TryParse(ss[1], out long msgId))
-                            {
-                                Console.WriteLine("无效消息ID");
-                                return;
-                            }
-                            MessageRecall recall = new(_context, authorId, _userId, _groupId, msgId);
-                            _localServer.AddReceivedMessage(recall);
-                            if (_verbose)
-                            {
-                                Console.WriteLine("\n详细信息：");
-                                Console.WriteLine(recall.ToString());
-                                Console.WriteLine();
-                            }
-                            break;
-                    }
-                }
-                else if (cmdToken.Length == 3)
-                {
-                    switch (cmdToken[0])
-                    {
-                        case "send-image-plain":
-                            string[] urls = cmdToken[1].Split(',');
-                            string text = cmdToken[2];
-                            SendMessageCommonAndPrint(lcb, new MessageImagePlain(_context, _userId, _groupId, text, urls));
-                            break;
-                    }
-                }
-                else
-                    continue;
                 lcb.ProcessMessages(lcb.FetchMessages());
                 Thread.Sleep(1000);
             }
@@ -326,5 +315,21 @@ start:
     private static string GetUploadDebugInfo(Module module, long groupId, string uploadPath, string filePath)
     {
         return $"* 模块[{module}]向群组[{groupId}]上传文件[{filePath}]到群文件夹[{uploadPath}]";
+    }
+
+    private static void SplitCommand(string cmd, out string command, out string argument)
+    {
+        for (int i = 0; i < cmd.Length; i++)
+        {
+            if (cmd[i] == ' ')
+            {
+                command = cmd.Substring(0, i);
+                argument = cmd.Substring(i + 1);
+                return;
+            }
+        }
+        command = cmd;
+        argument = string.Empty;
+        return;
     }
 }
