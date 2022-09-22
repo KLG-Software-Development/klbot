@@ -345,7 +345,7 @@ internal class StatusAllCmd : InfoCommand
         _sb.Append($"[配置信息]\n");
         _sb.Append(bot.GetListeningGroupListString());
         _sb.AppendLine("\n[模块信息]");
-        _sb.Append(bot.GetModuleChainString() + "\n");
+        _sb.Append(bot.GetModuleStatusString() + "\n");
         _sb.AppendLine("\n[统计信息]");
         _sb.Append(bot.DiagData.GetSummaryString());
         return _sb.ToString();
