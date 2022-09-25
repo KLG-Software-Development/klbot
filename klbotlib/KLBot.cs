@@ -377,9 +377,13 @@ namespace klbotlib
         // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
         private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
         {
+#pragma warning disable CS0219 // 从未使用变量
+#pragma warning disable CS0164 // 标签未被引用
             long successCounterCache = 0, continuousErrorCounter = 0;
+start:
+#pragma warning restore CS0219 // 从未使用变量
+#pragma warning restore CS0164 // 标签未被引用
             bool isLoopRestarting = true;
-        start:
             IsLoopOn = true;
             Thread.Sleep(500);     //延迟启动 为命令循环线程预留至少0.5s时间
             try
@@ -401,6 +405,10 @@ namespace klbotlib
             }
             catch (Exception ex)
             {
+#if DEBUG
+                _console.WriteLn(ex.ToString(), ConsoleMessageType.Error);
+                throw;
+#else
                 DiagData.LastException = ex;
                 lock (_console)  //防止和命令循环线程输出混淆
                 {
@@ -439,6 +447,7 @@ namespace klbotlib
                     _console.ClearInputBuffer();
                     _console.Write("> ", ConsoleColor.DarkYellow);
                 }
+#endif
             }
         }
         /// <summary>
