@@ -139,6 +139,7 @@ namespace klbotlib
                 }
                 _console.WriteLn($"加载配置...", ConsoleMessageType.Info);
                 //导出Config
+                Key = Config.Verification.Key;
                 SelfID = Config.QQ.SelfID;
                 TargetGroupIDList = Config.QQ.TargetGroupIDList;
                 ModulesCacheDir = Config.Pathes.ModulesCacheDir;

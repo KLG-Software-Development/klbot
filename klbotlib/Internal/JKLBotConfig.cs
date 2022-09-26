@@ -31,6 +31,7 @@ namespace klbotlib
     [JsonObject(MemberSerialization.Fields)]
     internal class JKLBotConfig
     {
+        internal JVerifyConfig Verification;
         internal JQQConfig QQ;
         internal JPathesConfig Pathes;
 
@@ -38,11 +39,13 @@ namespace klbotlib
         /// 创建一个KLBot配置
         /// </summary>
         /// <param name="selfId">KLBot自身ID (QQ号)</param>
+        /// <param name="key">验证Key</param>
         /// <param name="targets">监听群组列表</param>
         /// <param name="modulesCacheDir">模块缓存目录（相对）。所有模块的缓存目录集中在该目录下</param>
         /// <param name="modulesSaveDir">模块状态和模块配置的存档目录（相对）。所有模块的状态存档和配置存档文件集中在该目录下</param>
-        public JKLBotConfig(long selfId, IEnumerable<long> targets, string modulesCacheDir, string modulesSaveDir)
+        public JKLBotConfig(long selfId, string key, IEnumerable<long> targets, string modulesCacheDir, string modulesSaveDir)
         {
+            Verification = new JVerifyConfig(key);
             QQ = new JQQConfig(selfId, targets);
             Pathes = new JPathesConfig(modulesCacheDir, modulesSaveDir);
         }
@@ -118,4 +121,14 @@ namespace klbotlib
             ModulesSaveDir = modulesSaveDir;
         }
     }
+    [JsonObject(MemberSerialization.Fields)]
+    internal class JVerifyConfig : Config
+    {
+        public string Key = string.Empty;        //验证用Key
+        public JVerifyConfig(string key)
+        {
+            Key = key;
+        }
+    }
+
 }
