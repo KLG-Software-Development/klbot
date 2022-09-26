@@ -23,14 +23,13 @@ public class MiraiMessageServer : IMessageServer
     /// Mirai服务器URL
     /// </summary>
     public string ServerURL { get; }
-
     /// <summary>
     /// 创建一个Mirai消息服务器
     /// </summary>
     public MiraiMessageServer(string serverUrl)
     {
         ServerURL = serverUrl;
-        _networkTask = Task<Exception>.Run(() => (Exception)null);
+        _networkTask = Task.Run(() => (Exception)null);
     }
 
     /// <summary>
@@ -246,6 +245,21 @@ public class MiraiMessageServer : IMessageServer
                 string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
                 TrySendMessage(context, fullJson);
             }
+        }
+    }
+    /// <inheritdoc/>
+    public bool Verify(string key)
+    {
+        try
+        {
+            JMiraiResponse response = JsonConvert.DeserializeObject<JMiraiResponse>(MiraiNetworkHelper.Verify(ServerURL, key));
+            response.CheckStatusCode();
+            return true;
+        }
+        catch
+        {
+            return false;
+            throw;
         }
     }
 }

@@ -69,6 +69,10 @@ namespace klbotlib
         /// 配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
         /// </summary>
         public string ModulesSaveDir { get; }
+        /// <summary>
+        /// 配置项：身份密钥。用于讨mirai服务器开心
+        /// </summary>
+        public string Key { get; set; } = string.Empty;
 
         private KLBot() { }
         /// <summary>
@@ -459,6 +463,8 @@ start:
             var waitForPauseMsgLoopSignal = new ManualResetEvent(true);
             DiagData.SuccessPackageCount = 0;
             //消息循环线程
+            //开始之前向服务器验证身份
+            _msgServer.Verify(Key);
             var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
             bool exitFlag = false;
             //命令循环线程

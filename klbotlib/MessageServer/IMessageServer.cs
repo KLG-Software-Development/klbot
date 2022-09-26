@@ -10,6 +10,12 @@ namespace klbotlib;
 public interface IMessageServer
 {
     /// <summary>
+    /// 向消息服务器验证身份
+    /// </summary>
+    /// <param name="key">验证密钥</param>
+    /// <returns>验证是否成功</returns>
+    bool Verify(string key);
+    /// <summary>
     /// 获取接收到的消息
     /// </summary>
     /// <returns>消息列表</returns>

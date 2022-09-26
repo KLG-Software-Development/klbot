@@ -79,4 +79,9 @@ public class DebugMessageServer : IMessageServer
     {
         return _msgCache[id];
     }
+    /// <inheritdoc/>
+    public bool Verify(string key)
+    {
+        return true;
+    }
 }
