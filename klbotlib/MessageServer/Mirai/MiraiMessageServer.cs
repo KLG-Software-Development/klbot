@@ -47,6 +47,9 @@ public class MiraiMessageServer : IMessageServer
             {
                 //构建直接JSON对象
                 obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
+                //验证返回码
+                if (obj.code != 0)
+                    throw new MiraiException(obj.code, obj.msg);
             }
             catch (Exception ex)
             {
@@ -73,7 +76,7 @@ public class MiraiMessageServer : IMessageServer
                 }
             }
         }
-        while (obj != null && obj.data.Count != 0);   //无限轮询直到拿下所有消息
+        while (obj != null && obj.data != null && obj.data.Count != 0);   //无限轮询直到拿下所有消息
         return msgs.Where(x => !(x is MessageEmpty)).ToList(); //预过滤空消息
     }
     /// <inheritdoc/>
