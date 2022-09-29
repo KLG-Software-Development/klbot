@@ -294,7 +294,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     private int PowerLawDist(double y, double n, int min, int N)
     {
         double ss = 1 - _power;
-        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * _ro.NextDouble(), 1 / ss));
+        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * _ro.NextDouble(), 1 / ss)));
         return index > N ? N : index;
     }
     //计算generalized harmonic number
