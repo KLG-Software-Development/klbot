@@ -2,6 +2,7 @@
 using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -62,7 +63,8 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     private readonly HttpClient _client = new();
     private readonly Regex _dstPat = new(@""",""dst"":""(.*)""}]}$", RegexOptions.Compiled);
     private readonly Regex _errorCodePat = new(@"""error_code"":""(\d+)""", RegexOptions.Compiled);
-    
+    private readonly Dictionary<int, double> _generalizedHarmonicNumber = new();
+
     [ModuleSetup]
     private string _baseUrl;
     [ModuleSetup]
@@ -289,9 +291,26 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
         }
         return _sb.ToString();
     }
-    private int PowerLawDist(double y, double n, int min, int max)
+    private int PowerLawDist(double y, double n, int min, int N)
     {
-        double x = Math.Pow((Math.Pow(max, n + 1) - Math.Pow(min, n + 1)) * y + Math.Pow(min, n + 1), 1 / (n + 1));
-        return Convert.ToInt32(Math.Round(x));
+        double ss = 1 - _power;
+        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * _ro.NextDouble(), 1 / ss));
+        return index > N ? N : index;
+    }
+    //计算generalized harmonic number
+    private double Hns(int N)
+    {
+        if (_generalizedHarmonicNumber.ContainsKey(N))
+            return _generalizedHarmonicNumber[N];
+        else
+        {
+            double sum = 0;
+            for (int n = 1; n <= N; n++)
+            {
+                sum += 1.0 / Math.Pow(n, _power);   //Sum 1/(1~N)^_power
+            }
+            _generalizedHarmonicNumber.Add(N, sum);
+            return sum;
+        }
     }
 }
