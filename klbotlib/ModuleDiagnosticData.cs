@@ -35,7 +35,7 @@ namespace klbotlib
         /// <summary>
         /// 最近一次异常的调用栈
         /// </summary>
-        public Exception LastException { get; internal set; }
+        public Exception? LastException { get; internal set; }
         /// <summary>
         /// 获取此模块的统计信息
         /// </summary>

@@ -14,9 +14,9 @@ class Program
     static void Main(string[] args)
     {
         Console.ResetColor();
-        Version exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
-        Version libVersion = klbotlib.Info.CoreLibInfo.GetLibVersion();
-        Version mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion();
+        Version? exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        Version? libVersion = klbotlib.Info.CoreLibInfo.GetLibVersion();
+        Version? mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion();
         long queryCounterCache = 0;
         int fatalFailureCounter = 0;
         Console.WriteLine($"KLBot via mirai");
@@ -24,7 +24,7 @@ class Program
         Console.WriteLine($"corelib version: {libVersion.Major}.{libVersion.Minor} Build {libVersion.ToKLGBuildString()}");
         Console.WriteLine($"MC version: {mcVersion.Major}.{mcVersion.Minor} Build {mcVersion.ToKLGBuildString()}\n");
 start:
-        KLBot klg = null;
+        KLBot? klg = null;
         try
         {
             MiraiMessageServer miraiServer;

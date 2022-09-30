@@ -21,9 +21,9 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "聊天模块";
     /// <inheritdoc/>
-    public sealed override string Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? "ok" : null;
+    public sealed override string? Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? "ok" : null;
     /// <inheritdoc/>
-    public sealed override string Processor(MessagePlain msg, string _)
+    public sealed override string Processor(MessagePlain msg, string? _)
     {
         Uri host = new(_url + msg.Text);
         string jreply = _client.GetStringAsync(host).Result;
@@ -33,7 +33,7 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     private class ChatterBotReply
     {
         public int result;
-        public string content;
+        public string content = string.Empty;
         public static Regex trashPat = new(@"{r\+}", RegexOptions.Compiled);
         public static Regex facePat = new(@"{face:[\d]+}", RegexOptions.Compiled);
         public string FormattedContent() => trashPat.Replace(facePat.Replace(content.Replace("{br}", "\r\n"), ""), "");

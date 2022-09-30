@@ -17,6 +17,7 @@
     <TieredCompilation>True</TieredCompilation>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PublishSingleFile>true</PublishSingleFile>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

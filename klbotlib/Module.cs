@@ -21,7 +21,7 @@ namespace klbotlib.Modules
     public abstract class Module : IFileAPI, IMessagingAPI, IModuleAccessAPI
     {
         //后台变量
-        private KLBot _hostBot;
+        private KLBot? _hostBot;
         //消息处理Task
         private Task _processWorker;
 
@@ -70,18 +70,18 @@ namespace klbotlib.Modules
         /// </summary>
         /// <param name="msg">待判断消息</param>
         /// <returns>过滤器输出的字符串</returns>
-        public abstract string Filter(Message msg);
+        public abstract string? Filter(Message msg);
         /// <summary>
         /// 处理器(Message -> string)。模块通过这个函数处理所有(通过了过滤器的)消息。
         /// </summary>
         /// <param name="msg">待处理消息</param>
         /// <param name="filterOut">过滤器的输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
         /// <returns>用字符串表示的处理结果。如果你的模块不打算输出/回复处理结果，应返回null或空字符串</returns>
-        public abstract string Processor(Message msg, string filterOut);
+        public abstract string? Processor(Message msg, string? filterOut);
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
-        public KLBot HostBot 
+        public KLBot? HostBot 
         { 
             get { AssertAttachedStatus(true); return _hostBot; }
             private set => _hostBot = value;
@@ -119,6 +119,7 @@ namespace klbotlib.Modules
         public Module()
         {
             ModuleName = GetType().Name;
+            ModuleID = ModuleName;
             _processWorker = Task.Run(() => { });
             //绑定Enable通知
 
@@ -134,7 +135,7 @@ namespace klbotlib.Modules
         public void ModulePrint(string message, ConsoleMessageType msgType = ConsoleMessageType.Info, string prefix = "") 
             => HostBot.ObjectPrint(this, message, msgType, prefix);
         T IModuleAccessAPI.GetModule<T>(int index) => HostBot.GetModule<T>(index);
-        bool IModuleAccessAPI.TryGetFieldAndProperty<T>(string name, out T value)
+        bool IModuleAccessAPI.TryGetFieldAndProperty<T>(string name, out T value) where T : struct
         {
             value = default;
             Type type = GetType();
@@ -143,7 +144,11 @@ namespace klbotlib.Modules
             {
                 if (p.PropertyType == typeof(T))
                 {
-                    value = (T)p.GetValue(this);
+                    object? obj = p.GetValue(this);
+                    if (obj == null)
+                        return false;
+                    else
+                        value = (T)obj;
                     return true;
                 }
                 else
@@ -154,7 +159,10 @@ namespace klbotlib.Modules
             {
                 if (f.FieldType == typeof(T))
                 {
-                    value = (T)f.GetValue(this);
+                    object? obj = f.GetValue(this);
+                    if (obj == null)
+                        return false;
+                    value = (T)obj;
                     return true;
                 }
                 else
@@ -309,7 +317,7 @@ namespace klbotlib.Modules
         {
             if (!Enabled)
                 return false;
-            string filterOut = null;
+            string? filterOut = null;
             try
             {
                 filterOut = Filter(msg);
@@ -339,7 +347,7 @@ namespace klbotlib.Modules
             Type type = GetType();
             foreach (var kvp in statusDict)
             {
-                PropertyInfo property = type.GetProperty_All(kvp.Key);
+                PropertyInfo? property = type.GetProperty_All(kvp.Key);
                 if (property != null)
                 {
                     if (!property.CanWrite)
@@ -354,7 +362,9 @@ namespace klbotlib.Modules
                 }
                 else
                 {
-                    FieldInfo field = type.GetField_All(kvp.Key);
+                    if (kvp.Key == null)
+                        throw new NullReferenceException("键值对导入失败: 键中意外出现null值");
+                    FieldInfo? field = type.GetField_All(kvp.Key);
                     if (field != null)
                     {
                         if (kvp.Value == null)
@@ -371,9 +381,11 @@ namespace klbotlib.Modules
             }
         }
         // 把模块的所有模块状态(ModuleStatus)导出到字典
-        internal Dictionary<string, object> ExportStatusDict() => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
+        internal Dictionary<string, object?> ExportStatusDict() 
+            => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
         // 把模块的所有模块配置(ModuleStatus)导出到字典
-        internal Dictionary<string, object> ExportSetupDict() => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
+        internal Dictionary<string, object?> ExportSetupDict() 
+            => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
         //保存模块的状态
         internal void SaveModuleStatus(bool printInfo = true)
         {
@@ -388,9 +400,9 @@ namespace klbotlib.Modules
         /// <summary>
         /// 把模块中的所有含有attribute_type标记的成员导出到字典
         /// </summary>
-        private Dictionary<string, object> ExportMemberWithAttribute(Type attributeType)
+        private Dictionary<string, object?> ExportMemberWithAttribute(Type attributeType)
         {
-            Dictionary<string, object> propertiesDict = new Dictionary<string, object>();
+            Dictionary<string, object?> propertiesDict = new Dictionary<string, object?>();
             Type type = GetType();
             //export C# properties
             PropertyInfo[] properties = type.GetProperties_All().Where(x => x.GetCustomAttribute(attributeType) != null).ToArray();
@@ -417,11 +429,11 @@ namespace klbotlib.Modules
                 throw new Exception("此模块已经附加到宿主KLBot上，无法完成指定操作");
         }
         //处理并调用KLBot回复
-        private void ProcessMessage(Message msg, string filterOut)
+        private void ProcessMessage(Message msg, string? filterOut)
         {
             //ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务已开始...");
             AssertAttachedStatus(true); //统一Assert附加情况
-            string output;
+            string? output;
             bool hasError = false;
             try   //对处理器的异常控制
             {
@@ -439,7 +451,11 @@ namespace klbotlib.Modules
                 if (ex is WebException)
                     output = $"{ModuleID}模块表示自己不幸遭遇了网络错误：{ex.Message}";
                 else
-                    output = $"{ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
+                {
+                    output = $"{ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}";
+                    if (ex.StackTrace != null)
+                        output += "\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
+                }
             }
             if (!string.IsNullOrEmpty(output))  //处理器输出不为空时
             {
@@ -481,17 +497,17 @@ namespace klbotlib.Modules
         /// 单类型过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
         /// </summary>
         /// <param name="msg">待判断消息</param>
-        public abstract string Filter(T msg);
+        public abstract string? Filter(T msg);
         /// <summary>
         /// 处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
         /// </summary>
         /// <param name="msg">待处理消息</param>
         /// <param name="filterOut">消息经过过滤器时的输出</param>
         /// <returns>用字符串表示的处理结果</returns>
-        public abstract string Processor(T msg, string filterOut);
+        public abstract string? Processor(T msg, string? filterOut);
 
         ///<Inheritdoc/>
-        public sealed override string Filter(Message msg)
+        public sealed override string? Filter(Message msg)
         {
             if (msg.GetType() == typeof(T))
                 return Filter((T)msg);
@@ -499,9 +515,13 @@ namespace klbotlib.Modules
                 return null;
         }
         ///<Inheritdoc/>
-        public sealed override string Processor(Message msg, string filterOut)
+        public sealed override string? Processor(Message msg, string? filterOut)
         {
-            if (msg is T tmsg)
+            if (filterOut != null)
+            {
+                throw new Exception("");
+            }
+            else if (msg is T tmsg)
                 return Processor(tmsg, filterOut);
             else
             {

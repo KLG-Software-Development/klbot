@@ -22,7 +22,7 @@ public class ResetModule : SingleTypeModule<MessagePlain>
     public override string HelpInfo => "@机器人并：\n发送“day?”可以查询数据；发送“reset”或“day0”可以重置数据";
 
     /// <inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         if (msg.ContainsTargetID(HostBot.SelfID))
         {
@@ -38,7 +38,7 @@ public class ResetModule : SingleTypeModule<MessagePlain>
             return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {

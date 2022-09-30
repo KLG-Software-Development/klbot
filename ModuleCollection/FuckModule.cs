@@ -10,9 +10,9 @@ public class FuckModule : SingleTypeModule<MessagePlain>
 {
     private readonly StringBuilder _sb = new();
     [ModuleSetup]
-    private readonly Regex _pattern;
+    private readonly Regex _pattern = new("default_pattern");
     [ModuleSetup]
-    private readonly string[] _sub, _you, _v, _human, _organ, _subfix, _adjOfOrgan, _adv, _connector, _combine, _stuff, _status;
+    private readonly string[]? _sub, _you, _v, _human, _organ, _subfix, _adjOfOrgan, _adv, _connector, _combine, _stuff, _status;
 
     // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
     [ModuleStatus]
@@ -27,7 +27,7 @@ public class FuckModule : SingleTypeModule<MessagePlain>
     [ModuleStatus]
     private int MaxLength { get; set; } = 20;
 
-    private static string Pick(string[] a) => a[RandomNumberGenerator.GetInt32(a.Length)];
+    private static string Pick(string[]? a) => a[RandomNumberGenerator.GetInt32(a.Length)];
     private string GenerateFuck()
     {
         if (IsCascade)
@@ -52,14 +52,14 @@ public class FuckModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "嘴臭模块";
     /// <inheritdoc/>
-    public sealed override string Filter(MessagePlain msg)
+    public sealed override string? Filter(MessagePlain msg)
     {
         return _pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfID))
             ? "ok"
             : null;
     }
     /// <inheritdoc/>
-    public sealed override string Processor(MessagePlain msg, string _)
+    public sealed override string? Processor(MessagePlain msg, string? _)
         => GenerateFuck();
 
     /// <summary>

@@ -66,23 +66,23 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     private readonly Dictionary<int, double> _generalizedHarmonicNumber = new();
 
     [ModuleSetup]
-    private string _baseUrl;
+    private string _baseUrl = string.Empty;
     [ModuleSetup]
-    private string _appID; //APP ID
+    private string _appID = string.Empty; //APP ID
     [ModuleSetup]
-    private string _key;   //APP KEY
+    private string _key = string.Empty;   //APP KEY
     [ModuleStatus]
-    private string _srcLang;       //源语言
+    private string _srcLang = string.Empty;       //源语言
     [ModuleStatus]
-    private string _dstLang;         //目标语言
+    private string _dstLang = string.Empty;         //目标语言
     [ModuleSetup]
     private double _power = -0.5;     //幂
     [ModuleSetup]
     private int _reflectNum = 3;     //反射次数
     [ModuleSetup]
-    private readonly List<string>[] _patterns;  //句式模板
+    private readonly List<string>[] _patterns = new List<string>[0];  //句式模板
     [ModuleSetup]
-    private readonly Dictionary<string, string[]> _dicOf;   //词性字典
+    private readonly Dictionary<string, string[]> _dicOf = new();   //词性字典
 
     /// <inheritdoc/>
     public override string FriendlyName => "僵尸文学模块";
@@ -90,7 +90,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public override string HelpInfo => "使用方法：@机器人并发送“生成僵尸文学”";
 
     /// <inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
         if (msg.TargetID.Contains(HostBot.SelfID) && text == "生成僵尸文学")
@@ -99,7 +99,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
             return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
@@ -116,7 +116,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// <returns>僵尸文学文本</returns>
     public string GenerateZombieeeText()
     {
-        if (!TryGenerate(out string message, out string result))
+        if (!TryGenerate(out string message, out string? result) || result == null)
             return $"生成失败：{message}";
         else
             return result;
@@ -128,7 +128,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// <param name="message">错误信息</param>
     /// <param name="result">翻译结果。若翻译失败内容为null</param>
     /// <returns>翻译是否成功</returns>
-    public bool TryTranslate(string query, out string message, out string result)
+    public bool TryTranslate(string query, out string message, out string? result)
         => TryTranslate(query, _srcLang, _dstLang, out message, out result);
     /// <summary>
     /// 尝试用给定的源语言和当前设定的目标语言翻译指定内容
@@ -138,7 +138,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// <param name="message">错误信息</param>
     /// <param name="result">翻译结果。若翻译失败内容为null</param>
     /// <returns>翻译是否成功</returns>
-    public bool TryTranslate(string query, string srcLang, out string message, out string result)
+    public bool TryTranslate(string query, string srcLang, out string message, out string? result)
         => TryTranslate(query, srcLang, _dstLang, out message, out result);
     /// <summary>
     /// 尝试生成一段僵尸文学
@@ -146,7 +146,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// <param name="message">错误信息</param>
     /// <param name="result">生成结果</param>
     /// <returns>生成是否成功</returns>
-    public bool TryGenerate(out string message, out string result)
+    public bool TryGenerate(out string message, out string? result)
     {
         string seed = GenerateSentences(_ro.Next(1, 7));
         ModulePrint($"反射种子：{seed}");
@@ -159,7 +159,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// <param name="message">错误信息</param>
     /// <param name="result">生成结果</param>
     /// <returns>生成是否成功</returns>
-    public bool TryFastGenerate(out string message, out string result)
+    public bool TryFastGenerate(out string message, out string? result)
     {
         string seed = GenerateSingleSentence();
         ModulePrint($"反射种子：{seed}");
@@ -168,7 +168,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
 
     private string GetRequestUrl(string query, string srcLang, string dstLang, string salt, string sign)
         => $"{_baseUrl}?q={Uri.EscapeDataString(query)}&from={srcLang}&to={dstLang}&appid={_appID}&salt={salt}&sign={sign}";
-    private bool TryTranslate(string query, string srcLang, string dstLang, out string message, out string result)
+    private bool TryTranslate(string query, string srcLang, string dstLang, out string message, out string? result)
     {
         try
         {
@@ -210,9 +210,9 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
             return false;
         }
     }
-    private bool TryReflect(string query, out string message, out string result)
+    private bool TryReflect(string query, out string message, out string? result)
     {
-        if (!TryTranslate(query, _srcLang, _dstLang, out message, out string dst1))
+        if (!TryTranslate(query, _srcLang, _dstLang, out message, out string? dst1) || dst1 == null)
         {
             result = null;
             return false;
@@ -222,7 +222,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
             return false;
         return true;
     }
-    private bool TryReflect(int reflectNum, string query, out string message, out string result)
+    private bool TryReflect(int reflectNum, string query, out string message, out string? result)
     {
         result = query;
         for (int n = 0; n < reflectNum; n++)

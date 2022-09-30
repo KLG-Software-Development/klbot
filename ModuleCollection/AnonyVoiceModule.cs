@@ -59,7 +59,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         }
     }
     /// <inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
         if (msg.Context is MessageContext.Temp or MessageContext.Private)
@@ -81,7 +81,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
@@ -97,7 +97,9 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                 Messaging.ReplyMessage(msg, "正在薅羊毛...");
                 string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={msg.Text.Trim()}";
                 string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
-                JReply reply = JsonConvert.DeserializeObject<JReply>(json);
+                JReply? reply = JsonConvert.DeserializeObject<JReply>(json);
+                if (reply == null)
+                    throw new JsonException("返回结果解析失败：产生了null结果");
                 if (reply.errno != 0)
                     return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
                 string mpeg_b64 = reply.data[_prefix.Length..];
@@ -109,7 +111,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                 return "已发送";
             case "set tone":
                 string tone = msg.Text.Trim()[5..];
-                if (!_perByName.TryGetValue(tone, out string per))
+                if (!_perByName.TryGetValue(tone, out string? per))
                     return "不支持这个音色";
                 _person = per;
                 return $"音色已设置为{_person}";
@@ -127,7 +129,9 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     {
         string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={text.Trim()}";
         string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
-        JReply reply = JsonConvert.DeserializeObject<JReply>(json);
+        JReply? reply = JsonConvert.DeserializeObject<JReply>(json);
+        if (reply == null)
+            throw new JsonException("返回结果解析失败：产生了null结果");
         if (reply.errno != 0)
             return $"匿名语音模块TTS API错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
         string mpeg_b64 = reply.data[_prefix.Length..];
@@ -148,7 +152,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
 
     }
 
-    private class JReply { public int errno; public string msg; public string data; }
+    private class JReply { public int errno; public string? msg; public string? data; }
     private enum UserStatus
     {
         Idle = 1, ReadyToSendVoice = 2

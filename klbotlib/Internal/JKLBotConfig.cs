@@ -59,7 +59,7 @@ namespace klbotlib
                     nullFieldName = $"{field.Name}";
                     return true;
                 }
-                else if (((Config)field.GetValue(this)).HasNull(out nullFieldName))
+                else if (((Config?)field.GetValue(this)).HasNull(out nullFieldName))
                     return true;
             }
             nullFieldName = string.Empty;
@@ -77,7 +77,7 @@ namespace klbotlib
                     nullFieldName = $"{field.Name}";
                     return true;
                 }
-                else if (((Config)field.GetValue(this)).HasNull(out nullFieldName))
+                else if (((Config?)field.GetValue(this)).HasNull(out nullFieldName))
                     return true;
             }
             return false;

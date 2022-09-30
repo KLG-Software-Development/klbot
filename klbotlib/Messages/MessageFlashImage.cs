@@ -62,7 +62,7 @@ public class MessageFlashImage : MessageCommon
 
     internal override void CopyReferenceTypeMember(Message dstMsg)
     {
-        MessageFlashImage dst = dstMsg as MessageFlashImage;
+        MessageFlashImage dst = (MessageFlashImage)dstMsg;
         base.CopyReferenceTypeMember(dst);
         dst.UrlList = new();
         dst.UrlList.AddRange(UrlList);

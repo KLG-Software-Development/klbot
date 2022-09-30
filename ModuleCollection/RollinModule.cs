@@ -26,7 +26,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
     public override bool UseSignature => false;
     public override string HelpInfo => "发起快速抽奖：发送“抽奖”并@机器人和抽奖包括的群成员，发起快速抽奖。抽奖结果直接公布\n\n发起自愿抽奖：@机器人并发送“抽奖”，可以发起一次自愿抽奖；接下来@机器人并发送“加入”的人员可以参与抽奖；人员加入完成后，发起人@机器人并发送“开始抽奖”可以启动抽奖并公示抽奖结果";
 
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
         if (text == "抽奖" && msg.ContainsTargetID(HostBot.SelfID))
@@ -44,7 +44,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
             return null;
     }
 
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {

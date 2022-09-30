@@ -11,7 +11,7 @@ namespace klbotlib
         /// <summary>
         /// 最近一次处理消息的模块
         /// </summary>
-        public Module LastUsedModule { get; internal set; }
+        public Module? LastUsedModule { get; internal set; }
         /// <summary>
         /// KLBot初始化后，成功进行查询的总次数
         /// </summary>
@@ -27,7 +27,7 @@ namespace klbotlib
         /// <summary>
         /// 最近一次KLBot异常的调用栈
         /// </summary>
-        public Exception LastException { get; internal set; }
+        public Exception? LastException { get; internal set; }
         /// <summary>
         /// 获取KLBot的统计信息
         /// </summary>

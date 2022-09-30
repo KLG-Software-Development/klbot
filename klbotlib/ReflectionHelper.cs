@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using klbotlib.Exceptions;
+using klbotlib.Extensions;
+using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
 using System.Reflection;
@@ -33,7 +35,7 @@ namespace klbotlib.Reflection
                         break;
                     }
                 }
-                if (!is_found)
+                if (!is_found || JsonConvert_DeserializeObject_T == null)
                     throw new Exception("意外遇到反射异常：无法找到相应的方法。Newtonsoft.Json的API是否有所更改？");
             }
         }
@@ -57,13 +59,21 @@ namespace klbotlib.Reflection
                 original_type == typeof(float))
                 return Convert.ChangeType(value, original_type);
             else if (original_type == typeof(TimeSpan))
-                return _timespanConverter.ConvertFromString(value.ToString());
+            {
+                string? valueString = value.ToString();
+                if (valueString == null)
+                    throw new NullReferenceException("目标（非常奇怪地）无法转换为字符串");
+                TimeSpan? result = (TimeSpan?)_timespanConverter.ConvertFromString(valueString);
+                if (result == null)
+                    throw new InvalidOperationException("无法将目标转换为TimeSpan类型");
+                return result;
+            }
             else
             {
                 MethodInfo method = PrefetchMethods.JsonConvert_DeserializeObject_T;
                 var deserialize = method.MakeGenericMethod(original_type);
-                string json = value.ToString();
-                object output = null;
+                string json = value.ToNotNullString();
+                object? output = null;
                 try    //尝试用Newtonsoft.Json自动转换
                 {
                     output = deserialize.Invoke(null, new object[] { json });
@@ -72,6 +82,8 @@ namespace klbotlib.Reflection
                 {
                     throw new Exception($"RestoreType()遇到无法自动转换的类型。需要向框架中手动添加对\"{original_type.FullName}\"类型的转换支持");
                 }
+                if (output == null)
+                    throw new JsonDeserializationException("RestoreType()遇到无法自动转换的类型。需要向框架中手动添加对\"{original_type.FullName}\"类型的转换支持", json);
                 return output;
             }
         }

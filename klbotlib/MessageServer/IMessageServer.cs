@@ -34,7 +34,7 @@ public interface IMessageServer
     /// <param name="userId">用户ID</param>
     /// <param name="groupId">群组ID</param>
     /// <param name="content">待编译MsgMarker文本</param>
-    Exception SendMessage(Module module, MessageContext context, long userId, long groupId, string content);
+    Exception? SendMessage(Module module, MessageContext context, long userId, long groupId, string content);
     /// <summary>
     /// 上传群文件接口
     /// </summary>
@@ -43,5 +43,5 @@ public interface IMessageServer
     /// <param name="uploadPath">上传的目标路径</param>
     /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
     [Obsolete]
-    Exception UploadFile(Module module, long groupId, string uploadPath, string filePath);
+    Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath);
 }

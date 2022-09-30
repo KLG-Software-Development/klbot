@@ -20,7 +20,7 @@ public class FlashGambleModule : Module
     public override bool UseSignature => false;
 
     /// <inheritdoc/>
-    public override string Filter(Message msg)
+    public override string? Filter(Message msg)
     {
         if (msg is MessageRecall)
             return "recall";
@@ -30,18 +30,18 @@ public class FlashGambleModule : Module
             return null;
     }
     /// <inheritdoc/>
-    public override string Processor(Message msg, string filterOut)
+    public override string? Processor(Message msg, string? filterOut)
     {
         if (_ro.Next(100) < _prob)
         {
             switch (filterOut)
             {
                 case "recall":
-                    MessageRecall recall = msg as MessageRecall;
+                    MessageRecall recall = (MessageRecall)msg;
                     long msgId = recall.MessageID;
                     long operatorId = recall.OperatorID;
-                    MessageCommon origin = Messaging.GetMessageFromID(msgId) as MessageCommon;
-                    if (origin is null)
+                    MessageCommon origin = (MessageCommon)Messaging.GetMessageFromID(msgId);
+                    if (origin == null)
                         return null;
                     string info;
                     if (operatorId == origin.SenderID)

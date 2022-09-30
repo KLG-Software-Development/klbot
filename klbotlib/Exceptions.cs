@@ -59,6 +59,6 @@ namespace klbotlib.Exceptions
     }
     internal class MiraiException : Exception
     {
-        public MiraiException(int code, string msg) : base($"Mirai服务器错误[{code}]：{msg}") { }
+        public MiraiException(int code, string? msg) : base($"Mirai服务器错误[{code}]：{msg}") { }
     }
 }

@@ -3,7 +3,7 @@
     internal class JMiraiGroup
     {
         public int id;
-        public string name;
-        public string permission;
+        public string? name;
+        public string? permission;
     }
 }

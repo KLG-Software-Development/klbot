@@ -14,6 +14,7 @@
     <Configurations>Debug;Release;Ref_Only</Configurations>
     <Platforms>AnyCPU;x64</Platforms>
     <TieredCompilation>True</TieredCompilation>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   
   <PropertyGroup>

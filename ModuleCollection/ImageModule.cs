@@ -64,7 +64,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         _query["rn"]= "60";
     }
     /// <inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
         return text.EndsWith("图来") && text.Length != 2
@@ -74,9 +74,9 @@ public class ImageModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
-        string url, text = msg.Text.Trim();
+        string? url, text = msg.Text.Trim();
         string word = filterOut switch
         {
             "X图来" => text[..(msg.Text.Length - 2)],
@@ -100,7 +100,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         string json = FetchData(pn, word);
         ModulePrint($"成功获取json，pn={pn}");
         _sw.Restart();
-        JResult result = JsonConvert.DeserializeObject<JResult>(json);
+        JResult? result = JsonConvert.DeserializeObject<JResult>(json);
         //更新字典
         if (!isCached)
         {
@@ -109,7 +109,12 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         }
         else
             _listNumCache[word] = result.listNum;
-        url = result.data[_ro.Next(result.data.Length)].middleURL;
+        if (json == null || result.data == null)
+            throw new JsonException("返回结果解析失败：产生了null结果");
+        int index = _ro.Next(result.data.Length);
+        url = result.data[index].middleURL;
+        if (url == null)
+            throw new JsonException("返回结果解析失败：产生了null结果"); ;
         _sw.Stop();
         _lastParseTime = _sw.Elapsed.ToMsString();
         if (string.IsNullOrEmpty(url))
@@ -130,6 +135,6 @@ not_found:
         return _client.GetAsync($"{_url}?{_query}").Result.Content.ReadAsStringAsync().Result;
     }
 
-    private class JResult { public int listNum; public JImage[] data; }
-    private class JImage { public string middleURL; }
+    private class JResult { public int listNum; public JImage[]? data; }
+    private class JImage { public string? middleURL; }
 }

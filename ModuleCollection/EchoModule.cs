@@ -15,7 +15,7 @@ public class EchoModule : Module
         return "in";
     }
     /// <inheritdoc/>
-    public override string Processor(Message msg, string filterOut)
+    public override string Processor(Message msg, string? filterOut)
     {
         return msg.ToString();
     }

@@ -20,7 +20,7 @@ public abstract class Message
     /// <returns></returns>
     public Message DeepCopy()
     {
-        Message copy = MemberwiseClone() as Message;
+        Message copy = (Message)MemberwiseClone();
         CopyReferenceTypeMember(copy);
         return copy;
     }

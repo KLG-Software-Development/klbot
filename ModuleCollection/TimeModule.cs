@@ -18,7 +18,7 @@ public class TimeModule : SingleTypeModule<MessagePlain>
     private int _timeZone = 8; //默认是UTC+8
 
     /// <inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         return msg.Text == "报时"
             ? "报时"
@@ -28,7 +28,7 @@ public class TimeModule : SingleTypeModule<MessagePlain>
     }
 
     /// <inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {

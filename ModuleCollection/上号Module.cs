@@ -34,7 +34,7 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     /// <summary>
     /// 过滤器：处理任何消息
     /// </summary>
-    public sealed override string Filter(MessagePlain msg)
+    public sealed override string? Filter(MessagePlain msg)
     {
         string msgText = msg.Text.Trim();
         foreach (string keyword in _downgradedMsgKeywords)
@@ -42,7 +42,7 @@ public class 上号Module : SingleTypeModule<MessagePlain>
             if (msgText.StartsWith(keyword))
                 return null;
         }
-        string output = null;
+        string? output = null;
         if (Is上号(msgText) && !Is上号(_lastMsg))
             output = "上号";
         else if (msgText.Contains("蛤儿") && DateTime.Now - _lastHal > _coolDownTime)
@@ -61,7 +61,7 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     /// 处理器：内容包含上号且不长于五个字符，则复读内容；
     /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
     /// </summary>
-    public sealed override string Processor(MessagePlain msg, string filterOut)
+    public sealed override string? Processor(MessagePlain msg, string? filterOut)
     {
         string msgText = msg.Text.Trim();
         switch (filterOut)
@@ -70,7 +70,7 @@ public class 上号Module : SingleTypeModule<MessagePlain>
             case "跟风":
                 return msgText;
             case "蛤儿":
-                if (!ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate(out _, out string salt))
+                if (!ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate(out _, out string? salt))
                     return _halReply;
                 else
                     return salt + _halReply;

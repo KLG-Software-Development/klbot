@@ -21,9 +21,9 @@ namespace klbotlib.MessageServer.Mirai
         internal static Message BuildMessage(JMiraiMessagePackage msgPackage)
         {
             var type = CalcMessageType(msgPackage, out var targets);
-            Message ret = null;
+            Message? ret = null;
 
-            MessageCommon retCommon = null;
+            MessageCommon? retCommon = null;
             if (type == typeof(MessagePlain))
                 retCommon = BuildPlain(msgPackage);
             else if (type == typeof(MessageImage))
@@ -47,6 +47,8 @@ namespace klbotlib.MessageServer.Mirai
                 ret = retCommon;
             }
             //加工合适的上下文和ID
+            if (ret == null)
+                throw new NullReferenceException("消息对象构造错误：处理结束时意外遭遇null值");
             RefineContext(msgPackage, ret);
             return ret;
         }
@@ -58,17 +60,20 @@ namespace klbotlib.MessageServer.Mirai
             targets = new List<long>();
             //(Issue#22) 判断是否是普通消息 i.e.群聊消息、临时会话消息、私聊消息中的一种
             //如果是，则正常走统计构建流程
-            if (_commonMessageTypes.Contains(msgPackage.type))
+            if (msgPackage.type != null && _commonMessageTypes.Contains(msgPackage.type))
             {
                 //忽略所有不在映射表里的消息
                 int[] count = new int[16];
                 //遍历消息链，统计每种类型子消息的数量。如果遇到At，添加目标ID到输出
-                foreach (var sub_msg in msgPackage.messageChain)
-                    if (_indexOf.ContainsKey(sub_msg.type))
-                        count[_indexOf[sub_msg.type]]++;
-                    else if (sub_msg.type == "At")
-                        targets.Add(sub_msg.target);
-
+                foreach (JMiraiMessage subMsg in msgPackage.messageChain)
+                {
+                    if (subMsg == null || subMsg.type == null)
+                        throw new Exception("意外遭遇null");
+                    else if (_indexOf.ContainsKey(subMsg.type))
+                        count[_indexOf[subMsg.type]]++;
+                    else if (subMsg.type == "At")
+                        targets.Add(subMsg.target);
+                }
                 bool hasPlain = count[_indexOf["Plain"]] != 0;
                 bool hasImg = count[_indexOf["Image"]] != 0;
                 bool hasVoice = count[_indexOf["Voice"]] != 0;
@@ -130,7 +135,8 @@ namespace klbotlib.MessageServer.Mirai
             MessagePlain ret;
             ret = new MessagePlain(msgPackage.sender.id, msgPackage.sender.GroupId);
             foreach (JMiraiMessage subMsg in msgPackage.messageChain)
-                if (subMsg.type == "Plain")
+            {
+                if (subMsg.type == "Plain" && subMsg.text != null)
                 {
                     if (isAfterAt)           //意味着之前还有别的Plain消息，而且上一条子消息是At消息。用Substring()处理@后面无缘无故冒出来的傻逼空格
                     {
@@ -144,6 +150,7 @@ namespace klbotlib.MessageServer.Mirai
                     ret.AppendText(@$"{{\face:{subMsg.name}}}");
                 else if (subMsg.type == "At")
                     isAfterAt = true;
+            }
             return ret;
         }
         private static MessageImage BuildImage(JMiraiMessagePackage msgPackage)
@@ -151,7 +158,7 @@ namespace klbotlib.MessageServer.Mirai
             MessageImage ret = new MessageImage(msgPackage.sender.id, msgPackage.sender.GroupId);
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
-                if (subMsg.type == "Image")
+                if (subMsg.type == "Image" && subMsg.url != null)
                     ret.UrlList.Add(subMsg.url);
             return ret;
         }
@@ -160,7 +167,7 @@ namespace klbotlib.MessageServer.Mirai
             MessageFlashImage ret = new MessageFlashImage(msgPackage.sender.id, msgPackage.sender.GroupId);
             //由于作图像消息处理，只关心图像消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
-                if (subMsg.type == "FlashImage")
+                if (subMsg.type == "FlashImage" && subMsg.url != null)
                     ret.UrlList.Add(subMsg.url);
             return ret;
         }
@@ -169,7 +176,7 @@ namespace klbotlib.MessageServer.Mirai
             MessageVoice ret = new MessageVoice(msgPackage.sender.id, msgPackage.sender.GroupId);
             //只关心音频子消息，所以一旦找到Url直接返回
             foreach (var subMsg in msgPackage.messageChain)
-                if (subMsg.type == "Voice")
+                if (subMsg.type == "Voice" && subMsg.url != null)
                 {
                     ret.Url = subMsg.url;
                     return ret;

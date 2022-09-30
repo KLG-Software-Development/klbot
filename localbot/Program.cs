@@ -11,7 +11,7 @@ namespace localbot;
 
 public class Program
 {
-    private static readonly List<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
+    private static readonly HashSet<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
     private static readonly DebugMessageServer _localServer = new(PrintInfo, PrintInfo, PrintInfo); //调试用消息服务器
     private static long _userId = 2044164212;    //调试时发出的所有消息的用户ID
     private static long _groupId = 7355608;   //调试时发出的所有消息的群组ID
@@ -28,7 +28,10 @@ start:
         KLBot lcb = null;
         try
         {
-            lcb = new KLBot(_localServer, Assembly.GetAssembly(typeof(ImageModule)), _debugTargetGroupID);
+            Assembly? asm = Assembly.GetAssembly(typeof(ImageModule));
+            if (asm == null)
+                throw new NullReferenceException("无法获取模块集合所在的程序集");
+            lcb = new KLBot(_localServer, asm, _debugTargetGroupID);
             lcb.AddModule(new ZombieeeModule());
             //lcb.AddModule(new RollinModule());
             //lcb.AddModule(new CollapseModule());

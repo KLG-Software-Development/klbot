@@ -15,7 +15,7 @@ namespace klbotlib.Modules
         [ModuleStatus]
         private Common1 common = new();
         public override bool UseSignature => false;
-        public override string Filter(MessagePlain msg)
+        public override string? Filter(MessagePlain msg)
         {
             long x = msg.SenderID;
             if (x == 2044164212)
@@ -37,7 +37,7 @@ namespace klbotlib.Modules
             else
                 return null;
         }
-        public override string Processor(MessagePlain msg, string filter_out)
+        public override string? Processor(MessagePlain msg, string? filter_out)
         {
             if (filter_out == "yes")
                 return "welcome KXGG!";

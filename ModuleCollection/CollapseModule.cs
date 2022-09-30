@@ -36,7 +36,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     ///<inheritdoc/>
     public override string HelpInfo => "@机器人并发送\"塌 [问题]\"，可直接获取结果；\n发送\"过程 [问题]\"，可获取可能的计算步骤。";
     ///<inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         if (!msg.TargetID.Contains(HostBot.SelfID))
             return null;
@@ -48,7 +48,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     ///<inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
@@ -69,17 +69,19 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     private static string GetResultUrl(string input)
         => $"https://api.wolframalpha.com/v2/query.jsp?appid=6682H9-A87PYX7R9A&input={Uri.EscapeDataString(input)}&format=image";
 
-    private bool TryGetResultRoot(string xml, out XmlNode queryresult)
+    private bool TryGetResultRoot(string xml, out XmlNode? queryresult)
     {
         _xmlLoader.LoadXml(xml);
         queryresult = _xmlLoader.GetElementsByTagName("queryresult")[0];
+        if (queryresult == null)
+            return false;
         //查询失败
         return queryresult.Attributes["success"].Value == "true";
     }
     //尝试获取primary pod
-    private static bool TryGetPrimaryPod(XmlNodeList childs, out XmlNode output)
+    private static bool TryGetPrimaryPod(XmlNodeList childs, out XmlNode? output)
     {
-        XmlNode first_pod = null;
+        XmlNode? first_pod = null;
         output = null;
         //获取primary pod
         foreach (XmlNode child in childs)
@@ -111,14 +113,14 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     //XML解析：答案
     private string ProcessXML(MessageCommon msg, string xml)
     {
-        if (!TryGetResultRoot(xml, out XmlNode queryresult))
+        if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";
         //查询成功 
         var childs = queryresult.ChildNodes;
-        if (!TryGetPrimaryPod(childs, out XmlNode results_pod))
+        if (!TryGetPrimaryPod(childs, out XmlNode? resultsPod))
             return "Wolfram Alpha未提供主结果，无法计算";
         //返回图片
-        var subpod = results_pod["subpod"];
+        var subpod = resultsPod["subpod"];
         if (subpod == null)
             return "塌了！结果无法正确表示";
         var img = subpod["img"];
@@ -131,39 +133,39 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     //XML解析：中间过程
     private string ProcessXMLStepByStep(MessageCommon msg, string xml, string input)
     {
-        if (!TryGetResultRoot(xml, out XmlNode queryresult))
+        if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";
         //查询成功 
         var childs = queryresult.ChildNodes;
-        if (!TryGetPrimaryPod(childs, out XmlNode primary_pod))
+        if (!TryGetPrimaryPod(childs, out XmlNode? primaryPod) || primaryPod == null)
             return "Wolfram Alpha未提供主结果，无法计算";
-        string result_img_url = primary_pod.ChildNodes[1].ChildNodes[1].Attributes["src"].Value;
+        string result_img_url = primaryPod.ChildNodes[1].ChildNodes[1].Attributes["src"].Value;
         Messaging.ReplyMessage(msg, $@"\image:\url:{result_img_url}");
         //检查primary result是否可显示过程
-        var states = primary_pod["states"];
-        string pod_state = null;
+        var states = primaryPod["states"];
+        string? podState = null;
         if (states != null && states.Attributes["count"].Value != "0")
         {
             foreach (XmlNode state in states.ChildNodes)
             {
                 if (state.Attributes != null && state.Attributes["name"].Value == "Step-by-step solution")
                 {
-                    pod_state = state.Attributes["input"].Value;
+                    podState = state.Attributes["input"].Value;
                     break;
                 }
             }
         }
         //第二次查询
-        if (pod_state != null)
+        if (podState != null)
         {
-            xml = _helper.GetStringAsync(GetStepByStepUrl(input, pod_state)).Result;
+            xml = _helper.GetStringAsync(GetStepByStepUrl(input, podState)).Result;
             if (!TryGetResultRoot(xml, out queryresult))
                 return "塌了！查询失败，内容可能不合法";
             //查询成功 
             childs = queryresult.ChildNodes;
-            if (!TryGetPrimaryPod(childs, out primary_pod))
+            if (!TryGetPrimaryPod(childs, out primaryPod))
                 return "Wolfram Alpha未提供主结果，无法计算";
-            if (!primary_pod.TryGetFirstChildNodeByAttribute("title", "Possible intermediate steps", out XmlNode step_pod))
+            if (primaryPod == null || !primaryPod.TryGetFirstChildNodeByAttribute("title", "Possible intermediate steps", out XmlNode? step_pod))
                 return "无法显示过程：不存在可用的中间过程";
             result_img_url = step_pod["img"].Attributes["src"].Value;
             Messaging.ReplyMessage(msg, $@"\image:\url:{result_img_url}");

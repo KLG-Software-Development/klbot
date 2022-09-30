@@ -1,4 +1,5 @@
 ﻿using klbotlib.Modules;
+using System;
 
 namespace klbotlib
 {
@@ -117,6 +118,6 @@ namespace klbotlib
         /// <param name="name">字段名称</param>
         /// <param name="value">输出字段的值</param>
         /// <returns>是否获取成功</returns>
-        bool TryGetFieldAndProperty<T>(string name, out T value);
+        bool TryGetFieldAndProperty<T>(string name, out T value) where T : struct;
     }
 }

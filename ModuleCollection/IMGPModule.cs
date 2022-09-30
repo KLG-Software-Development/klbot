@@ -75,7 +75,13 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     private static readonly HttpHelper _httpHelper = new();
     private static readonly ImageHelper _imgHelper = new();
     private static readonly StringBuilder _sb = new();  //caller clear
-    private static string ErrorString(int code, string msg) => $"错误[{code}]：{msg}";
+    private static string ErrorString(int code, string? msg)
+    {
+        if (msg == null)
+            return $"错误[{code}]：(无错误信息)";
+        else
+            return $"错误[{code}]：{msg}";
+    }
     private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
     private bool TryMergeWithBase64(MessageImagePlain msg, out string result)
     {
@@ -86,9 +92,9 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         JMergeRequest request = new(new(b642, "BASE64"), new(b641, "BASE64"), "2.0");
         //string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
         string json = _httpHelper.PostJsonAsync(_postUrl + queryString, request).Result;
-        JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+        JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(json);
         //错误检查
-        if (reply.errno != 0)
+        if (reply == null || reply.errno != 0)
         {
             result = ErrorString(reply.errno, reply.msg);
             return false;
@@ -111,9 +117,9 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         string url1 = JsonConvert.ToString(msg.UrlList[1]);
         string body = "{\"image_template\":{\"image\":" + url0 + ",\"image_type\":\"URL\"},\"image_target\":{\"image\":" + url1 + ",\"image_type\":\"URL\"},\"version\":\"2.0\"}";
         string json = _httpHelper.PostStringAsync(_postUrl + queryString, body).Result;
-        JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+        JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(json);
         //错误检查
-        if (reply.errno != 0)
+        if (reply == null || reply.errno != 0)
         {
             result = ErrorString(reply.errno, reply.msg);
             return false;
@@ -131,7 +137,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     }
 
     /// <inheritdoc/>
-    public override string Filter(MessageImagePlain msg)
+    public override string? Filter(MessageImagePlain msg)
     {
         if (msg.ContainsTargetID(HostBot.SelfID))  //图文消息
         {
@@ -154,7 +160,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override string Processor(MessageImagePlain msg, string filterOut)
+    public override string? Processor(MessageImagePlain msg, string? filterOut)
     {
         _sb.Clear();
         //之后都是图文消息，统一转换类型为MessageImagePlain
@@ -165,7 +171,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 _httpHelper.Headers.Clear();
                 _httpHelper.Headers.Add("Referer", "https://ai.baidu.com/tech/face/merge");
                 Messaging.ReplyMessage(msg, "转换中...");
-                bool isSuccess = TryMergeWithBase64(msg, out string result);
+                bool isSuccess = TryMergeWithBase64(msg, out string? result);
                 if (!isSuccess)
                 {
                     return $"使用BASE64合成失败：\n{result}";
@@ -189,9 +195,9 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 if (type == "landmark")
                 {
                     //只有一个result对象，用JReplySingle
-                    JReplySingle reply = JsonConvert.DeserializeObject<JReplySingle>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
+                    JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                     //错误检查
-                    if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
+                    if (reply == null || reply.data == null || reply.data.result == null || reply.data.result.landmark == null || reply.msg.Trim().ToLower() != "success")
                         return ErrorString(reply.errno, reply.msg);
                     string landmark = reply.data.result.landmark;
                     return string.IsNullOrEmpty(landmark)
@@ -201,7 +207,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 else
                 {
                     string json = _httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result;
-                    JReplyMulti reply = JsonConvert.DeserializeObject<JReplyMulti>(json);
+                    JReplyMulti? reply = JsonConvert.DeserializeObject<JReplyMulti>(json);
                     if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                         return ErrorString(reply.errno, reply.msg);
                     if (type == "advanced_general")
@@ -214,7 +220,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return _sb.ToString();
             case "face": //人脸评分
                 body = $"image&image_url={escUrl}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
-                JFaceReply replyFace = JsonConvert.DeserializeObject<JFaceReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
+                JFaceReply? replyFace = JsonConvert.DeserializeObject<JFaceReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                 if (replyFace.errno != 0 || replyFace.msg.Trim().ToLower() != "success")
                     return ErrorString(replyFace.errno, replyFace.msg);
                 if (replyFace.data.result.face_num == 0)
@@ -239,9 +245,9 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 type = _typeByWordProc[word];
                 body = $"image&image_url={escUrl}&type={type}&show=true";
                 //HostBot.ReplyPlainMessage(this, msg, "处理中...");
-                JProcReply replyProc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
+                JProcReply? replyProc = JsonConvert.DeserializeObject<JProcReply>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                 //错误检查
-                if (replyProc.errno != 0 || replyProc.msg.Trim().ToLower() != "success")
+                if (replyProc == null || replyProc.data == null|| replyProc.data.image == null || replyProc.errno != 0 || replyProc.msg.Trim().ToLower() != "success")
                     return ErrorString(replyProc.errno, replyProc.msg);
                 b64 = replyProc.data.image;
                 return $@"\image:\base64:{b64}";
@@ -250,22 +256,22 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         }
     }
 
-    private class JReply { public int errno; public string msg; }
-    private class JReplyMulti : JReply { public JDataMulti data; }
-    private class JDataMulti { public List<JResultMulti> result; }
-    private class JResultMulti { public float score; public float probability; public string name; public string keyword; }
+    private class JReply { public int errno; public string? msg; }
+    private class JReplyMulti : JReply { public JDataMulti? data; }
+    private class JDataMulti { public List<JResultMulti>? result; }
+    private class JResultMulti { public float score; public float probability; public string? name; public string? keyword; }
 
-    private class JReplySingle : JReply { public JDataSingle data; }
-    private class JDataSingle { public int error_code; public string error_msg; public JResultSingle result; }   //error_code和error_msg：合成
-    private class JResultSingle { public string landmark; public string merge_image; }   //merge_image：合成；landmark：地标
+    private class JReplySingle : JReply { public JDataSingle? data; }
+    private class JDataSingle { public int error_code; public string? error_msg; public JResultSingle? result; }   //error_code和error_msg：合成
+    private class JResultSingle { public string? landmark; public string? merge_image; }   //merge_image：合成；landmark：地标
 
-    private class JFaceReply : JReply { public JFaceData data; }
-    private class JFaceData { public int errno; public JFaceResult result; }
-    private class JFaceResult { public int face_num; public JFace[] face_list; }
+    private class JFaceReply : JReply { public JFaceData? data; }
+    private class JFaceData { public int errno; public JFaceResult? result; }
+    private class JFaceResult { public int face_num; public JFace[]? face_list; }
     private class JFace { public int age; public float beauty; }
 
-    private class JProcReply : JReply { public JProcData data; }
-    private class JProcData { public string image; }
+    private class JProcReply : JReply { public JProcData? data; }
+    private class JProcData { public string? image; }
 
     private record JMergeRequest (JImage image_target, JImage image_template, string version);
     private record JImage (string image, string image_type);

@@ -9,7 +9,7 @@ namespace klbotlib.Modules
         private Invisible ruan = new Invisible();
 
         public override bool UseSignature => false;
-        public override string Filter(MessagePlain msg)
+        public override string? Filter(MessagePlain msg)
         {
             long x = msg.SenderID;
             if (x == 2044164212)
@@ -31,7 +31,7 @@ namespace klbotlib.Modules
             }
             else return null;
         }
-        public override string Processor(MessagePlain msg, string filterOut)
+        public override string? Processor(MessagePlain msg, string? filterOut)
         {
             if (filterOut.Equals("yes") && ruan.K == 0)
             {

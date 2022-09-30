@@ -12,5 +12,5 @@ public static class CollectionInfo
     /// 获取ModuleCollection程序集版本
     /// </summary>
     /// <returns>ModuleCollection程序集版本</returns>
-    public static Version GetLibVersion() => Assembly.GetExecutingAssembly().GetName().Version;
+    public static Version? GetLibVersion() => Assembly.GetExecutingAssembly().GetName().Version;
 }

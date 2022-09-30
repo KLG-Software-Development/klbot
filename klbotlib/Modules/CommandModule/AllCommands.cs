@@ -105,7 +105,7 @@ internal abstract class ExternalSwitchCommand : SwitchCommand
 
     public sealed override bool GetBotProperty(KLBot bot)
     {
-        if (!bot[TargetModuleID].ModuleAccess.TryGetFieldAndProperty(MemberName, out bool value))
+        if (!bot[TargetModuleID].ModuleAccess.TryGetFieldAndProperty<bool>(MemberName, out bool value))
             throw new Exception($"找不到字段\"{MemberName}\"");
         return value;
     }
@@ -168,7 +168,7 @@ internal abstract class IntExternalAssignmentCommand : ExternalAssignmentCommand
 /// 专门管理外部模块的赋值型命令基类
 /// </summary>
 /// <typeparam name="T">参数的类型</typeparam>
-internal abstract class ExternalAssignmentCommand<T> : AssignmentCommand<T>
+internal abstract class ExternalAssignmentCommand<T> : AssignmentCommand<T> where T : struct
 {
     private readonly string _typeName = typeof(T).Name;
 
@@ -288,9 +288,9 @@ internal class InfoCmd : InfoCommand
     public override string GetInfo(KLBot bot)
     {
         Process process = Process.GetCurrentProcess();
-        Version exeVersion = Assembly.GetEntryAssembly().GetName().Version;
-        Version libVersion = Info.CoreLibInfo.GetLibVersion();
-        Version mcVersion = Info.ModuleCollectionInfo.GetMCVersion();
+        Version? exeVersion = Assembly.GetEntryAssembly().GetName().Version;
+        Version? libVersion = Info.CoreLibInfo.GetLibVersion();
+        Version? mcVersion = Info.ModuleCollectionInfo.GetMCVersion();
         _sb.Clear();
         _sb.AppendLine($"KLBot via mirai");
         _sb.AppendLine($"主函数版本: v{exeVersion.Major}.{exeVersion.Minor}-{exeVersion.ToKLGBuildString()}");

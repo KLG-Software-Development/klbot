@@ -38,12 +38,12 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
     ///<inheritdoc/>
     public override bool UseSignature => false;
     ///<inheritdoc/>
-    public override string Filter(MessagePlain msg)
+    public override string? Filter(MessagePlain msg)
     {
         return msg.Text.StartsWith(_onlineCommand) ? "compile_ol" : msg.Text.StartsWith(_localCommand) ? "compile" : null;
     }
     ///<inheritdoc/>
-    public override string Processor(MessagePlain msg, string filterOut)
+    public override string? Processor(MessagePlain msg, string? filterOut)
     {
         string text = msg.Text.TrimStart();
         int ptr = 4;
@@ -56,12 +56,14 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         {
             case "compile_ol":
                 string language = text[_onlineCommand.Length..ptr].Trim().ToLower();
-                _fileExts.TryGetValue(language, out string fileExt);
+                _fileExts.TryGetValue(language, out string? fileExt);
                 if (fileExt == null)
                     return $"不支持语言\"{language}\"";
                 string response = _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code)).Result;
                 ModulePrint($"Response: {response}");
-                JReply jreply = JsonConvert.DeserializeObject<JReply>(response);
+                JReply? jreply = JsonConvert.DeserializeObject<JReply>(response);
+                if (jreply == null)
+                    throw new JsonException("返回结果解析失败：产生了null结果");
                 _sb.Clear();
                 if (!string.IsNullOrWhiteSpace(jreply.errors))
                 {
@@ -94,5 +96,5 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         _sb.Append(fileExt);
         return _sb.ToString();
     }
-    private class JReply { public string output; public string errors; }
+    private class JReply { public string? output; public string? errors; }
 }

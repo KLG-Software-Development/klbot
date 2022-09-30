@@ -85,7 +85,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="moduleId">模块ID</param>
         /// <param name="module">获取到的模块对象。失败时为null</param>
-        public bool TryGetModule(string moduleId, out Module module)
+        public bool TryGetModule(string moduleId, out Module? module)
         {
             if (!_indexById.ContainsKey(moduleId))
             {
@@ -105,7 +105,7 @@ namespace klbotlib
         /// <typeparam name="T">目标模块的类型</typeparam>
         /// <param name="index">目标模块的索引。默认为0</param>
         /// <param name="module">目标模块对象。失败时为null</param>
-        public bool TryGetModule<T>(int index, out T module) where T : Module
+        public bool TryGetModule<T>(int index, out T? module) where T : Module
         {
             string moduleId = CalcModuleID(typeof(T).Name, index);
             if (!_indexById.ContainsKey(moduleId))

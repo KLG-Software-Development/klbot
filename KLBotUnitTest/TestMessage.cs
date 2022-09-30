@@ -131,7 +131,7 @@ public class TestMessage
         {
             MessagePlain plain = new(ro.Next(1000), ro.Next(1000));
             plain.AddTargetID(targetId);
-            MessagePlain copyPlain = plain.DeepCopy() as MessagePlain;
+            MessagePlain copyPlain = (MessagePlain)plain.DeepCopy();
             //TargetID
             CollectionAssert.AreEquivalent((ICollection)plain.TargetID, (ICollection)copyPlain.TargetID, "拷贝结果内容应与原始内容相等 (MessageCommon.TargetID)");
             copyPlain.AddTargetID(ro.NextInt64());
@@ -143,7 +143,7 @@ public class TestMessage
         //MessageImage
         {
             MessageImage image = new(ro.Next(1000), ro.Next(1000), urlList);
-            MessageImage copyImage = image.DeepCopy() as MessageImage;
+            MessageImage copyImage = (MessageImage)image.DeepCopy();
             //UrlList
             CollectionAssert.AreEquivalent(image.UrlList, copyImage.UrlList, "拷贝结果内容应与原始内容相等 (MessageImage.UrlList)");
             copyImage.UrlList.Add("url4");
@@ -152,7 +152,7 @@ public class TestMessage
         //MessageFlashImage
         {
             MessageFlashImage image = new(ro.Next(1000), ro.Next(1000), urlList);
-            MessageFlashImage copyImage = image.DeepCopy() as MessageFlashImage;
+            MessageFlashImage copyImage = (MessageFlashImage)image.DeepCopy();
             //UrlList
             CollectionAssert.AreEquivalent(image.UrlList, copyImage.UrlList, "拷贝结果内容应与原始内容相等 (MessageFlashImage.UrlList)");
             copyImage.UrlList.Add("url4");
@@ -161,7 +161,7 @@ public class TestMessage
         //MessageImagePlain
         {
             MessageImagePlain imagePlain = new(ro.Next(1000), ro.Next(1000), ro.NextDouble().ToString());
-            MessageImagePlain copyImagePlain = imagePlain.DeepCopy() as MessageImagePlain;
+            MessageImagePlain copyImagePlain = (MessageImagePlain)imagePlain.DeepCopy();
             //UrlList
             CollectionAssert.AreEquivalent(imagePlain.UrlList, copyImagePlain.UrlList, "拷贝结果内容应与原始内容相等 (MessageImagePlain.UrlList)");
             copyImagePlain.UrlList.Add("url4");

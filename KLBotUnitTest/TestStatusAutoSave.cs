@@ -31,7 +31,12 @@ public class TestStatusAutoSave
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         //Test save file
         string savePath = Path.Combine(bot.ModulesSaveDir, module.ModuleID + "_status.json");
-        JObject status = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(savePath));
-        Assert.AreEqual(!initState, (bool)status["Enabled"], $"FuckModule.Enabled field in \"{savePath}\"should have changed");
+        JObject? status = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(savePath));
+        if (status == null)
+            throw new JsonException();
+        bool? enabledJson = (bool?)status["Enabled"];
+        if (enabledJson == null)
+            throw new JsonException("Cannot read Enabled field from json file.");
+        Assert.AreEqual(!initState, enabledJson, $"FuckModule.Enabled field in \"{savePath}\"should have changed");
     }
 }

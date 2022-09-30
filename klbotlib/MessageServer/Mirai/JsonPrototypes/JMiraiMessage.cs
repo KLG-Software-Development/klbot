@@ -5,13 +5,13 @@
     /// </summary>
     internal class JMiraiMessage
     {
-        public string type;
+        public string? type;
         public long id;
         public long time;
         public long target;
-        public string text;
-        public string url;
-        public string faceId;
-        public string name;
+        public string? text;
+        public string? url;
+        public string? faceId;
+        public string? name;
     }
 }

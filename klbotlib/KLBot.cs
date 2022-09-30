@@ -60,21 +60,28 @@ namespace klbotlib
         /// <summary>
         /// 配置项：此KLBot的监听群组QQ号列表
         /// </summary>
-        public HashSet<long> TargetGroupIDList { get; }
+        public HashSet<long> TargetGroupIDList { get; } = new();
         /// <summary>
         /// 配置项：模块私有目录。用来存取模块自己的自定义文件
         /// </summary>
-        public string ModulesCacheDir { get; }
+        public string ModulesCacheDir { get; } = string.Empty;
         /// <summary>
         /// 配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
         /// </summary>
-        public string ModulesSaveDir { get; }
+        public string ModulesSaveDir { get; } = string.Empty;
         /// <summary>
         /// 配置项：身份密钥。用于讨mirai服务器开心
         /// </summary>
         public string Key { get; set; } = string.Empty;
 
-        private KLBot() { }
+        private KLBot(IMessageServer server, ISet<long> targetGroups) 
+        {
+            _msgServer = server;
+            foreach (var group in targetGroups)
+            {
+                TargetGroupIDList.Add(group);
+            }
+        }
         /// <summary>
         /// 构造函数。可用于模块开发调试
         /// </summary>
@@ -83,7 +90,7 @@ namespace klbotlib
         /// <param name="selfID">KLBot自身ID。默认为33550336</param>
         /// <param name="isSilent">是否开启安静模式。开启时ObjectPrint()不打印任何内容</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageServer server, Assembly moduleCollection, List<long> targetGroups, long selfID = 33550336, bool isSilent = true)
+        public KLBot(IMessageServer server, Assembly moduleCollection, ISet<long> targetGroups, long selfID = 33550336, bool isSilent = true) : this(server, targetGroups)
         {
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _msgServer = server;
@@ -91,7 +98,6 @@ namespace klbotlib
             IsSilent = isSilent;
             TargetGroupIDList = new();
             SelfID = selfID;
-            targetGroups.ForEach(x => TargetGroupIDList.Add(x));
             ModulesCacheDir = "ModuleCacheDir";
             ModulesSaveDir = "ModuleSaveDir";
             CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
@@ -131,7 +137,10 @@ namespace klbotlib
                     _console.WriteLn($"KLBot配置文件{configPath}不存在", ConsoleMessageType.Error);
                     throw new KLBotInitializationException($"KLBot初始化失败：KLBot配置文件{configPath}不存在");
                 }
-                JKLBotConfig Config = JsonConvert.DeserializeObject<JKLBotConfig>(File.ReadAllText(configPath));
+                string json = File.ReadAllText(configPath);
+                JKLBotConfig? Config = JsonConvert.DeserializeObject<JKLBotConfig>(json);
+                if (Config == null)
+                    throw new JsonDeserializationException($"无法反序列化KLBot配置文件“{configPath}”", json);
                 if (Config.HasNull(out string fieldName))
                 {
                     _console.WriteLn($"KLBot配置文件解析结果中的{fieldName}字段为null。请检查配置文件", ConsoleMessageType.Error);
@@ -163,7 +172,7 @@ namespace klbotlib
         /// <param name="server">KLBot使用的消息服务器</param>
         /// <param name="loadCoreModule">是否加载核心模块</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageServer server, string configPath = "config/config.json", bool loadCoreModule = true, Assembly moduleCollection = null) : this(server, configPath)
+        public KLBot(IMessageServer server, string configPath = "config/config.json", bool loadCoreModule = true, Assembly? moduleCollection = null) : this(server, configPath)
         {
             if (loadCoreModule)
             {
@@ -473,7 +482,7 @@ start:
             {
                 _console.Write("> ", ConsoleColor.DarkYellow);
                 _cmdStat = CmdLoopStatus.ReadLn;
-                string cmd = _console.ReadLn();
+                string? cmd = _console.ReadLn();
                 _cmdStat = CmdLoopStatus.Output;
                 try
                 {
@@ -674,7 +683,10 @@ start:
                 {
                     if (printInfo)
                         _console.WriteLnWithLock($"正在从\"{filePath}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
-                    module.ImportDict(JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting));
+                    Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting);
+                    if (result == null)
+                        throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
+                    module.ImportDict(result);
                 }
                 else
                     ObjectPrint(module, $"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题", ConsoleMessageType.Warning);
@@ -754,7 +766,7 @@ start:
                     {
                         if (member.IsNonHiddenModuleStatus())
                         {
-                            member.TryGetValue(module, out object value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
+                            member.TryGetValue(module, out object? value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
                             _sb.AppendLine($" {member.Name,-10} = {value}");
                         }
                     }

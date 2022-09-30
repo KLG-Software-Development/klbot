@@ -18,6 +18,7 @@
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <TieredCompilation>True</TieredCompilation>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

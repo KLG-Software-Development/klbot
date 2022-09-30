@@ -46,13 +46,13 @@ public class DebugMessageServer : IMessageServer
         return msgs;
     }
     /// <inheritdoc/>
-    public Exception SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public Exception? SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
         SendMessageCallback.Invoke(module, context, userId, groupId, content);
         return null;
     }
     /// <inheritdoc/>
-    public Exception UploadFile(Module module, long groupId, string uploadPath, string filePath)
+    public Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath)
     {
         UploadFileCallback.Invoke(module, groupId, uploadPath, filePath);
         return null;

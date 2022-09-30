@@ -5,7 +5,7 @@ namespace klbotlib.Extensions
 {
     public static class XmlNodeExtension
     {
-        public static bool TryGetFirstChildNodeByAttribute(this XmlNode node, string attribute_name, string attribute_value, out XmlNode output)
+        public static bool TryGetFirstChildNodeByAttribute(this XmlNode node, string attribute_name, string attribute_value, out XmlNode? output)
         {
             foreach (XmlNode child in node.ChildNodes)
             {

@@ -2,5 +2,5 @@
 
 internal class JMiraiGetMessageFromIdResponse : JMiraiResponse
 {
-    public JMiraiMessagePackage data;
+    public JMiraiMessagePackage? data;
 }

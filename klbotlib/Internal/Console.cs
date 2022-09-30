@@ -38,7 +38,7 @@ public class Consoleee
     {
         var tmp = Console.ForegroundColor;
         Console.ForegroundColor = c;
-        Write(obj.ToString());
+        Write(obj.ToNotNullString());
         Console.ForegroundColor = tmp;
     }
     public void Write(object obj, ConsoleMessageType level = ConsoleMessageType.Default, string prefix = "")
@@ -73,7 +73,7 @@ public class Consoleee
     {
         var tmp = Console.ForegroundColor;
         Console.ForegroundColor = c;
-        WriteLn(obj.ToString());
+        WriteLn(obj.ToNotNullString());
         Console.ForegroundColor = tmp;
     }
     public void WriteLn(object obj, ConsoleMessageType level, string prefix = "") => Write(obj.ToString() + "\n", level, prefix);
@@ -135,7 +135,14 @@ public class Consoleee
         Console.SetCursorPosition(tmpLeft, tmpTop);
     }
     public void SetCursorPos(int left, int top) => Console.SetCursorPosition(left, top);
-    public string ReadLn() => Console.ReadLine();
+    public string ReadLn()
+    {
+        string? s = Console.ReadLine();
+        if (s == null)
+            return string.Empty;
+        else
+            return s;
+    } 
     public string BufferedReadLn()
     {
         while (true)
