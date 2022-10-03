@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -27,10 +28,10 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
             return null;
     }
     /// <inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         _lastActivateTime = DateTime.Now;
-        Messaging.ReplyMessage(msg, "早安！");
+        await Messaging.ReplyMessage(msg, "早安！");
         return $@"\image:\url:{_urlList[_ro.Next(_urlList.Length)]}";
     }
 

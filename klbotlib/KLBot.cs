@@ -249,7 +249,7 @@ namespace klbotlib
         }
 
         //消息内部API
-        internal Message GetMessageFromID(long id)
+        internal Task<Message> GetMessageFromID(long id)
             => _msgServer.GetMessageFromID(id);
         /// <summary>
         /// 发送消息
@@ -259,8 +259,8 @@ namespace klbotlib
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
         /// <param name="content">待编译MsgMarker文本</param>
-        internal void SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
-            => _msgServer.SendMessage(module, context, userId, groupId, content);
+        internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+            => await _msgServer.SendMessage(module, context, userId, groupId, content);
         /// <summary>
         /// 发送群消息
         /// </summary>

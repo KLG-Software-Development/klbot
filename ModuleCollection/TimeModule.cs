@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -28,22 +29,22 @@ public class TimeModule : SingleTypeModule<MessagePlain>
     }
 
     /// <inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
             case "报时":
-                return DateTime.UtcNow.AddHours(_timeZone).ToString() + @"{\face:大哭}";
+                return Task.FromResult(DateTime.UtcNow.AddHours(_timeZone).ToString() + @"{\face:大哭}");
             case "设置时区":
                 if (int.TryParse(msg.Text.AsSpan(5), out int result))
                 {
                     _timeZone = result;
-                    return $"时区已设置为UTC{_timeZone:+#;-#;#}";
+                    return Task.FromResult($"时区已设置为UTC{_timeZone:+#;-#;#}");
                 }
                 else
-                    return $"错误：你输了什么狗屁东西？";
+                    return Task.FromResult($"错误：你输了什么狗屁东西？");
             default:
-                return $"意外收到未知过滤器输出\"{filterOut}\"";
+                return Task.FromResult($"意外收到未知过滤器输出\"{filterOut}\"");
         }
     }
 }

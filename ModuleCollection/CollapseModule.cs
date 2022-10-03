@@ -3,6 +3,7 @@ using klbotlib.Modules.ModuleUtils;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace klbotlib.Modules;
@@ -48,20 +49,20 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     ///<inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
             case "答案":
                 string input = _collapsePat.Match(msg.Text.Trim()).Groups[1].Value;
-                string xml = _helper.GetStringAsync(GetResultUrl(input)).Result;
+                string xml = await _helper.GetStringAsync(GetResultUrl(input));
                 return ProcessXML(msg, xml);
             case "过程":
                 input = _stepPat.Match(msg.Text.Trim()).Groups[1].Value;
-                xml = _helper.GetStringAsync(GetResultUrl(input)).Result;
+                xml = await _helper.GetStringAsync(GetResultUrl(input));
                 return ProcessXMLStepByStep(msg, xml, input);
         }
-        return null;
+        return string.Empty;
     }
 
     private static string GetStepByStepUrl(string input, string pod_state)

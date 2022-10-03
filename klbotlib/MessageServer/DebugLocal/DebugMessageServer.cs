@@ -1,6 +1,7 @@
 ﻿using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace klbotlib.MessageServer.Debug;
 
@@ -46,10 +47,10 @@ public class DebugMessageServer : IMessageServer
         return msgs;
     }
     /// <inheritdoc/>
-    public Exception? SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public Task<Exception?> SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
         SendMessageCallback.Invoke(module, context, userId, groupId, content);
-        return null;
+        return Task.FromResult<Exception?>(null);
     }
     /// <inheritdoc/>
     public Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath)
@@ -75,9 +76,9 @@ public class DebugMessageServer : IMessageServer
     }
 
     /// <inheritdoc/>
-    public Message GetMessageFromID(long id)
+    public Task<Message> GetMessageFromID(long id)
     {
-        return _msgCache[id];
+        return Task.FromResult(_msgCache[id]);
     }
     /// <inheritdoc/>
     public bool Verify(string key)

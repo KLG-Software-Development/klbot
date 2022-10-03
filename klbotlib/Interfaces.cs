@@ -1,5 +1,6 @@
 ﻿using klbotlib.Modules;
 using System;
+using System.Threading.Tasks;
 
 namespace klbotlib
 {
@@ -64,7 +65,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        void ReplyMessage(MessageCommon originMsg, string content);
+        Task ReplyMessage(MessageCommon originMsg, string content);
         /// <summary>
         /// 发送群消息接口
         /// </summary>
@@ -97,7 +98,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="id">消息ID</param>
         /// <returns>消息对象</returns>
-        Message GetMessageFromID(long id);
+        Task<Message> GetMessageFromID(long id);
     }
     /// <summary>
     /// 模块访问API

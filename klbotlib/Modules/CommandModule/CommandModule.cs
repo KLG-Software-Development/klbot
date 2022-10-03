@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
@@ -51,7 +52,7 @@ namespace klbotlib.Modules
         public sealed override string FriendlyName => "命令模块";
         public sealed override string HelpInfo => $"发送“{_prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
         public sealed override string? Filter(MessagePlain msg) => _cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
-        public sealed override string? Processor(MessagePlain msg, string? _)
+        public sealed override async Task<string> Processor(MessagePlain msg, string? _)
         {
             if (HostBot == null)
                 throw new NullReferenceException("模块尚未链接到主机机器人上");
@@ -60,7 +61,7 @@ namespace klbotlib.Modules
             foreach (var cmd in _cmds)
             {
                 if (cmd.IsCmd(cmdStr))
-                    return cmd.Run(HostBot, msg, cmdStr);
+                    return await cmd.Run(HostBot, msg, cmdStr);
             }
             return $"错误：未知命令'{cmdStr}'";
         }
@@ -96,9 +97,9 @@ namespace klbotlib.Modules.CommandModuleNamespace
         /// <param name="cmdMsg">命令的原始文本消息对象</param>
         /// <param name="cmdStr">命令的文本(不含前缀)</param>
         /// <returns></returns>
-        public abstract string CommandTask(KLBot bot, MessagePlain cmdMsg, string cmdStr);
+        public abstract Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmdStr);
 
-        public string Run(KLBot bot, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
+        public async Task<string> Run(KLBot bot, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
             try
             {
@@ -106,7 +107,7 @@ namespace klbotlib.Modules.CommandModuleNamespace
                 if (authority < AuthorityRequirment)
                     return $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}";
                 else
-                    return CommandTask(bot, msg, cmd);
+                    return await CommandTask(bot, msg, cmd);
             }
             catch (Exception ex)
             {

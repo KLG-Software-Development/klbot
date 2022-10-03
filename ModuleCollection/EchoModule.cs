@@ -1,5 +1,6 @@
 ﻿using klbotlib;
 using klbotlib.Modules;
+using System.Threading.Tasks;
 
 namespace ModuleCollection;
 
@@ -15,8 +16,8 @@ public class EchoModule : Module
         return "in";
     }
     /// <inheritdoc/>
-    public override string Processor(Message msg, string? filterOut)
+    public override Task<string> Processor(Message msg, string? filterOut)
     {
-        return msg.ToString();
+        return Task.FromResult(msg.ToString());
     }
 }

@@ -4,6 +4,7 @@
 
 using klbotlib.Modules.KLDNamespace;
 using System;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
@@ -37,12 +38,12 @@ namespace klbotlib.Modules
             else
                 return null;
         }
-        public override string? Processor(MessagePlain msg, string? filter_out)
+        public override Task<string> Processor(MessagePlain msg, string? filterOut)
         {
-            if (filter_out == "yes")
-                return "welcome KXGG!";
+            if (filterOut == "yes")
+                return Task.FromResult("welcome KXGG!");
             else 
-                return null;
+                return Task.FromResult(string.Empty);
         }
     }
 }

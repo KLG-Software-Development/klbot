@@ -1,6 +1,8 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
 
 using klbotlib.Modules.KLDNamespace;
+using System.Threading.Tasks;
+
 namespace klbotlib.Modules
 {
     public class InvisibleModule : SingleTypeModule<MessagePlain>
@@ -31,19 +33,17 @@ namespace klbotlib.Modules
             }
             else return null;
         }
-        public override string? Processor(MessagePlain msg, string? filterOut)
+        public override Task<string> Processor(MessagePlain msg, string? filterOut)
         {
             if (filterOut.Equals("yes") && ruan.K == 0)
-            {
-
-                return null;
-            }
+                return Task.FromResult(string.Empty);
             else if (filterOut.Equals("yes") && ruan.K == 1)
             {
                 ruan.K = 2;
-                return "kxgg back!";
+                return Task.FromResult("kxgg back!");
             }
-            else return null;
+            else 
+                return Task.FromResult(string.Empty);
         }
     }
 }
