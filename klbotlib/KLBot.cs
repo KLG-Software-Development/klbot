@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -654,7 +655,7 @@ start:
             File.WriteAllText(filePath, json);
         }
         //载入模块的状态
-        private void LoadModuleStatus(Module module, bool printInfo = true)
+        private async Task LoadModuleStatus(Module module, bool printInfo = true)
         {
             try
             {
@@ -663,7 +664,7 @@ start:
                 {
                     if (printInfo)
                         _console.WriteLn($"正在从\"{filePath}\"加载模块{module}的状态...", ConsoleMessageType.Task);
-                    var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting);
+                    var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
                     if (statusDict != null)
                         module.ImportDict(statusDict);
                 }
@@ -674,7 +675,7 @@ start:
             }
         }
         //载入所有模块配置
-        private void LoadModuleSetup(Module module, bool printInfo = true)
+        private async Task LoadModuleSetup(Module module, bool printInfo = true)
         {
             try
             {
@@ -682,8 +683,8 @@ start:
                 if (File.Exists(filePath))
                 {
                     if (printInfo)
-                        _console.WriteLnWithLock($"正在从\"{filePath}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
-                    Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting);
+                        _console.WriteLn($"正在从\"{filePath}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
+                    Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
                     if (result == null)
                         throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
                     module.ImportDict(result);
