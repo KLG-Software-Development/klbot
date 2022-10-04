@@ -305,16 +305,16 @@ namespace klbotlib
         /// <param name="module">调用模块</param>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        internal void ReplyMessage(Module module, Message originMsg, string content)
+        internal async Task ReplyMessage(Module module, Message originMsg, string content)
         {
             if (originMsg is MessageCommon originMsgCommon)
-                SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
+                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
             else
             {
                 switch (originMsg.Context)
                 {
                     case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
                         return;
                     default:
                         ObjectPrint(module, $"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
@@ -373,21 +373,24 @@ namespace klbotlib
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
+        public async Task ProcessMessages(List<Message> msgs) => await ProcessMessages(msgs, ModulesProcessMessage);
         /// <summary>
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <param name="mainProcessor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs, Action<Message> mainProcessor)
+        public async Task ProcessMessages(List<Message> msgs, Func<Message, Task> mainProcessor)
         {
             if (_isBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
                 _isBooting = false;
             }
-            msgs.ForEach(msg => { mainProcessor(msg); });
+            foreach (var msg in msgs)
+            {
+                await mainProcessor(msg);
+            }
         }
         // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
         private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
@@ -588,7 +591,7 @@ start:
 
         //默认处理函数。用Modules中的模块依次尝试处理消息
         //注意 空消息的过滤已经在上一级ProcessMessages()完成，所以此处入参的所有消息均为非空消息
-        private void ModulesProcessMessage(Message msg)
+        private async Task ModulesProcessMessage(Message msg)
         {
             //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
             //另外，帮助消息不计入统计信息
@@ -598,7 +601,7 @@ start:
                 {
                     if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
                     {
-                        ReplyMessage(module, msg, module.HelpInfo);
+                        await ReplyMessage(module, msg, module.HelpInfo);
                         return;
                     }
                 }
@@ -608,7 +611,7 @@ start:
             {
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool shouldProcess = module.AddProcessTask(msg);
+                bool shouldProcess = await module.AddProcessTask(msg);
                 if (shouldProcess)
                 {
                     DiagData.ProcessedMessageCount++;

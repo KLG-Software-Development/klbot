@@ -218,75 +218,69 @@ internal class InfoCmd : InfoCommand
     private readonly StringBuilder _sb = new();     //调用者清理
     private readonly Stopwatch _sw = new();
     private readonly Regex _multiWhite = new(@"\s+", RegexOptions.Compiled);
-    private Task<string> GetCoreUtilization()
+    private async Task<string> GetCoreUtilization()
     {
-        return Task.Run(() => 
+        Process p = new();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            Process p = new();
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                p.StartInfo.FileName = "mpstat";
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.Start();
-                string raw = p.StandardOutput.ReadToEnd();
-                p.WaitForExit();
+            p.StartInfo.FileName = "mpstat";
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.Start();
+            string raw = await p.StandardOutput.ReadToEndAsync();
+            p.WaitForExit();
 
-                string lastLine = raw.Split('\n')[3];
-                string idle = _multiWhite.Replace(lastLine, "-").Split('-').Last();
-                return (100 - Convert.ToSingle(idle)).ToString("f2") + "%";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                p.StartInfo.FileName = "wmic";
-                p.StartInfo.Arguments = "CPU get LoadPercentage /Value";
-                p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.Start();
-                p.WaitForExit();
-                string output = p.StandardOutput.ReadToEnd().Trim();
-                string load = output.Split('=')[1];
-                return $"{load}%";
-            }
-            else
-                return $"暂时不支持获取此平台下的CPU占用信息";
-        });
-    }
-    private Task<string> GetRAMUtilization()
-    {
-        return Task.Run(() => 
+            string lastLine = raw.Split('\n')[3];
+            string idle = _multiWhite.Replace(lastLine, "-").Split('-').Last();
+            return (100 - Convert.ToSingle(idle)).ToString("f2") + "%";
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Process p = new();
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                p.StartInfo.FileName = "free";
-                p.StartInfo.Arguments = "-h";
-                p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.Start();
-                p.WaitForExit();
-                string output = p.StandardOutput.ReadToEnd().Split('\n')[1];
-                string[] outputs = _multiWhite.Replace(output, "-").Split('-');
-                string total = outputs[1][0..^1];
-                string available = outputs[6][0..^1];
-                return $"{available}B/{total}B";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                p.StartInfo.FileName = "wmic";
-                p.StartInfo.Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value";
-                p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.Start();
-                p.WaitForExit();
-                string[] outputs = p.StandardOutput.ReadToEnd().Trim().Split('\n');
-                string available = (Convert.ToInt64(outputs[0].Split('=')[1]) * 1024L).ToMemorySizeString(1);
-                string total = (Convert.ToInt64(outputs[1].Split('=')[1]) * 1024L).ToMemorySizeString(1);
-                return $"{available}/{total}";
-            }
-            else
-                return $"暂时不支持获取此平台下的内存占用信息";
-        });
+            p.StartInfo.FileName = "wmic";
+            p.StartInfo.Arguments = "CPU get LoadPercentage /Value";
+            p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.Start();
+            p.WaitForExit();
+            string output = (await p.StandardOutput.ReadToEndAsync()).Trim();
+            string load = output.Split('=')[1];
+            return $"{load}%";
+        }
+        else
+            return $"暂时不支持获取此平台下的CPU占用信息";
+    }
+    private async Task<string> GetRAMUtilization()
+    {
+        Process p = new();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            p.StartInfo.FileName = "free";
+            p.StartInfo.Arguments = "-h";
+            p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.Start();
+            p.WaitForExit();
+            string output = (await p.StandardOutput.ReadToEndAsync()).Split('\n')[1];
+            string[] outputs = _multiWhite.Replace(output, "-").Split('-');
+            string total = outputs[1][0..^1];
+            string available = outputs[6][0..^1];
+            return $"{available}B/{total}B";
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            p.StartInfo.FileName = "wmic";
+            p.StartInfo.Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value";
+            p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.Start();
+            p.WaitForExit();
+            string[] outputs = (await p.StandardOutput.ReadToEndAsync()).Trim().Split('\n');
+            string available = (Convert.ToInt64(outputs[0].Split('=')[1]) * 1024L).ToMemorySizeString(1);
+            string total = (Convert.ToInt64(outputs[1].Split('=')[1]) * 1024L).ToMemorySizeString(1);
+            return $"{available}/{total}";
+        }
+        else
+            return $"暂时不支持获取此平台下的内存占用信息";
     }
 
     public InfoCmd()
@@ -295,7 +289,7 @@ internal class InfoCmd : InfoCommand
     }
     public override string CommandString => "info";
     public override string InfoDescription => "硬件和软件信息";
-    public override Task<string> GetInfo(KLBot bot)
+    public override async Task<string> GetInfo(KLBot bot)
     {
         Process process = Process.GetCurrentProcess();
         Version? exeVersion = Assembly.GetEntryAssembly().GetName().Version;
@@ -312,8 +306,8 @@ internal class InfoCmd : InfoCommand
         _sb.AppendLine($"\n[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
         _sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
         _sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
-        _sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
-        _sb.AppendLine($"可用内存：{ GetRAMUtilization()}");
+        _sb.AppendLine($"\n[性能信息]\nCPU使用率：{ await GetCoreUtilization()}");
+        _sb.AppendLine($"可用内存：{ await GetRAMUtilization()}");
         _sb.AppendLine($"\n[进程信息]\n进程架构：{RuntimeInformation.ProcessArchitecture}");
         _sb.AppendLine($"当前内存：{process.WorkingSet64.ToMemorySizeString(3)}");
         _sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
@@ -321,7 +315,7 @@ internal class InfoCmd : InfoCommand
         _sb.AppendLine($"总处理器时间：{process.TotalProcessorTime.TotalMilliseconds.ToTimeSpanString(1)}");
         TimeSpan elapsed = _sw.Elapsed;
         _sb.Append($"\n已运行：{elapsed.Days}天，{elapsed.Hours}小时{elapsed.Minutes}分钟{elapsed.Seconds}秒");
-        return Task.FromResult(_sb.ToString());
+        return _sb.ToString();
     }
 }
 [DefaultCommand]

@@ -313,7 +313,7 @@ namespace klbotlib.Modules
             IsAttached = false;
         }
         // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
-        internal bool AddProcessTask(Message msg)
+        internal async Task<bool> AddProcessTask(Message msg)
         {
             if (!Enabled)
                 return false;
@@ -331,13 +331,14 @@ namespace klbotlib.Modules
                 return false;
             //这里模块内异步过于简单粗暴。框架需要对每个任务提供跟踪功能
             if (IsAsync)    //模块启用内部异步 则同一模块每条消息也放在Task内处理
-                Task.Run(() => ProcessMessage(msg, filterOut));
+                await ProcessMessage(msg, filterOut);
             else
             {
-                if (!_processWorker.IsCompleted)
-                    _processWorker.ContinueWith(x => ProcessMessage(msg, filterOut));    //若未完成 则排队
-                else
-                    _processWorker = Task.Run(() => ProcessMessage(msg, filterOut));      //已完成 则取而代之直接开始
+                await ProcessMessage(msg, filterOut);
+                //if (!_processWorker.IsCompleted)
+                //    _processWorker.ContinueWith(x => ProcessMessage(msg, filterOut));    //若未完成 则排队
+                //else
+                //    _processWorker = Task.Run(() => ProcessMessage(msg, filterOut));      //已完成 则取而代之直接开始
             }
             return true;
         }
@@ -454,7 +455,7 @@ namespace klbotlib.Modules
                 {
                     output = $"{ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}";
                     if (ex.StackTrace != null)
-                        output += "\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
+                        output += $"\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
                 }
             }
             if (!string.IsNullOrEmpty(output))  //处理器输出不为空时
@@ -517,10 +518,8 @@ namespace klbotlib.Modules
         ///<Inheritdoc/>
         public sealed override async Task<string> Processor(Message msg, string? filterOut)
         {
-            if (filterOut != null)
-            {
-                throw new Exception("");
-            }
+            if (filterOut == null)
+                throw new Exception("过滤器输出意外为空");
             else if (msg is T tmsg)
                 return await Processor(tmsg, filterOut);
             else
