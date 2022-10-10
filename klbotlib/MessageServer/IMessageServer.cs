@@ -44,5 +44,5 @@ public interface IMessageServer
     /// <param name="uploadPath">上传的目标路径</param>
     /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
     [Obsolete]
-    Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath);
+    Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath);
 }

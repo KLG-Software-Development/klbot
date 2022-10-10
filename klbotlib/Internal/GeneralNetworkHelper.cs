@@ -16,12 +16,12 @@ namespace klbotlib.Internal
             return (result.IsSuccessStatusCode, responseMsg);
         }
         // POST multipart信息到给定URL
-        internal static bool PostMultipart(string url, MultipartFormDataContent content, out string responseMsg)
+        internal static async Task<(bool, string)> PostMultipart(string url, MultipartFormDataContent content)
         {
             //content.Headers.ContentType;
-            var result = _client.PostAsync(url, content).Result;
-            responseMsg = result.Content.ReadAsStringAsync().Result;
-            return result.IsSuccessStatusCode;
+            var result = await _client.PostAsync(url, content);
+            string responseMsg = result.Content.ReadAsStringAsync().Result;
+            return (result.IsSuccessStatusCode, responseMsg);
         }
     }
 }

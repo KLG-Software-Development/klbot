@@ -263,7 +263,7 @@ namespace klbotlib.Modules
         }
         Task<Message> IMessagingAPI.GetMessageFromID(long id)
             => HostBot.GetMessageFromID(id);
-        void IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
+        Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
             => HostBot.SendMessage(this, context, userId, groupId, content);
         async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)
         {
@@ -280,16 +280,16 @@ namespace klbotlib.Modules
                     break;
             }
         }
-        void IMessagingAPI.SendGroupMessage(long groupId, string content)
+        Task IMessagingAPI.SendGroupMessage(long groupId, string content)
             => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, content);
-        void IMessagingAPI.SendTempMessage(long userId, long groupId, string content)
+        Task IMessagingAPI.SendTempMessage(long userId, long groupId, string content)
             => HostBot.SendMessage(this, MessageContext.Group, userId, groupId, content);
-        void IMessagingAPI.SendPrivateMessage(long userId, string content)
+        Task IMessagingAPI.SendPrivateMessage(long userId, string content)
             => HostBot.SendMessage(this, MessageContext.Group, userId, -1, content);
         [Obsolete]
-        void IMessagingAPI.UploadFile(MessageContext context, long groupID, string uploadPath, string filePath)
+        Task IMessagingAPI.UploadFile(MessageContext context, long groupID, string uploadPath, string filePath)
         {
-            HostBot.UploadFile(this, groupID, uploadPath, filePath);
+            return HostBot.UploadFile(this, groupID, uploadPath, filePath);
         }
         /// <summary>
         /// 返回当前模块的缓存目录绝对路径
@@ -468,7 +468,7 @@ namespace klbotlib.Modules
                 }
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
-                _hostBot.ReplyMessage(this, msg, signature + output);
+                await _hostBot.ReplyMessage(this, msg, signature + output);
                 ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else

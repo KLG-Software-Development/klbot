@@ -53,10 +53,10 @@ public class DebugMessageServer : IMessageServer
         return Task.FromResult<Exception?>(null);
     }
     /// <inheritdoc/>
-    public Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath)
+    public Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath)
     {
         UploadFileCallback.Invoke(module, groupId, uploadPath, filePath);
-        return null;
+        return Task.FromResult<Exception?>(null);
     }
     /// <summary>
     /// 向消息服务器中添加未读消息

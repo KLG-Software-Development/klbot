@@ -59,7 +59,7 @@ namespace klbotlib
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendMessage(MessageContext context, long userId, long groupId, string content);
+        Task SendMessage(MessageContext context, long userId, long groupId, string content);
         /// <summary>
         /// 回复消息接口
         /// </summary>
@@ -71,20 +71,20 @@ namespace klbotlib
         /// </summary>
         /// <param name="groupId">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendGroupMessage(long groupId, string content);
+        Task SendGroupMessage(long groupId, string content);
         /// <summary>
         /// 发送临时消息接口
         /// </summary>
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendTempMessage(long userId, long groupId, string content);
+        Task SendTempMessage(long userId, long groupId, string content);
         /// <summary>
         /// 发送私聊消息接口
         /// </summary>
         /// <param name="userId">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        void SendPrivateMessage(long userId, string content);
+        Task SendPrivateMessage(long userId, string content);
         /// <summary>
         /// 上传文件接口
         /// </summary>
@@ -92,7 +92,7 @@ namespace klbotlib
         /// <param name="target">目标ID</param>
         /// <param name="uploadPath">上传路径</param>
         /// <param name="filePath">文件本地路径</param>
-        void UploadFile(MessageContext context, long target, string uploadPath, string filePath);
+        Task UploadFile(MessageContext context, long target, string uploadPath, string filePath);
         /// <summary>
         /// 根据消息ID获取消息接口
         /// </summary>

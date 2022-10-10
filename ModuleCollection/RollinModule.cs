@@ -42,7 +42,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
         else if (text == "开始抽奖")
             return "begin";
         else
-            return null;
+            return string.Empty;
     }
 
     public override async Task<string> Processor(MessagePlain msg, string? filterOut)

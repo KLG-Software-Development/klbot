@@ -106,7 +106,7 @@ namespace klbotlib
             {
                 //加载核心模块
                 _console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
-                AddModule(new CommandModule(this));
+                AddModule(new CommandModule(this)).Wait();
                 _console.WriteLn(GetModuleChainString());
             }
             catch (Exception ex)
@@ -181,7 +181,7 @@ namespace klbotlib
                 {
                     //加载核心模块
                     _console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
-                    AddModule(new CommandModule(this));
+                    AddModule(new CommandModule(this)).Wait();
                     _console.WriteLn(GetModuleChainString());
                 }
                 catch (Exception ex)
@@ -232,7 +232,7 @@ namespace klbotlib
         /// <summary>
         /// 在当前模块链条的末尾手动添加一个或多个新模块
         /// </summary>
-        public void AddModule(params Module[] modules)
+        public async Task AddModule(params Module[] modules)
         {
             foreach (var m in modules)
             {
@@ -243,8 +243,8 @@ namespace klbotlib
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
                 CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
                 //载入模块配置
-                LoadModuleSetup(m);
-                LoadModuleStatus(m);
+                await LoadModuleSetup(m);
+                await LoadModuleStatus(m);
                 _console.WriteLn($"已添加{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
             }
         }
@@ -268,7 +268,7 @@ namespace klbotlib
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="groupId">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendGroupMessage(Module module, long groupId, string content)
+        internal Task SendGroupMessage(Module module, long groupId, string content)
             => SendMessage(module, MessageContext.Group, -1, groupId, content);
         /// <summary>
         /// 发送临时消息
@@ -277,7 +277,7 @@ namespace klbotlib
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendTempMessage(Module module, long userId, long groupId, string content)
+        internal Task SendTempMessage(Module module, long userId, long groupId, string content)
             => SendMessage(module, MessageContext.Group, userId, groupId, content);
         /// <summary>
         /// 发送私聊消息
@@ -285,7 +285,7 @@ namespace klbotlib
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="userId">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendPrivateMessage(Module module, long userId, string content)
+        internal Task SendPrivateMessage(Module module, long userId, string content)
             => SendMessage(module, MessageContext.Group,  userId, -1, content);
         /// <summary>
         /// 上传群文件
@@ -295,9 +295,11 @@ namespace klbotlib
         /// <param name="uploadPath">上传的目标路径</param>
         /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
         [Obsolete("该方法仍有问题")]
-        internal void UploadFile(Module module, long groupId, string uploadPath, string filePath)
+        internal async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
         {
-            _msgServer.UploadFile(module, groupId, uploadPath, filePath);
+            Exception? ex = await _msgServer.UploadFile(module, groupId, uploadPath, filePath);
+            if (ex != null)
+                throw ex;
         } 
         /// <summary>
         /// 回复消息
@@ -393,7 +395,7 @@ namespace klbotlib
             }
         }
         // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
-        private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
+        private async Task MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
         {
 #pragma warning disable CS0219 // 从未使用变量
 #pragma warning disable CS0164 // 标签未被引用
@@ -412,11 +414,11 @@ start:
                     if (isLoopRestarting)
                     {
                         if (msgs.Count != 0)
-                            ProcessMessages(new List<Message> { msgs.Last() });
+                            await ProcessMessages(new List<Message> { msgs.Last() });
                         isLoopRestarting = false;
                     }
                     else
-                        ProcessMessages(msgs);
+                        await ProcessMessages(msgs);
                     Thread.Sleep(PollingTimeInterval);
                     waitForPauseMsgLoopSignal.WaitOne();
                 }
@@ -572,7 +574,7 @@ start:
                     else if (cmd == "reload")
                     {
                         _console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
-                        ReloadAllModules();
+                        ReloadAllModules().Wait();
                         _console.WriteLn("重载已完成", ConsoleMessageType.Info);
                     }
                     else if (cmd == "lasterror")
@@ -627,13 +629,13 @@ start:
         /// <summary>
         /// 重新载入所有模块配置和状态
         /// </summary>
-        public void ReloadAllModules()
+        public async Task ReloadAllModules()
         {
-            ModuleChain.ForEach( module => 
+            foreach (var module in ModuleChain)
             {
-                LoadModuleSetup(module);
-                LoadModuleStatus(module);
-            });
+                await LoadModuleSetup(module);
+                await LoadModuleStatus(module);
+            }
         }
         // 保存该模块的配置
         [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]

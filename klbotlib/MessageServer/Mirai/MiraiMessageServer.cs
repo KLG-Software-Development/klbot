@@ -148,7 +148,7 @@ public class MiraiMessageServer : IMessageServer
     /// <param name="filePath">文件本地路径</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
     [Obsolete("该方法仍有问题")]
-    public Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath)
+    public async Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath)
     {
         throw new NotImplementedException();
 #pragma warning disable CS0162 // 检测到无法访问的代码
@@ -161,24 +161,8 @@ public class MiraiMessageServer : IMessageServer
             multipart.Add(new StringContent(uploadPath), "path");
             FileStream fs = new FileStream(filePath, FileMode.Open);
             multipart.Add(new StreamContent(fs), "file");
-            //发送
-            if (_networkTask.IsCompleted)
-            {
-                _networkTask = Task.Run(() =>
-                {
-                    Exception? ex = TryUploadFile(MessageContext.Group, fs, multipart);
-                    CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
-                    return ex;
-                });
-            }
-            else
-            {
-                _networkTask.ContinueWith((x) =>
-                {
-                    TryUploadFile(MessageContext.Group, fs, multipart);  //尝试上传消息
-                    CheckNetworkTaskResult(x.Result, module, groupId, groupId, MessageContext.Group);   //检查上一个任务的完成结果 若有问题打印相关信息
-                });
-            }
+            Exception? ex = await TryUploadFile(MessageContext.Group, fs, multipart);
+            await CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
         }
         catch (Exception ex)
         {
@@ -208,12 +192,12 @@ public class MiraiMessageServer : IMessageServer
         }
     }
     // 发送给定消息.
-    private Exception? TryUploadFile(MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
+    private async Task<Exception?> TryUploadFile(MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
     {
         string url = MiraiNetworkHelper.GetUploadFileUrl(ServerURL, context);
         try
         {
-            bool result = GeneralNetworkHelper.PostMultipart(url, fullContent, out string responseStr);
+            (bool result, string responseStr) = await GeneralNetworkHelper.PostMultipart(url, fullContent);
             if (!result)
                 throw new Exception($"非成功返回码：{responseStr}");
             var response = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
