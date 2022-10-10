@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -26,7 +27,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
     public override bool UseSignature => false;
     public override string HelpInfo => "发起快速抽奖：发送“抽奖”并@机器人和抽奖包括的群成员，发起快速抽奖。抽奖结果直接公布\n\n发起自愿抽奖：@机器人并发送“抽奖”，可以发起一次自愿抽奖；接下来@机器人并发送“加入”的人员可以参与抽奖；人员加入完成后，发起人@机器人并发送“开始抽奖”可以启动抽奖并公示抽奖结果";
 
-    public override string? Filter(MessagePlain msg)
+    public override string Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
         if (text == "抽奖" && msg.ContainsTargetID(HostBot.SelfID))
@@ -41,10 +42,10 @@ public class RollinModule : SingleTypeModule<MessagePlain>
         else if (text == "开始抽奖")
             return "begin";
         else
-            return null;
+            return string.Empty;
     }
 
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
@@ -87,7 +88,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
                     _sb.AppendFormat(@"{{\tag:{0}}}", id);
                     _sb.Append('\n');
                 }
-                Messaging.ReplyMessage(msg, "抽奖开始。参与者列表：\n" + _sb.ToString());
+                await Messaging.ReplyMessage(msg, "抽奖开始。参与者列表：\n" + _sb.ToString());
                 index = _ro.Next(_list.Count);
                 long winner = _list[index];
                 //抽奖结束，清理与重置

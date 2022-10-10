@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -30,7 +31,7 @@ public class FlashGambleModule : Module
             return null;
     }
     /// <inheritdoc/>
-    public override string? Processor(Message msg, string? filterOut)
+    public override async Task<string> Processor(Message msg, string? filterOut)
     {
         if (_ro.Next(100) < _prob)
         {
@@ -40,9 +41,9 @@ public class FlashGambleModule : Module
                     MessageRecall recall = (MessageRecall)msg;
                     long msgId = recall.MessageID;
                     long operatorId = recall.OperatorID;
-                    MessageCommon origin = (MessageCommon)Messaging.GetMessageFromID(msgId);
+                    MessageCommon origin = (MessageCommon)(await Messaging.GetMessageFromID(msgId));
                     if (origin == null)
-                        return null;
+                        return string.Empty;
                     string info;
                     if (operatorId == origin.SenderID)
                         info = @$"{{\tag:{operatorId}}} 撤回了自己的";
@@ -52,40 +53,40 @@ public class FlashGambleModule : Module
                         return info + "消息：\n\n" + p.Text;
                     else if (origin is MessageImage i)
                     {
-                        Messaging.ReplyMessage(i, info + "图像");
+                        await Messaging.ReplyMessage(i, info + "图像");
                         foreach (var url in i.UrlList)
-                            Messaging.ReplyMessage(i, @"\image:\url:" + url);
-                        return null;
+                            await Messaging.ReplyMessage(i, @"\image:\url:" + url);
+                        return string.Empty;
                     }
                     else if (origin is MessageFlashImage f)
                     {
-                        Messaging.ReplyMessage(f, info + "闪照");
+                        await Messaging.ReplyMessage(f, info + "闪照");
                         foreach (var url in f.UrlList)
-                            Messaging.ReplyMessage(f, @"\image:\url:" + url);
-                        return null;
+                            await Messaging.ReplyMessage(f, @"\image:\url:" + url);
+                        return string.Empty;
                     }
                     else if (origin is MessageVoice v)
                     {
-                        Messaging.ReplyMessage(v, info + "语音");
+                        await Messaging.ReplyMessage(v, info + "语音");
                         return @"\voice:\url:" + v.Url;
                     }
                     else
-                        return null;
+                        return string.Empty;
                 case "flash":
                     var flashMsg = msg as MessageFlashImage;
                     foreach (var url in flashMsg.UrlList)
                     {
-                        Messaging.ReplyMessage(flashMsg, @"\image:\url:" + url);
+                        await Messaging.ReplyMessage(flashMsg, @"\image:\url:" + url);
                     }
-                    return null;
+                    return string.Empty;
                 default:
-                    return null;
+                    return string.Empty;
             }
         }
         else
         {
             ModulePrint("未命中，忽略此条撤回或闪照");
-            return null;
+            return string.Empty;
         }
     }
 }

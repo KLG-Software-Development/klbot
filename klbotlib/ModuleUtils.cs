@@ -160,36 +160,29 @@ namespace klbotlib.Modules.ModuleUtils
         /// 下载一张图片，并解析为Bitmap对象。默认使用伪装的Firefox UserAgent
         /// </summary>
         /// <param name="url">图片地址</param>
-        /// <param name="size">输出图片的字节数</param>
         /// <param name="ua">下载时使用的UserAgent</param>
-        public Bitmap DownloadImage(string url, out int size, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
+        public async Task<(Bitmap, int)> DownloadImageAsync(string url, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
         {
             byte[] bin;
-            lock (_client)
-            {
-                _client.DefaultRequestHeaders.UserAgent.Clear();
-                _client.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
-                bin = _client.GetByteArrayAsync(url).Result;
-            }
-            size = bin.Length;
+            _client.DefaultRequestHeaders.UserAgent.Clear();
+            _client.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
+            bin = await _client.GetByteArrayAsync(url);
+            int size = bin.Length;
             using (var ms = new MemoryStream(bin))
             {
                 Bitmap bmp = new Bitmap(Image.FromStream(ms));
                 Console.WriteLine($"完成");
-                return bmp;
+                return (bmp, size);
             }
         }
         /// <summary>
         /// 下载图片为Base64字符串
         /// </summary>
         /// <param name="url">图像地址</param>
-        public string DownloadAsBase64(string url)
+        public async Task<string> DownloadAsBase64Async(string url)
         {
-            lock (_client)
-            {
-                return Convert.ToBase64String(_client.GetByteArrayAsync(url).Result);
-            }
-        } 
+            return Convert.ToBase64String(await _client.GetByteArrayAsync(url));
+        }
         /// <summary>
         /// 缩放一张图片到指定分辨率
         /// </summary>

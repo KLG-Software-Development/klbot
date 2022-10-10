@@ -1,4 +1,6 @@
-﻿namespace klbotlib.Extensions;
+﻿using System.Threading.Tasks;
+
+namespace klbotlib.Extensions;
 /// <summary>
 /// Object类的扩展方法
 /// </summary>

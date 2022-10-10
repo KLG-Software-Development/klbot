@@ -1,6 +1,7 @@
 ﻿using ModuleCollection;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -61,7 +62,7 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     /// 处理器：内容包含上号且不长于五个字符，则复读内容；
     /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
     /// </summary>
-    public sealed override string? Processor(MessagePlain msg, string? filterOut)
+    public sealed override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         string msgText = msg.Text.Trim();
         switch (filterOut)
@@ -70,10 +71,11 @@ public class 上号Module : SingleTypeModule<MessagePlain>
             case "跟风":
                 return msgText;
             case "蛤儿":
-                if (!ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate(out _, out string? salt))
+                (bool success, _, _) = await ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate();
+                if (success)
                     return _halReply;
                 else
-                    return salt + _halReply;
+                    return "快速生成错误";
             default:
                 throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\"");
         }

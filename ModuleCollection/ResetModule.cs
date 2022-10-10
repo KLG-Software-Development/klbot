@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -38,25 +39,25 @@ public class ResetModule : SingleTypeModule<MessagePlain>
             return null;
     }
     /// <inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
             case "day?":
 
                 if (!_lastUpdatedDays.ContainsKey(msg.SenderID))
-                    return "未找到数据。@机器人并发送“reset”或“day0”创建第一条数据";
+                    return Task.FromResult("未找到数据。@机器人并发送“reset”或“day0”创建第一条数据");
                 else
                 {
                     TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderID];
-                    return $"距离上次reset已经过去{TimeSpanToString(dt)}";
+                    return Task.FromResult($"距离上次reset已经过去{TimeSpanToString(dt)}");
                 }
             case "reset":
                 if (!_lastUpdatedDays.ContainsKey(msg.SenderID))
                 {
                     _lastUpdatedDays.Add(msg.SenderID, DateTime.Now);
                     _bestRecords.Add(msg.SenderID, new TimeSpan());
-                    return @$"成功为用户[{{\tag:{msg.SenderID}}}]创建数据";
+                    return Task.FromResult(@$"成功为用户[{{\tag:{msg.SenderID}}}]创建数据");
                 }
                 else
                 {
@@ -67,15 +68,15 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                     if (dt > record)
                     {
                         _bestRecords[msg.SenderID] = dt;
-                        return @$"[{{\tag:{msg.SenderID}}}]成功创造了{TimeSpanToString(_bestRecords[msg.SenderID])}的新纪录！";
+                        return Task.FromResult(@$"[{{\tag:{msg.SenderID}}}]成功创造了{TimeSpanToString(_bestRecords[msg.SenderID])}的新纪录！");
                     }
                     else
                     {
                         TimeSpan distanceToGoal = record - dt;
                         if (distanceToGoal < _smallTimeSpan)
-                            return $"已重置数据。\n非常可惜，[{{\\tag:{msg.SenderID}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}";
+                            return Task.FromResult($"已重置数据。\n非常可惜，[{{\\tag:{msg.SenderID}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}");
                         else
-                            return "已重置数据";
+                            return Task.FromResult("已重置数据");
                     }
                 }
             default:

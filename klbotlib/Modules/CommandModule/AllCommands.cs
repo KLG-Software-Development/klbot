@@ -3,9 +3,11 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 // 所有命令都在本文件、本命名空间中定义
 namespace klbotlib.Modules.CommandModuleNamespace.Commands;
@@ -18,15 +20,15 @@ internal abstract class SimpleActionCommand : Command
     private static readonly Stopwatch _sw = new();
     public abstract string CommandString { get; }
     public abstract string ActionDescription { get; } //命令所执行操作的内容
-    public abstract void Action(KLBot bot, MessagePlain cmdMsg);
+    public abstract Task Action(KLBot bot, MessagePlain cmdMsg);
 
     public sealed override string Format => CommandString;
     public sealed override string Usage => $"执行{ActionDescription}操作";
     public sealed override bool IsCmd(string cmd) => cmd == CommandString;
-    public sealed override string CommandTask(KLBot bot, MessagePlain cmdMsg, string __)
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string __)
     {
         _sw.Restart();
-        Action(bot, cmdMsg);
+        await Action(bot, cmdMsg);
         _sw.Stop();
         return $"{ActionDescription}执行成功，耗时{_sw.ElapsedMilliseconds.ToTimeSpanString(2)}。";
     }
@@ -42,19 +44,19 @@ internal abstract class ActionCommand<T> : Command
     public abstract string ActionName { get; }       //命令所执行操作的名称
     public abstract string ActionDescription { get; }       //命令所执行操作的名称
     public abstract string ParameterDescription { get; }  //参数的格式或类型
-    public abstract void Action(KLBot bot, MessagePlain cmdMsg, T parameter);     //命令所执行的操作
+    public abstract Task Action(KLBot bot, MessagePlain cmdMsg, T parameter);     //命令所执行的操作
     public abstract bool TryParseCmdStringValue(string valueString, out T value);     //TryParse的规范：接收值字符串并尝试解析，失败则返回false，成功则返回true且写入out value参数中
 
     public sealed override string Format => $"{CommandString} [{ParameterDescription}]";
     public sealed override string Usage => ActionDescription;
     public sealed override bool IsCmd(string cmd) => cmd.StartsWith($"{CommandString} ");
-    public sealed override string CommandTask(KLBot bot, MessagePlain cmdMsg, string cmd)
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmd)
     {
         _sw.Restart();
         string valueString = cmd[(CommandString.Length + 1)..];
         if (TryParseCmdStringValue(valueString, out T parameter))
         {
-            Action(bot, cmdMsg, parameter);
+            await Action(bot, cmdMsg, parameter);
             _sw.Stop();
             return $"{ActionName}执行成功，耗时{_sw.ElapsedMilliseconds.ToTimeSpanString(2)}。";
         }
@@ -69,13 +71,13 @@ internal abstract class InfoCommand : Command
 {
     public abstract string CommandString { get; }
     public abstract string InfoDescription { get; }
-    public abstract string GetInfo(KLBot bot);
+    public abstract Task<string> GetInfo(KLBot bot);
 
     public sealed override AuthorType AuthorityRequirment => AuthorType.野人;
     public sealed override string Format => CommandString;
     public sealed override string Usage => $"获取{InfoDescription}";
     public sealed override bool IsCmd(string cmd) => cmd == CommandString;
-    public sealed override string CommandTask(KLBot bot, MessagePlain _, string __) => GetInfo(bot);
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain _, string __) => await GetInfo(bot);
 }
 /// <summary>
 /// 开关型命令的基类. 统一调用方法：^[命令字符串]$
@@ -84,12 +86,12 @@ internal abstract class SwitchCommand : Command
 {
     public abstract string SwitchName { get; }
     public abstract bool GetBotProperty(KLBot bot);
-    public abstract void SetBotProperty(KLBot bot, bool value);
+    public abstract Task SetBotProperty(KLBot bot, bool value);
     public sealed override string Usage => "打开/关闭" + SwitchName;
-    public sealed override string CommandTask(KLBot bot, MessagePlain _, string __)
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain _, string __)
     {
         bool currentState = GetBotProperty(bot);
-        SetBotProperty(bot, !currentState);
+        await SetBotProperty(bot, !currentState);
         string action = currentState ? "关闭" : "打开";
         return $"{SwitchName}已{action}";
     }
@@ -109,10 +111,13 @@ internal abstract class ExternalSwitchCommand : SwitchCommand
             throw new Exception($"找不到字段\"{MemberName}\"");
         return value;
     }
-    public sealed override void SetBotProperty(KLBot bot, bool value)
+    public sealed override Task SetBotProperty(KLBot bot, bool value)
     {
-        if (!bot[TargetModuleID].TrySetFieldAndProperty(MemberName, value))
-            throw new Exception($"找不到可设置的布尔字段\"{MemberName}\"");
+        return Task.Run(() => 
+        {
+            if (!bot[TargetModuleID].TrySetFieldAndProperty(MemberName, value))
+                throw new Exception($"找不到可设置的布尔字段\"{MemberName}\"");
+        });
     }
 }
 /// <summary>
@@ -131,22 +136,22 @@ internal abstract class AssignmentCommand<T> : Command
     public sealed override string Usage => "查询/设置" + PropertyName;
     public sealed override string Format => $"查询：{CommandString} ?\r\n设置：{CommandString} [{ParameterDescription}]";
     public sealed override bool IsCmd(string cmd) => cmd.StartsWith($"{CommandString} ");
-    public sealed override string CommandTask(KLBot bot, MessagePlain msg, string cmd)
+    public sealed override Task<string> CommandTask(KLBot bot, MessagePlain msg, string cmd)
     {
         T currentValue = GetBotProperty(bot);
         string valueString = cmd[(CommandString.Length + 1)..];
         if (valueString == "?")
-            return $"{PropertyName}当前的值为{currentValue}";
+            return Task.FromResult($"{PropertyName}当前的值为{currentValue}");
         else
         {
             bool result = TryParseCmdStringValue(valueString, out T val);
             if (result)
             {
                 SetBotProperty(bot, val);
-                return $"{PropertyName}已修改：\r\n旧值：{currentValue}\r\n新值：{val}";
+                return Task.FromResult($"{PropertyName}已修改：\r\n旧值：{currentValue}\r\n新值：{val}");
             }
             else
-                return $"修改{PropertyName}失败：无法从'{val}'中解析出合法的值";
+                return Task.FromResult($"修改{PropertyName}失败：无法从'{val}'中解析出合法的值");
         }
     }
 }
@@ -196,7 +201,7 @@ internal class HelpCmd : InfoCommand
     private readonly StringBuilder _sb = new();     //调用者清理
     public override string CommandString => "help";
     public override string InfoDescription => "可用命令和帮助";
-    public override string GetInfo(KLBot bot)
+    public override Task<string> GetInfo(KLBot bot)
     {
         _sb.Clear();
         _sb.AppendLine("命令列表: ");
@@ -204,7 +209,7 @@ internal class HelpCmd : InfoCommand
         {
             _sb.AppendLine($"{cmd.Format}\n{cmd.Usage}\r\n<权限级别：{cmd.AuthorityRequirment}>\n");
         }
-        return _sb.AppendLine("\n提示：发送“##status”可以查看当前模块链条；发送“[模块名]帮助”可以查看模块信息").ToString();
+        return Task.FromResult(_sb.AppendLine("\n提示：发送“##status”可以查看当前模块链条；发送“[模块名]帮助”可以查看模块信息").ToString());
     }
 }
 [DefaultCommand]
@@ -213,7 +218,7 @@ internal class InfoCmd : InfoCommand
     private readonly StringBuilder _sb = new();     //调用者清理
     private readonly Stopwatch _sw = new();
     private readonly Regex _multiWhite = new(@"\s+", RegexOptions.Compiled);
-    private string GetCoreUtilization()
+    private async Task<string> GetCoreUtilization()
     {
         Process p = new();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -222,7 +227,7 @@ internal class InfoCmd : InfoCommand
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.Start();
-            string raw = p.StandardOutput.ReadToEnd();
+            string raw = await p.StandardOutput.ReadToEndAsync();
             p.WaitForExit();
 
             string lastLine = raw.Split('\n')[3];
@@ -237,15 +242,14 @@ internal class InfoCmd : InfoCommand
             p.StartInfo.RedirectStandardOutput = true;
             p.Start();
             p.WaitForExit();
-            string output = p.StandardOutput.ReadToEnd().Trim();
+            string output = (await p.StandardOutput.ReadToEndAsync()).Trim();
             string load = output.Split('=')[1];
             return $"{load}%";
         }
         else
             return $"暂时不支持获取此平台下的CPU占用信息";
-
     }
-    private string GetRAMUtilization()
+    private async Task<string> GetRAMUtilization()
     {
         Process p = new();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -256,7 +260,7 @@ internal class InfoCmd : InfoCommand
             p.StartInfo.RedirectStandardOutput = true;
             p.Start();
             p.WaitForExit();
-            string output = p.StandardOutput.ReadToEnd().Split('\n')[1];
+            string output = (await p.StandardOutput.ReadToEndAsync()).Split('\n')[1];
             string[] outputs = _multiWhite.Replace(output, "-").Split('-');
             string total = outputs[1][0..^1];
             string available = outputs[6][0..^1];
@@ -270,7 +274,7 @@ internal class InfoCmd : InfoCommand
             p.StartInfo.RedirectStandardOutput = true;
             p.Start();
             p.WaitForExit();
-            string[] outputs = p.StandardOutput.ReadToEnd().Trim().Split('\n');
+            string[] outputs = (await p.StandardOutput.ReadToEndAsync()).Trim().Split('\n');
             string available = (Convert.ToInt64(outputs[0].Split('=')[1]) * 1024L).ToMemorySizeString(1);
             string total = (Convert.ToInt64(outputs[1].Split('=')[1]) * 1024L).ToMemorySizeString(1);
             return $"{available}/{total}";
@@ -285,7 +289,7 @@ internal class InfoCmd : InfoCommand
     }
     public override string CommandString => "info";
     public override string InfoDescription => "硬件和软件信息";
-    public override string GetInfo(KLBot bot)
+    public override async Task<string> GetInfo(KLBot bot)
     {
         Process process = Process.GetCurrentProcess();
         Version? exeVersion = Assembly.GetEntryAssembly().GetName().Version;
@@ -302,8 +306,8 @@ internal class InfoCmd : InfoCommand
         _sb.AppendLine($"\n[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
         _sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
         _sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
-        _sb.AppendLine($"\n[性能信息]\nCPU使用率：{ GetCoreUtilization()}");
-        _sb.AppendLine($"可用内存：{ GetRAMUtilization()}");
+        _sb.AppendLine($"\n[性能信息]\nCPU使用率：{ await GetCoreUtilization()}");
+        _sb.AppendLine($"可用内存：{ await GetRAMUtilization()}");
         _sb.AppendLine($"\n[进程信息]\n进程架构：{RuntimeInformation.ProcessArchitecture}");
         _sb.AppendLine($"当前内存：{process.WorkingSet64.ToMemorySizeString(3)}");
         _sb.AppendLine($"峰值内存：{process.PeakWorkingSet64.ToMemorySizeString(3)}");
@@ -320,7 +324,7 @@ internal class StatusCmd : InfoCommand
     private readonly StringBuilder _sb = new();     //调用者清理
     public sealed override string CommandString => "status";
     public sealed override string InfoDescription => "KLBot状态";
-    public sealed override string GetInfo(KLBot bot)
+    public sealed override Task<string> GetInfo(KLBot bot)
     {
         _sb.Clear();
         _sb.Append($"[配置信息]\n");
@@ -329,7 +333,7 @@ internal class StatusCmd : InfoCommand
         _sb.Append(bot.GetModuleChainString() + "\n");
         _sb.AppendLine("\n[统计信息]");
         _sb.Append(bot.DiagData.GetSummaryString());
-        return _sb.ToString();
+        return Task.FromResult(_sb.ToString());
     }
 }
 [DefaultCommand]
@@ -339,7 +343,7 @@ internal class StatusAllCmd : InfoCommand
 
     public sealed override string CommandString => "status all";
     public sealed override string InfoDescription => "KLBot详细状态";
-    public sealed override string GetInfo(KLBot bot)
+    public sealed override Task<string> GetInfo(KLBot bot)
     {
         _sb.Clear();
         _sb.Append($"[配置信息]\n");
@@ -348,7 +352,7 @@ internal class StatusAllCmd : InfoCommand
         _sb.Append(bot.GetModuleStatusString() + "\n");
         _sb.AppendLine("\n[统计信息]");
         _sb.Append(bot.DiagData.GetSummaryString());
-        return _sb.ToString();
+        return Task.FromResult(_sb.ToString());
     }
 }
 internal class PtiCmd : AssignmentCommand<int>
@@ -369,7 +373,7 @@ internal class FuckModEnabledCmd : SwitchCommand
     public override string SwitchName => "嘴臭模块-总开关";
     public override string Format => "fuckmod enabled";
     public override bool GetBotProperty(KLBot bot) => bot["FuckModule"].Enabled;
-    public override void SetBotProperty(KLBot bot, bool value) => bot["FuckModule"].Enabled = value;
+    public override Task SetBotProperty(KLBot bot, bool value) => Task.FromResult(() => bot["FuckModule"].Enabled = value);
 }
 [DefaultCommand]
 internal class FuckModCascadeCmd : ExternalSwitchCommand

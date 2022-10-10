@@ -1,7 +1,9 @@
-﻿using klbotlib.Modules.ModuleUtils;
+﻿using klbotlib.Extensions;
+using klbotlib.Modules.ModuleUtils;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -81,17 +83,17 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
             case "request":     //临时会话 发起请求
                 ToWaitForTextState(msg.SenderID, msg.GroupID);
-                return "准备好了，你说";
+                return Task.FromResult("准备好了，你说");
             case "private request":     //私聊会话 发起请求。这种情况需要额外解析一个群号
                 if (long.TryParse(_priReqPat.Match(msg.Text).Groups[1].Value, out long group_id))
                     ToWaitForTextState(msg.SenderID, group_id);
-                return "准备好了，你说";
+                return Task.FromResult("准备好了，你说");
             case "content":
                 _userStat[msg.SenderID] = UserStatus.Idle;
                 Messaging.ReplyMessage(msg, "正在薅羊毛...");
@@ -101,22 +103,22 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                 if (reply == null)
                     throw new JsonException("返回结果解析失败：产生了null结果");
                 if (reply.errno != 0)
-                    return $"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
+                    return Task.FromResult($"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧");
                 string mpeg_b64 = reply.data[_prefix.Length..];
                 //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                 //string b64_amr = ConvertToAmr();
                 Messaging.SendGroupMessage(_targetGroups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
-                return "已发送";
+                return Task.FromResult("已发送");
             case "set tone":
                 string tone = msg.Text.Trim()[5..];
                 if (!_perByName.TryGetValue(tone, out string? per))
-                    return "不支持这个音色";
+                    return Task.FromResult("不支持这个音色");
                 _person = per;
-                return $"音色已设置为{_person}";
+                return Task.FromResult($"音色已设置为{_person}");
             default:
-                return "[匿名语音模块]意外遇到不应处理的消息，KLBot框架有大问题！";
+                return Task.FromResult("[匿名语音模块]意外遇到不应处理的消息，KLBot框架有大问题！");
         }
     }
     

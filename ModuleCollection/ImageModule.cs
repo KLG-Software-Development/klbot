@@ -6,6 +6,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace klbotlib.Modules;
@@ -74,7 +75,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     /// <inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         string? url, text = msg.Text.Trim();
         string word = filterOut switch
@@ -97,7 +98,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         }
         int max_index = Convert.ToInt32(Math.Round(listNum * (Fraction / 100f)));
         int pn = _ro.Next(max_index);
-        string json = FetchData(pn, word);
+        string json = await FetchData(pn, word);
         ModulePrint($"成功获取json，pn={pn}");
         _sw.Restart();
         JResult? result = JsonConvert.DeserializeObject<JResult>(json);
@@ -125,14 +126,16 @@ not_found:
         return $"{HostBot.GetModule<FuckModule>().SingleSentence()}，找不到";
     }
 
-    private string FetchData(int pn, string word)
+    private async Task<string> FetchData(int pn, string word)
     {
         _sw.Restart();
         _query["word"] = word;
         _query["pn"] = pn.ToString();
         _sw.Stop();
         _lastDownloadTime = _sw.Elapsed.ToMsString();
-        return _client.GetAsync($"{_url}?{_query}").Result.Content.ReadAsStringAsync().Result;
+        var response = await _client.GetAsync($"{_url}?{_query}");
+
+        return await response.Content.ReadAsStringAsync();
     }
 
     private class JResult { public int listNum; public JImage[]? data; }

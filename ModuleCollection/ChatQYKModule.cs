@@ -2,7 +2,9 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -23,10 +25,10 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string? Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfID) ? "ok" : null;
     /// <inheritdoc/>
-    public sealed override string Processor(MessagePlain msg, string? _)
+    public sealed override async Task<string> Processor(MessagePlain msg, string? _)
     {
         Uri host = new(_url + msg.Text);
-        string jreply = _client.GetStringAsync(host).Result;
+        string jreply = await _client.GetStringAsync(host);
         return JsonConvert.DeserializeObject<ChatterBotReply>(jreply).FormattedContent();
     }
 

@@ -5,10 +5,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ModuleCollection;
 
@@ -99,12 +101,12 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
             return null;
     }
     /// <inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {
             case "generate":
-                return GenerateZombieeeText();
+                return await GenerateZombieeeText();
             default:
                 return $"意外遭遇未知过滤器输出“{filterOut}”。检查模块实现";
         }
@@ -114,9 +116,10 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// 生成一段僵尸文学
     /// </summary>
     /// <returns>僵尸文学文本</returns>
-    public string GenerateZombieeeText()
+    public async Task<string> GenerateZombieeeText()
     {
-        if (!TryGenerate(out string message, out string? result) || result == null)
+        (bool success, string message, string result) = await TryGenerate();
+        if (!success)
             return $"生成失败：{message}";
         else
             return result;
@@ -125,62 +128,56 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// 尝试用当前设定的源语言和目标语言翻译指定内容
     /// </summary>
     /// <param name="query">待翻译内容</param>
-    /// <param name="message">错误信息</param>
-    /// <param name="result">翻译结果。若翻译失败内容为null</param>
     /// <returns>翻译是否成功</returns>
-    public bool TryTranslate(string query, out string message, out string? result)
-        => TryTranslate(query, _srcLang, _dstLang, out message, out result);
+    public async Task<(bool, string, string)> TryTranslate(string query)
+        => await TryTranslate(query, _srcLang, _dstLang);
     /// <summary>
     /// 尝试用给定的源语言和当前设定的目标语言翻译指定内容
     /// </summary>
     /// <param name="query">待翻译内容</param>
     /// <param name="srcLang">源语言</param>
-    /// <param name="message">错误信息</param>
-    /// <param name="result">翻译结果。若翻译失败内容为null</param>
     /// <returns>翻译是否成功</returns>
-    public bool TryTranslate(string query, string srcLang, out string message, out string? result)
-        => TryTranslate(query, srcLang, _dstLang, out message, out result);
+    public async Task<(bool, string, string)> TryTranslate(string query, string srcLang)
+        => await TryTranslate(query, srcLang, _dstLang);
     /// <summary>
     /// 尝试生成一段僵尸文学
     /// </summary>
-    /// <param name="message">错误信息</param>
-    /// <param name="result">生成结果</param>
     /// <returns>生成是否成功</returns>
-    public bool TryGenerate(out string message, out string? result)
+    public async Task<(bool, string, string)> TryGenerate()
     {
         string seed = GenerateSentences(_ro.Next(1, 7));
         ModulePrint($"反射种子：{seed}");
-        return TryReflect(_reflectNum, seed, out message, out result);
+        return await TryReflect(_reflectNum, seed);
     }
     /// <summary>
     /// 尝试快速生成一短句僵尸文学。
     /// 此方法中句子长度锁定为1，反射次数锁定为2，以保证速度。
     /// </summary>
-    /// <param name="message">错误信息</param>
-    /// <param name="result">生成结果</param>
     /// <returns>生成是否成功</returns>
-    public bool TryFastGenerate(out string message, out string? result)
+    public async Task<(bool, string, string)> TryFastGenerate()
     {
         string seed = GenerateSingleSentence();
         ModulePrint($"反射种子：{seed}");
-        return TryReflect(2, seed, out message, out result);
+        return await TryReflect(2, seed);
     }
 
     private string GetRequestUrl(string query, string srcLang, string dstLang, string salt, string sign)
         => $"{_baseUrl}?q={Uri.EscapeDataString(query)}&from={srcLang}&to={dstLang}&appid={_appID}&salt={salt}&sign={sign}";
-    private bool TryTranslate(string query, string srcLang, string dstLang, out string message, out string? result)
+    private async Task<(bool, string, string)> TryTranslate(string query, string srcLang, string dstLang)
     {
+
+        string result = string.Empty;
+        string message = string.Empty;
         try
         {
-            result = null;
             string salt = _ro.Next().ToString();
             string sign = CalculateSign(query, salt);
             string url = GetRequestUrl(query, srcLang, dstLang, salt, sign);
-            var response = _client.GetAsync(url).Result;
+            HttpResponseMessage response = await _client.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
                 message = $"请求返回异常状态码[{response.StatusCode}]";
-                return false;
+                return (false, message, result);
             }
             else
             {
@@ -190,50 +187,47 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
                 {
                     result = Regex.Unescape(_dstPat.Match(re).Groups[1].Value);
                     message = "翻译成功";
-                    return true;
+                    return (true, message, result);
                 }
                 else
                 {
-                    result = null;
                     if (_errorCodePat.IsMatch(re))
                         message = $"翻译失败：{_errorMsg[_errorCodePat.Match(re).Groups[1].Value]}";
                     else
                         message = "翻译失败：未正确识别到翻译结果";
-                    return false;
+                    return (true, message, result);
                 }
             }
         }
         catch (Exception ex)
         {
             message = $"翻译时发生异常：{ex.Message}";
-            result = null;
-            return false;
+            return (false, message, result);
         }
     }
-    private bool TryReflect(string query, out string message, out string? result)
+    private async Task<(bool, string, string)> TryReflect(string query)
     {
-        if (!TryTranslate(query, _srcLang, _dstLang, out message, out string? dst1) || dst1 == null)
-        {
-            result = null;
-            return false;
-        }
+        (bool success, string message, string result) = await TryTranslate(query, _srcLang, _dstLang);
+        if (!success)
+            return (false, message, result);
         Thread.Sleep(1000);
-        if (!TryTranslate(dst1, _dstLang, _srcLang, out message, out result))
-            return false;
-        return true;
+        (success, message, result) = await TryTranslate(result, _dstLang, _srcLang);
+        if (!success)
+            return (false, message, result);
+        return (true, message, result);
     }
-    private bool TryReflect(int reflectNum, string query, out string message, out string? result)
+    private async Task<(bool, string, string)> TryReflect(int reflectNum, string query)
     {
-        result = query;
+        string result = string.Empty;
         for (int n = 0; n < reflectNum; n++)
         {
             ModulePrint($"正在进行反射#{n}...");
-            if (!TryReflect(query, out message, out result))
-                return false;
+            (bool suceess, string message, result) = await TryReflect(query);
+            if (!suceess)
+                return (false, message, result);
             Thread.Sleep(1000);
         }
-        message = "反射成功";
-        return true;
+        return (true, "反射成功", result);
     }
     private string GenerateSingleSentence()
     {

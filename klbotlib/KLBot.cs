@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -105,7 +106,7 @@ namespace klbotlib
             {
                 //加载核心模块
                 _console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
-                AddModule(new CommandModule(this));
+                AddModule(new CommandModule(this)).Wait();
                 _console.WriteLn(GetModuleChainString());
             }
             catch (Exception ex)
@@ -180,7 +181,7 @@ namespace klbotlib
                 {
                     //加载核心模块
                     _console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
-                    AddModule(new CommandModule(this));
+                    AddModule(new CommandModule(this)).Wait();
                     _console.WriteLn(GetModuleChainString());
                 }
                 catch (Exception ex)
@@ -231,7 +232,7 @@ namespace klbotlib
         /// <summary>
         /// 在当前模块链条的末尾手动添加一个或多个新模块
         /// </summary>
-        public void AddModule(params Module[] modules)
+        public async Task AddModule(params Module[] modules)
         {
             foreach (var m in modules)
             {
@@ -242,14 +243,14 @@ namespace klbotlib
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
                 CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
                 //载入模块配置
-                LoadModuleSetup(m);
-                LoadModuleStatus(m);
+                await LoadModuleSetup(m);
+                await LoadModuleStatus(m);
                 _console.WriteLn($"已添加{m.ModuleName}，模块ID为\"{m}\"", ConsoleMessageType.Info);
             }
         }
 
         //消息内部API
-        internal Message GetMessageFromID(long id)
+        internal Task<Message> GetMessageFromID(long id)
             => _msgServer.GetMessageFromID(id);
         /// <summary>
         /// 发送消息
@@ -259,15 +260,15 @@ namespace klbotlib
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
         /// <param name="content">待编译MsgMarker文本</param>
-        internal void SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
-            => _msgServer.SendMessage(module, context, userId, groupId, content);
+        internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+            => await _msgServer.SendMessage(module, context, userId, groupId, content);
         /// <summary>
         /// 发送群消息
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="groupId">目标群组ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendGroupMessage(Module module, long groupId, string content)
+        internal Task SendGroupMessage(Module module, long groupId, string content)
             => SendMessage(module, MessageContext.Group, -1, groupId, content);
         /// <summary>
         /// 发送临时消息
@@ -276,7 +277,7 @@ namespace klbotlib
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendTempMessage(Module module, long userId, long groupId, string content)
+        internal Task SendTempMessage(Module module, long userId, long groupId, string content)
             => SendMessage(module, MessageContext.Group, userId, groupId, content);
         /// <summary>
         /// 发送私聊消息
@@ -284,7 +285,7 @@ namespace klbotlib
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="userId">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
-        internal void SendPrivateMessage(Module module, long userId, string content)
+        internal Task SendPrivateMessage(Module module, long userId, string content)
             => SendMessage(module, MessageContext.Group,  userId, -1, content);
         /// <summary>
         /// 上传群文件
@@ -294,9 +295,11 @@ namespace klbotlib
         /// <param name="uploadPath">上传的目标路径</param>
         /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
         [Obsolete("该方法仍有问题")]
-        internal void UploadFile(Module module, long groupId, string uploadPath, string filePath)
+        internal async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
         {
-            _msgServer.UploadFile(module, groupId, uploadPath, filePath);
+            Exception? ex = await _msgServer.UploadFile(module, groupId, uploadPath, filePath);
+            if (ex != null)
+                throw ex;
         } 
         /// <summary>
         /// 回复消息
@@ -304,16 +307,16 @@ namespace klbotlib
         /// <param name="module">调用模块</param>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="content">回复内容</param>
-        internal void ReplyMessage(Module module, Message originMsg, string content)
+        internal async Task ReplyMessage(Module module, Message originMsg, string content)
         {
             if (originMsg is MessageCommon originMsgCommon)
-                SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
+                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
             else
             {
                 switch (originMsg.Context)
                 {
                     case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
                         return;
                     default:
                         ObjectPrint(module, $"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
@@ -372,24 +375,27 @@ namespace klbotlib
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs) => ProcessMessages(msgs, ModulesProcessMessage);
+        public async Task ProcessMessages(List<Message> msgs) => await ProcessMessages(msgs, ModulesProcessMessage);
         /// <summary>
         /// 用processor依次处理消息列表。返回非空消息的个数
         /// </summary>
         /// <param name="msgs">待处理消息列表</param>
         /// <param name="mainProcessor">消息处理函数</param>
         /// <returns>已处理的消息数量</returns>
-        public void ProcessMessages(List<Message> msgs, Action<Message> mainProcessor)
+        public async Task ProcessMessages(List<Message> msgs, Func<Message, Task> mainProcessor)
         {
             if (_isBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
                 _isBooting = false;
             }
-            msgs.ForEach(msg => { mainProcessor(msg); });
+            foreach (var msg in msgs)
+            {
+                await mainProcessor(msg);
+            }
         }
         // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
-        private void MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
+        private async Task MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
         {
 #pragma warning disable CS0219 // 从未使用变量
 #pragma warning disable CS0164 // 标签未被引用
@@ -408,11 +414,11 @@ start:
                     if (isLoopRestarting)
                     {
                         if (msgs.Count != 0)
-                            ProcessMessages(new List<Message> { msgs.Last() });
+                            await ProcessMessages(new List<Message> { msgs.Last() });
                         isLoopRestarting = false;
                     }
                     else
-                        ProcessMessages(msgs);
+                        await ProcessMessages(msgs);
                     Thread.Sleep(PollingTimeInterval);
                     waitForPauseMsgLoopSignal.WaitOne();
                 }
@@ -568,7 +574,7 @@ start:
                     else if (cmd == "reload")
                     {
                         _console.WriteLn("手动重载所有模块存档...", ConsoleMessageType.Info);
-                        ReloadAllModules();
+                        ReloadAllModules().Wait();
                         _console.WriteLn("重载已完成", ConsoleMessageType.Info);
                     }
                     else if (cmd == "lasterror")
@@ -587,7 +593,7 @@ start:
 
         //默认处理函数。用Modules中的模块依次尝试处理消息
         //注意 空消息的过滤已经在上一级ProcessMessages()完成，所以此处入参的所有消息均为非空消息
-        private void ModulesProcessMessage(Message msg)
+        private async Task ModulesProcessMessage(Message msg)
         {
             //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
             //另外，帮助消息不计入统计信息
@@ -597,7 +603,7 @@ start:
                 {
                     if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
                     {
-                        ReplyMessage(module, msg, module.HelpInfo);
+                        await ReplyMessage(module, msg, module.HelpInfo);
                         return;
                     }
                 }
@@ -607,7 +613,7 @@ start:
             {
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool shouldProcess = module.AddProcessTask(msg);
+                bool shouldProcess = await module.AddProcessTask(msg);
                 if (shouldProcess)
                 {
                     DiagData.ProcessedMessageCount++;
@@ -623,13 +629,13 @@ start:
         /// <summary>
         /// 重新载入所有模块配置和状态
         /// </summary>
-        public void ReloadAllModules()
+        public async Task ReloadAllModules()
         {
-            ModuleChain.ForEach( module => 
+            foreach (var module in ModuleChain)
             {
-                LoadModuleSetup(module);
-                LoadModuleStatus(module);
-            });
+                await LoadModuleSetup(module);
+                await LoadModuleStatus(module);
+            }
         }
         // 保存该模块的配置
         [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
@@ -654,7 +660,7 @@ start:
             File.WriteAllText(filePath, json);
         }
         //载入模块的状态
-        private void LoadModuleStatus(Module module, bool printInfo = true)
+        private async Task LoadModuleStatus(Module module, bool printInfo = true)
         {
             try
             {
@@ -663,7 +669,7 @@ start:
                 {
                     if (printInfo)
                         _console.WriteLn($"正在从\"{filePath}\"加载模块{module}的状态...", ConsoleMessageType.Task);
-                    var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting);
+                    var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
                     if (statusDict != null)
                         module.ImportDict(statusDict);
                 }
@@ -674,7 +680,7 @@ start:
             }
         }
         //载入所有模块配置
-        private void LoadModuleSetup(Module module, bool printInfo = true)
+        private async Task LoadModuleSetup(Module module, bool printInfo = true)
         {
             try
             {
@@ -682,8 +688,8 @@ start:
                 if (File.Exists(filePath))
                 {
                     if (printInfo)
-                        _console.WriteLnWithLock($"正在从\"{filePath}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
-                    Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText(filePath), JsonHelper.JsonSettings.FileSetting);
+                        _console.WriteLn($"正在从\"{filePath}\"加载模块{module.ModuleID}的配置...", ConsoleMessageType.Task);
+                    Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
                     if (result == null)
                         throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
                     module.ImportDict(result);

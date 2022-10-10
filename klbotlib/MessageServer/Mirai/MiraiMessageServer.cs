@@ -82,9 +82,9 @@ public class MiraiMessageServer : IMessageServer
         return msgs.Where(x => !(x is MessageEmpty)).ToList(); //预过滤空消息
     }
     /// <inheritdoc/>
-    public Message GetMessageFromID(long id)
+    public async Task<Message> GetMessageFromID(long id)
     {
-        string response = MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, id);
+        string response = await MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, id);
         JMiraiGetMessageFromIdResponse? obj = null;
         try
         {
@@ -93,7 +93,7 @@ public class MiraiMessageServer : IMessageServer
         catch (Exception ex)
         {
             Console.WriteLine($"JSON解析失败：{ex.Message}");
-            File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+            await File.AppendAllTextAsync("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
             Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
         }
         try
@@ -105,7 +105,7 @@ public class MiraiMessageServer : IMessageServer
         catch (Exception ex)
         {
             Console.WriteLine($"Message对象构造失败：{ex.Message}");
-            File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
+            await File.AppendAllTextAsync("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
             Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
             throw ex;
         }
@@ -119,7 +119,7 @@ public class MiraiMessageServer : IMessageServer
     /// <param name="groupId">目标群组ID</param>
     /// <param name="content">MsgMarker内容</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
-    public Exception? SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public async Task<Exception?> SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
         Exception? exception = null;
         //编译MsgMarker文本到json消息链
@@ -135,21 +135,8 @@ public class MiraiMessageServer : IMessageServer
         }
         //创建完整JSON字符串
         string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
-        //上一条消息已完成，则直接用新任务覆盖
-        if (_networkTask.IsCompleted)
-        {
-            _networkTask = Task.Run(() => TrySendMessage(context, fullJson));
-            _networkTask.ContinueWith(x => CheckNetworkTaskResult(x.Result, module, userId, groupId, context));
-        }
-        //上一条消息未完成，排队
-        else
-        {
-            _networkTask.ContinueWith((x) =>
-            {
-                CheckNetworkTaskResult(x.Result, module, userId, groupId, context);   //检查上一条消息的完成结果 若有问题打印相关信息
-                TrySendMessage(context, fullJson);  //尝试发送下一条消息
-            });
-        }
+        exception = await TrySendMessage(context, fullJson);
+        await CheckNetworkTaskResult(exception, module, userId, groupId, context);
         return exception;
     }
     /// <summary>
@@ -161,7 +148,7 @@ public class MiraiMessageServer : IMessageServer
     /// <param name="filePath">文件本地路径</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
     [Obsolete("该方法仍有问题")]
-    public Exception? UploadFile(Module module, long groupId, string uploadPath, string filePath)
+    public async Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath)
     {
         throw new NotImplementedException();
 #pragma warning disable CS0162 // 检测到无法访问的代码
@@ -174,24 +161,8 @@ public class MiraiMessageServer : IMessageServer
             multipart.Add(new StringContent(uploadPath), "path");
             FileStream fs = new FileStream(filePath, FileMode.Open);
             multipart.Add(new StreamContent(fs), "file");
-            //发送
-            if (_networkTask.IsCompleted)
-            {
-                _networkTask = Task.Run(() =>
-                {
-                    Exception? ex = TryUploadFile(MessageContext.Group, fs, multipart);
-                    CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
-                    return ex;
-                });
-            }
-            else
-            {
-                _networkTask.ContinueWith((x) =>
-                {
-                    TryUploadFile(MessageContext.Group, fs, multipart);  //尝试上传消息
-                    CheckNetworkTaskResult(x.Result, module, groupId, groupId, MessageContext.Group);   //检查上一个任务的完成结果 若有问题打印相关信息
-                });
-            }
+            Exception? ex = await TryUploadFile(MessageContext.Group, fs, multipart);
+            await CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
         }
         catch (Exception ex)
         {
@@ -202,12 +173,12 @@ public class MiraiMessageServer : IMessageServer
     }
 
     // 发送给定消息.
-    private Exception? TrySendMessage(MessageContext context, string fullMsgJson)
+    private async Task<Exception?> TrySendMessage(MessageContext context, string fullMsgJson)
     {
         string url = MiraiNetworkHelper.GetSendMessageUrl(ServerURL, context);
         try
         {
-            bool result = GeneralNetworkHelper.PostPlainText(url, fullMsgJson, out string responseStr);
+            (bool result, string responseStr) = await GeneralNetworkHelper.PostPlainText(url, fullMsgJson);
             if (!result)
                 throw new Exception($"非成功返回码：{responseStr}");
             var response = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
@@ -221,12 +192,12 @@ public class MiraiMessageServer : IMessageServer
         }
     }
     // 发送给定消息.
-    private Exception? TryUploadFile(MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
+    private async Task<Exception?> TryUploadFile(MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
     {
         string url = MiraiNetworkHelper.GetUploadFileUrl(ServerURL, context);
         try
         {
-            bool result = GeneralNetworkHelper.PostMultipart(url, fullContent, out string responseStr);
+            (bool result, string responseStr) = await GeneralNetworkHelper.PostMultipart(url, fullContent);
             if (!result)
                 throw new Exception($"非成功返回码：{responseStr}");
             var response = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
@@ -242,7 +213,7 @@ public class MiraiMessageServer : IMessageServer
         }
     }
     // 检查上一个发送任务是否正确完成，若失败则根据异常决定是否尝试使机器人发送错误消息
-    private void CheckNetworkTaskResult(Exception? exception, Module module, long userId, long groupId, MessageContext context)
+    private async Task CheckNetworkTaskResult(Exception? exception, Module module, long userId, long groupId, MessageContext context)
     {
         if (exception != null)   //检查上个发送任务是否正确完成
         {
@@ -250,7 +221,7 @@ public class MiraiMessageServer : IMessageServer
             {
                 string chainJson = MiraiJsonHelper.MiraiMessageElementBuilder.BuildPlainElement($"{module.ModuleID}返回的消息不受mirai服务器认可。\n异常信息：\n{exception.Message}");
                 string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
-                TrySendMessage(context, fullJson);
+                await TrySendMessage(context, fullJson);
             }
         }
     }

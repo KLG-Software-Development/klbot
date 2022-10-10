@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -59,8 +60,8 @@ public class FuckModule : SingleTypeModule<MessagePlain>
             : null;
     }
     /// <inheritdoc/>
-    public sealed override string? Processor(MessagePlain msg, string? _)
-        => GenerateFuck();
+    public sealed override Task<string> Processor(MessagePlain msg, string? _)
+        => Task.FromResult(GenerateFuck());
 
     /// <summary>
     /// 生成一句脏话

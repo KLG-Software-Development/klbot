@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -43,7 +44,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         return msg.Text.StartsWith(_onlineCommand) ? "compile_ol" : msg.Text.StartsWith(_localCommand) ? "compile" : null;
     }
     ///<inheritdoc/>
-    public override string? Processor(MessagePlain msg, string? filterOut)
+    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
     {
         string text = msg.Text.TrimStart();
         int ptr = 4;
@@ -59,7 +60,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
                 _fileExts.TryGetValue(language, out string? fileExt);
                 if (fileExt == null)
                     return $"不支持语言\"{language}\"";
-                string response = _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code)).Result;
+                string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
                 ModulePrint($"Response: {response}");
                 JReply? jreply = JsonConvert.DeserializeObject<JReply>(response);
                 if (jreply == null)

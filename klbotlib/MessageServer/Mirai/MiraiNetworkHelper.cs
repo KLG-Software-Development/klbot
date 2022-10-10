@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace klbotlib.MessageServer.Mirai;
 
@@ -46,8 +47,8 @@ internal static class MiraiNetworkHelper
         response.EnsureSuccessStatusCode();
         return response.Content.ReadAsStringAsync().Result;
     }
-    internal static string GetMessageByIdJSON(string serverUrl, long id)
+    internal static async Task<string> GetMessageByIdJSON(string serverUrl, long id)
     {
-        return _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + "?id=" + id).Result;
+        return await _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + "?id=" + id);
     }
 }
