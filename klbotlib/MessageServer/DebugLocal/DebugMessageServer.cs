@@ -76,9 +76,9 @@ public class DebugMessageServer : IMessageServer
     }
 
     /// <inheritdoc/>
-    public Task<Message> GetMessageFromID(long id)
+    public Task<Message> GetMessageFromID(long target, long messageId)
     {
-        return Task.FromResult(_msgCache[id]);
+        return Task.FromResult(_msgCache[messageId]);
     }
     /// <inheritdoc/>
     public bool Verify(string key)

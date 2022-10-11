@@ -39,9 +39,10 @@ public class FlashGambleModule : Module
             {
                 case "recall":
                     MessageRecall recall = (MessageRecall)msg;
+                    long target = recall.Context == MessageContext.Group ? recall.GroupID :HostBot.SelfID;
                     long msgId = recall.MessageID;
                     long operatorId = recall.OperatorID;
-                    MessageCommon origin = (MessageCommon)(await Messaging.GetMessageFromID(msgId));
+                    MessageCommon origin = (MessageCommon)await Messaging.GetMessageFromID(target, msgId);
                     if (origin == null)
                         return string.Empty;
                     string info;
