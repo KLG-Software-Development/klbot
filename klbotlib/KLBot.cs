@@ -250,8 +250,8 @@ namespace klbotlib
         }
 
         //消息内部API
-        internal Task<Message> GetMessageFromID(long id)
-            => _msgServer.GetMessageFromID(id);
+        internal Task<Message> GetMessageFromID(long target, long messageId)
+            => _msgServer.GetMessageFromID(target, messageId);
         /// <summary>
         /// 发送消息
         /// </summary>

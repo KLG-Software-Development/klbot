@@ -82,9 +82,9 @@ public class MiraiMessageServer : IMessageServer
         return msgs.Where(x => !(x is MessageEmpty)).ToList(); //预过滤空消息
     }
     /// <inheritdoc/>
-    public async Task<Message> GetMessageFromID(long id)
+    public async Task<Message> GetMessageFromID(long target, long messageId)
     {
-        string response = await MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, id);
+        string response = await MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, target, messageId);
         JMiraiGetMessageFromIdResponse? obj = null;
         try
         {

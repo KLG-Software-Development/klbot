@@ -24,9 +24,10 @@ public interface IMessageServer
     /// <summary>
     /// 根据消息ID，从服务器获取给定消息
     /// </summary>
-    /// <param name="id">消息ID</param>
+    /// <param name="target">获取消息的对象</param>
+    /// <param name="messageId">消息ID</param>
     /// <returns>相应的消息对象</returns>
-    Task<Message> GetMessageFromID(long id);
+    Task<Message> GetMessageFromID(long target, long messageId);
     /// <summary>
     /// 发送消息接口
     /// </summary>

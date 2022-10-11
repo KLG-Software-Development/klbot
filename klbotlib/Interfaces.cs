@@ -96,9 +96,10 @@ namespace klbotlib
         /// <summary>
         /// 根据消息ID获取消息接口
         /// </summary>
-        /// <param name="id">消息ID</param>
+        /// <param name="target">获取的目标ID</param>
+        /// <param name="messageId">消息ID</param>
         /// <returns>消息对象</returns>
-        Task<Message> GetMessageFromID(long id);
+        Task<Message> GetMessageFromID(long target, long messageId);
     }
     /// <summary>
     /// 模块访问API

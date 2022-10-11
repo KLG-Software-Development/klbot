@@ -47,8 +47,8 @@ internal static class MiraiNetworkHelper
         response.EnsureSuccessStatusCode();
         return response.Content.ReadAsStringAsync().Result;
     }
-    internal static async Task<string> GetMessageByIdJSON(string serverUrl, long id)
+    internal static async Task<string> GetMessageByIdJSON(string serverUrl, long target, long messageId)
     {
-        return await _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + "?id=" + id);
+        return await _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + $"?messageId={messageId}&target={target}");
     }
 }
