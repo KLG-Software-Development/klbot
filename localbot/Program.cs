@@ -163,7 +163,7 @@ start:
                     default:
                         continue;
                 }
-                lcb.ProcessMessages(lcb.FetchMessages());
+                lcb.ProcessMessages(lcb.FetchMessages()).Wait();
                 Thread.Sleep(1000);
             }
         }
