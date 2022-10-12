@@ -97,7 +97,7 @@ namespace klbotlib
             _msgServer = server;
             _isBooting = true;
             IsSilent = isSilent;
-            TargetGroupIDList = new();
+            //TargetGroupIDList = new();
             SelfID = selfID;
             ModulesCacheDir = "ModuleCacheDir";
             ModulesSaveDir = "ModuleSaveDir";

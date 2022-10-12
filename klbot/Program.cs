@@ -6,6 +6,7 @@ using klbotlib.Modules;
 using ModuleCollection;
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace klbot;
 
@@ -47,7 +48,7 @@ start:
             klg.AddModule(new AnonyVoiceModule());
             klg.AddModule(new TimeModule());
             klg.AddModule(new 上号Module());
-            klg.AddModule(new ChatQYKModule());
+            klg.AddModule(new ChatXiaoIceModule());
             klg.AddModule(new FuckModule());
             Console.WriteLine(klg.GetModuleChainString());
             klg.DefaultLoop();
