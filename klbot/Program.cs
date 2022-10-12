@@ -12,7 +12,7 @@ namespace klbot;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         Console.ResetColor();
         Version? exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
@@ -34,22 +34,22 @@ start:
             else
                 miraiServer = new(args[0]);
             klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
-            klg.AddModule(new ResetModule());
-            klg.AddModule(new PLJJModule());
-            klg.AddModule(new ZombieeeModule());
-            klg.AddModule(new FlashGambleModule());
-            klg.AddModule(new RollinModule());
-            klg.AddModule(new CollapseModule());
-            klg.AddModule(new CompilerModule());
-            klg.AddModule(new InvisibleModule());
-            klg.AddModule(new WelcomekxggModule());
-            klg.AddModule(new ImageModule());
-            klg.AddModule(new IMGPModule());
-            klg.AddModule(new AnonyVoiceModule());
-            klg.AddModule(new TimeModule());
-            klg.AddModule(new 上号Module());
-            klg.AddModule(new ChatXiaoIceModule());
-            klg.AddModule(new FuckModule());
+            await klg.AddModule(new ResetModule());
+            await klg.AddModule(new PLJJModule());
+            await klg.AddModule(new ZombieeeModule());
+            await klg.AddModule(new FlashGambleModule());
+            await klg.AddModule(new RollinModule());
+            await klg.AddModule(new CollapseModule());
+            await klg.AddModule(new CompilerModule());
+            await klg.AddModule(new InvisibleModule());
+            await klg.AddModule(new WelcomekxggModule());
+            await klg.AddModule(new ImageModule());
+            await klg.AddModule(new IMGPModule());
+            await klg.AddModule(new AnonyVoiceModule());
+            await klg.AddModule(new TimeModule());
+            await klg.AddModule(new 上号Module());
+            await klg.AddModule(new ChatXiaoIceModule());
+            await klg.AddModule(new FuckModule());
             Console.WriteLine(klg.GetModuleChainString());
             klg.DefaultLoop();
         }

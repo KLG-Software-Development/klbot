@@ -19,7 +19,7 @@ public class Program
     private static bool _tagMe = false;
     private static bool _verbose = false;
 
-    public static void Main()
+    public static async Task Main()
     {
         Console.ResetColor();
         long queryCounterCache = 0;
@@ -32,12 +32,12 @@ start:
             if (asm == null)
                 throw new NullReferenceException("无法获取模块集合所在的程序集");
             lcb = new KLBot(_localServer, asm, _debugTargetGroupID);
-            lcb.AddModule(new ZombieeeModule());
+            await lcb.AddModule(new ZombieeeModule());
             //lcb.AddModule(new RollinModule());
             //lcb.AddModule(new CollapseModule());
             //lcb.AddModule(new CompilerModule());
             //lcb.AddModule(new ImageModule());
-            lcb.AddModule(new IMGPModule());
+            await lcb.AddModule(new IMGPModule());
             //lcb.AddModule(new InvisibleModule());
             //lcb.AddModule(new WelcomekxggModule());
             //lcb.AddModule(new AnonyVoiceModule());
