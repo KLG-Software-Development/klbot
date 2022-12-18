@@ -18,7 +18,7 @@ namespace klbotlib.Modules
     /// 消息处理模块基类.
     /// 这是KLBot功能实现的基本单位
     /// </summary>
-    public abstract class Module : IFileAPI, IMessagingAPI, IModuleAccessAPI
+    public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAccessAPI
     {
         //后台变量
         private KLBot? _hostBot;
@@ -95,15 +95,19 @@ namespace klbotlib.Modules
         /// </summary>
         public string ModuleCacheDir { get => HostBot.GetModuleCacheDir(this); }
         /// <summary>
-        /// 缓存操作接口
+        /// 缓存接口
         /// </summary>
         public IFileAPI Cache { get => this; }
         /// <summary>
-        /// 发送消息操作接口
+        /// 消息接口
         /// </summary>
         public IMessagingAPI Messaging { get => this; }
         /// <summary>
-        /// 发送消息操作接口
+        /// 操作接口
+        /// </summary>
+        public IOperationAPI Operating { get => this; }
+        /// <summary>
+        /// 访问模块接口
         /// </summary>
         public IModuleAccessAPI ModuleAccess { get => this; }
 
@@ -291,6 +295,10 @@ namespace klbotlib.Modules
         {
             return HostBot.UploadFile(this, groupID, uploadPath, filePath);
         }
+        Task IOperationAPI.Mute(long userId, long groupId, uint durationSeconds)
+            => HostBot.Mute(this, userId, groupId, durationSeconds);
+        Task IOperationAPI.Unmute(long userId, long groupId)
+            => HostBot.Unmute(this, userId, groupId);
         /// <summary>
         /// 返回当前模块的缓存目录绝对路径
         /// </summary>

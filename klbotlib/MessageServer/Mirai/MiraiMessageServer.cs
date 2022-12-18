@@ -171,7 +171,37 @@ public class MiraiMessageServer : IMessageServer
         return exception;
 #pragma warning restore CS0162 // 检测到无法访问的代码
     }
+    /// <inheritdoc/>
+    public bool Verify(string key)
+    {
+        try
+        {
+            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(MiraiNetworkHelper.Verify(ServerURL, key));
+            response.CheckStatusCode();
+            return true;
+        }
+        catch
+        {
+            return false;
+            throw;
+        }
+    }
+    /// <inheritdoc/>
+    public async Task Mute(Module module, long userId, long groupId, uint durationSeconds)
+    {
+        string responseJson = await MiraiNetworkHelper.Mute(ServerURL, userId, groupId, durationSeconds);
+        JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
+        CheckMiraiResponse(responseJson, response);
+    }
+    /// <inheritdoc/>
+    public async Task Unmute(Module module, long userId, long groupId)
+    {
+        string responseJson = await MiraiNetworkHelper.Unmute(ServerURL, userId, groupId);
+        JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
+        CheckMiraiResponse(responseJson, response);
+    }
 
+    //**** Helper函数 ****
     // 发送给定消息.
     private async Task<Exception?> TrySendMessage(MessageContext context, string fullMsgJson)
     {
@@ -225,19 +255,13 @@ public class MiraiMessageServer : IMessageServer
             }
         }
     }
-    /// <inheritdoc/>
-    public bool Verify(string key)
+    // 检查返回码
+    private void CheckMiraiResponse(string originalJson, JMiraiResponse? response)
     {
-        try
-        {
-            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(MiraiNetworkHelper.Verify(ServerURL, key));
-            response.CheckStatusCode();
-            return true;
-        }
-        catch
-        {
-            return false;
-            throw;
-        }
+        if (response == null)
+            throw new Exception($"未成功反序列化Mirai服务器返回的JSON消息。\n返回内容：{originalJson}\n");
+        //验证返回码
+        if (response.code != 0)
+            throw new MiraiException(response.code, response.msg);
     }
 }

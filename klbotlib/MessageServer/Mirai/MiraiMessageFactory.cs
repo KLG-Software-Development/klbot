@@ -36,6 +36,25 @@ namespace klbotlib.MessageServer.Mirai
                 retCommon = BuildImagePlain(msgPackage);
             else if (type == typeof(MessageRecall))
                 ret = new MessageRecall(msgPackage.authorId, msgPackage.@operator.id, -1, msgPackage.messageId);
+            else if (type == typeof(MessageMute))
+            {
+                //根据情况构造相应的禁言/取消禁言消息
+                switch (msgPackage.type)
+                {
+                    case "MemberMuteEvent":
+                        ret = new MessageMute(false, msgPackage.@operator.GroupId, msgPackage.@operator.id, msgPackage.member.id, msgPackage.durationSeconds);
+                        break;
+                    case "BotMuteEvent":
+                        ret = new MessageMute(false, msgPackage.@operator.GroupId, msgPackage.@operator.id, 0, msgPackage.durationSeconds);
+                        break;
+                    case "MemberUnmuteEvent":
+                        ret = new MessageMute(true, msgPackage.@operator.GroupId, msgPackage.@operator.id, msgPackage.member.id);
+                        break;
+                    case "BotUnmuteEvent":
+                        ret = new MessageMute(true, msgPackage.@operator.GroupId, msgPackage.@operator.id, 0);
+                        break;
+                }
+            }
             else
                 return Message.Empty;
             if (retCommon != null)
@@ -99,10 +118,12 @@ namespace klbotlib.MessageServer.Mirai
             {
                 if (msgPackage.type == "GroupRecallEvent")
                     return typeof(MessageRecall);
+                else if (msgPackage.type == "BotMuteEvent" || msgPackage.type == "MemberMuteEvent"
+                    || msgPackage.type == "BotUnmuteEvent" || msgPackage.type == "MemberUnmuteEvent")
+                    return typeof(MessageMute);
                 else
                     return typeof(MessageEmpty);
             }
-
         }
         //根据消息链，将Message对象的Context字段和相应的ID字段修改成合适值
         private static void RefineContext(JMiraiMessagePackage msgPackage, Message msg)
@@ -119,10 +140,11 @@ namespace klbotlib.MessageServer.Mirai
                     msg.GroupID = msgPackage.sender.group.id;
                     break;
                 case "GroupMessage":
-                    msg.Context = MessageContext.Group;
-                    msg.GroupID = msgPackage.sender.group.id;
-                    break;
                 case "GroupRecallEvent":
+                case "BotMuteEvent":
+                case "MemberMuteEvent":
+                case "BotUnmuteEvent":
+                case "MemberUnmuteEvent":
                     msg.Context = MessageContext.Group;
                     msg.GroupID = msgPackage.@operator.group.id;
                     break;

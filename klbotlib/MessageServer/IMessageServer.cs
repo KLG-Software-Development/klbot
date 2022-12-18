@@ -46,4 +46,19 @@ public interface IMessageServer
     /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
     [Obsolete]
     Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath);
+    /// <summary>
+    /// 禁言接口
+    /// </summary>
+    /// <param name="module">模块</param>
+    /// <param name="userId">禁言用户ID</param>
+    /// <param name="groupId">群聊ID</param>
+    /// <param name="durationSeconds">禁言时长（秒）</param>
+    Task Mute(Module module, long userId, long groupId, uint durationSeconds);
+    /// <summary>
+    /// 解除禁言接口
+    /// </summary>
+    /// <param name="module">模块</param>
+    /// <param name="userId">解除禁言用户ID</param>
+    /// <param name="groupId">群聊ID</param>
+    Task Unmute(Module module, long userId, long groupId);
 }
