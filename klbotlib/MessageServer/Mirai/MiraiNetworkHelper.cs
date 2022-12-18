@@ -27,13 +27,17 @@ internal static class MiraiNetworkHelper
         => serverUrl + "/file/upload";
     internal static string GetVerifyUrl(string serverUrl)
         => serverUrl + "/verify";
+    internal static string GetMuteUrl(string serverUrl)
+        => serverUrl + "/mute";
+    internal static string GetUnmuteUrl(string serverUrl)
+        => serverUrl + "/unmute";
 
     //返回获取消息的url
     internal static string GetFetchMessageUrl(string serverUrl)
         => $"{serverUrl}/fetchMessage";
     //返回从ID获取消息的url
     internal static string GetMessageFromIDUrl(string serverUrl)
-    => $"{serverUrl}/messageFromId";
+        => $"{serverUrl}/messageFromId";
     internal static string FetchMessageListJSON(string serverUrl)
     {
         return _client.GetStringAsync(GetFetchMessageUrl(serverUrl)).Result;
@@ -47,6 +51,23 @@ internal static class MiraiNetworkHelper
         response.EnsureSuccessStatusCode();
         return response.Content.ReadAsStringAsync().Result;
     }
+    //禁言
+    internal static async Task<string> Mute(string serverUrl, long userId, long groupId, uint durationSeconds)
+    {
+        StringContent content = new($"{{\"target\":{groupId},\"memberId\":{userId},\"time\":{durationSeconds}}}");
+        HttpResponseMessage response = await _client.PostAsync(GetMuteUrl(serverUrl), content);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
+    //解除禁言
+    internal static async Task<string> Unmute(string serverUrl, long userId, long groupId)
+    {
+        StringContent content = new($"{{\"target\":{groupId},\"memberId\":{userId}}}");
+        HttpResponseMessage response = await _client.PostAsync(GetUnmuteUrl(serverUrl), content);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
+
     internal static async Task<string> GetMessageByIdJSON(string serverUrl, long target, long messageId)
     {
         return await _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + $"?messageId={messageId}&target={target}");

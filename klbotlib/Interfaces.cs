@@ -122,4 +122,23 @@ namespace klbotlib
         /// <returns>是否获取成功</returns>
         bool TryGetFieldAndProperty<T>(string name, out T value) where T : struct;
     }
+    /// <summary>
+    /// 操作API
+    /// </summary>
+    public interface IOperationAPI
+    {
+        /// <summary>
+        /// 禁言指定用户
+        /// </summary>
+        /// <param name="userId">待禁言者ID</param>
+        /// <param name="groupId">所在群ID</param>
+        /// <param name="durationSeconds">禁言时长</param>
+        Task Mute(long userId, long groupId, uint durationSeconds);
+        /// <summary>
+        /// 解除指定用户的禁言
+        /// </summary>
+        /// <param name="userId">待解除禁言者ID</param>
+        /// <param name="groupId">所在群ID</param>
+        Task Unmute(long userId, long groupId);
+    }
 }

@@ -249,7 +249,8 @@ namespace klbotlib
             }
         }
 
-        //消息内部API
+        //**** 内部API ****//
+        //消息
         internal Task<Message> GetMessageFromID(long target, long messageId)
             => _msgServer.GetMessageFromID(target, messageId);
         /// <summary>
@@ -323,6 +324,28 @@ namespace klbotlib
                         return;
                 }
             }
+        }
+        //操作
+        /// <summary>
+        /// 禁言
+        /// </summary>
+        /// <param name="module">模块</param>
+        /// <param name="userId">禁言用户ID</param>
+        /// <param name="groupId">群聊ID</param>
+        /// <param name="durationSeconds">禁言时长</param>
+        internal async Task Mute(Module module, long userId, long groupId, uint durationSeconds)
+        {
+            await _msgServer.Mute(module, userId, groupId, durationSeconds);
+        }
+        /// <summary>
+        /// 取消禁言
+        /// </summary>
+        /// <param name="module">模块</param>
+        /// <param name="userId">取消禁言用户ID</param>
+        /// <param name="groupId">群聊ID</param>
+        internal async Task Unmute(Module module, long userId, long groupId)
+        {
+            await _msgServer.Unmute(module, userId, groupId);
         }
 
         //暴露给Module类的一些成员

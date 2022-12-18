@@ -14,6 +14,10 @@
         //群撤回消息
         public long messageId;
         public long authorId;           //被撤回消息发送者ID
-        public JMiraiUser? @operator;    //撤回者
+        public JMiraiUser? @operator;    //撤回/禁言者
+
+        //禁言消息
+        public JMiraiUser? member;       //被禁言成员
+        public uint durationSeconds;     //禁言时长
     }
 }

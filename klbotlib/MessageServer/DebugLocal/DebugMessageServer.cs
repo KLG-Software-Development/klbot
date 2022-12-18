@@ -25,6 +25,15 @@ public class DebugMessageServer : IMessageServer
     /// 机器人上传文件时触发的回调。参数为上传文件操作的来源模块、群聊ID、MsgMarker内容
     /// </summary>
     public Action<Module, long, string, string> UploadFileCallback { get; private set; }
+    /// <summary>
+    /// 机器人禁言他人时触发的回调。参数为禁言操作的来源模块、禁言用户ID、群聊ID、禁言时长（秒）
+    /// </summary>
+    public Action<Module, long, long, uint> MuteCallback { get; private set; }
+    /// <summary>
+    /// 机器人解除他人禁言时触发的回调。参数为解除禁言操作的来源模块、解除禁言用户ID、群聊ID
+    /// </summary>
+    public Action<Module, long, long> UnmuteCallback { get; private set; }
+
 
     /// <summary>
     /// 创建本地模拟消息服务器
@@ -32,11 +41,19 @@ public class DebugMessageServer : IMessageServer
     /// <param name="addMsgCallback">消息缓冲区加入新消息时触发的回调</param>
     /// <param name="sendMsgCallback">机器人发送消息时触发的回调</param>
     /// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
-    public DebugMessageServer(Action<Message> addMsgCallback, Action<Module, MessageContext, long, long, string> sendMsgCallback, Action<Module, long, string, string> uploadFileCallback)
+    /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
+    /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
+    public DebugMessageServer(Action<Message> addMsgCallback, 
+        Action<Module, MessageContext, long, long, string> sendMsgCallback, 
+        Action<Module, long, string, string> uploadFileCallback,
+        Action<Module, long, long, uint> muteCallback,
+        Action<Module, long, long> unmuteCallback)
     {
         AddMessageCallback = addMsgCallback;
         SendMessageCallback = sendMsgCallback;
         UploadFileCallback = uploadFileCallback;
+        MuteCallback = muteCallback;
+        UnmuteCallback = unmuteCallback;
     }
 
     /// <inheritdoc/>
@@ -84,5 +101,17 @@ public class DebugMessageServer : IMessageServer
     public bool Verify(string key)
     {
         return true;
+    }
+    /// <inheritdoc/>
+    public Task Mute(Module module, long userId, long groupId, uint durationSeconds)
+    {
+        MuteCallback.Invoke(module, userId, groupId, durationSeconds);
+        return Task.CompletedTask;
+    }
+    /// <inheritdoc/>
+    public Task Unmute(Module module, long userId, long groupId)
+    {
+        UnmuteCallback.Invoke(module, userId, groupId);
+        return Task.CompletedTask;
     }
 }
