@@ -12,11 +12,11 @@ public class TestModule
     [TestMethod]
     public void TestIsAttach()
     {
-        DebugMessageServer server = new(TestConst.NullAction, TestConst.NullAction, TestConst.NullAction);
+        DebugMessageServer server = TestConst.GetTestServer();
         KLBot test_bot = new(server, "config/unit_test_config.json");
         var tm = new TimeModule();
         Assert.AreEqual(false, tm.IsAttached, "模块初始情况下模块应处于未附加状态（IsAttach=false）");
-        test_bot.AddModule(tm);
+        test_bot.AddModule(tm).Wait();
         Assert.AreEqual(true, tm.IsAttached, "调用AddModule()后模块应处于附加状态（IsAttach=true）");
     }
 }
