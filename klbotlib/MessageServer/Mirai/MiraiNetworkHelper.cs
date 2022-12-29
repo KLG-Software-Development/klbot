@@ -6,7 +6,8 @@ namespace klbotlib.MessageServer.Mirai;
 
 internal static class MiraiNetworkHelper
 {
-    private static HttpClient _client = new();
+    private static HttpClientHandler _handler = new HttpClientHandler() { UseProxy = false }; //忽略系统代理
+    private static HttpClient _client = new(_handler);
     private static StringContent? _verifyRequestBody = null;
 
     //返回发送特定上下文消息的url

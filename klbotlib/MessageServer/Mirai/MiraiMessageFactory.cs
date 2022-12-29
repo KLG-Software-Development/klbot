@@ -140,6 +140,9 @@ namespace klbotlib.MessageServer.Mirai
                     msg.GroupID = msgPackage.sender.group.id;
                     break;
                 case "GroupMessage":
+                    msg.Context = MessageContext.Group;
+                    msg.GroupID = msgPackage.sender.group.id;
+                    break;
                 case "GroupRecallEvent":
                 case "BotMuteEvent":
                 case "MemberMuteEvent":

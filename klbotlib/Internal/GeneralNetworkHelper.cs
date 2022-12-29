@@ -6,12 +6,14 @@ namespace klbotlib.Internal
 {
     internal static class GeneralNetworkHelper
     {
-        private static HttpClient _client = new();
+        private static HttpClientHandler _handler = new() { UseProxy = false };
+        private static HttpClient _client = new(_handler);
         // POST一条纯文本字符串到给定URL
         internal static async Task<(bool, string)> PostPlainText(string url, string jsonString)
         {
             StringContent content = new StringContent(jsonString, Encoding.UTF8);
             HttpResponseMessage result = await _client.PostAsync(url, content);
+            result.EnsureSuccessStatusCode();
             string responseMsg = await result.Content.ReadAsStringAsync();
             return (result.IsSuccessStatusCode, responseMsg);
         }
@@ -20,6 +22,7 @@ namespace klbotlib.Internal
         {
             //content.Headers.ContentType;
             var result = await _client.PostAsync(url, content);
+            result.EnsureSuccessStatusCode();
             string responseMsg = result.Content.ReadAsStringAsync().Result;
             return (result.IsSuccessStatusCode, responseMsg);
         }

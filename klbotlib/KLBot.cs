@@ -503,7 +503,15 @@ start:
             DiagData.SuccessPackageCount = 0;
             //消息循环线程
             //开始之前向服务器验证身份
-            _msgServer.Verify(Key);
+            _console.WriteLn("正在向mirai服务器验证身份...", ConsoleMessageType.Task);
+            bool verifyResult = _msgServer.Verify(Key);
+            if (!verifyResult)
+            {
+                _console.WriteLn("验证失败。请检查密钥和网络是否正确\n正在退出...", ConsoleMessageType.Error);
+                Environment.Exit(0);
+            }
+            else
+                _console.WriteLn("验证成功", ConsoleMessageType.Info);
             var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
             bool exitFlag = false;
             //命令循环线程
