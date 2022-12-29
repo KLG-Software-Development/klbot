@@ -27,7 +27,6 @@ public class TestStatusAutoSave
         MessagePlain msg = new(MessageContext.Group, -1, -1, "##fuckmod enabled"); //unit_test_config.json中应将-1设置为监听群
         server.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages()).Wait();   
-        Thread.Sleep(25);//等待命令处理完成
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         //Test save file
         string savePath = Path.Combine(bot.ModulesSaveDir, module.ModuleID + "_status.json");

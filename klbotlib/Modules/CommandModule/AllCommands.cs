@@ -373,7 +373,7 @@ internal class FuckModEnabledCmd : SwitchCommand
     public override string SwitchName => "嘴臭模块-总开关";
     public override string Format => "fuckmod enabled";
     public override bool GetBotProperty(KLBot bot) => bot["FuckModule"].Enabled;
-    public override Task SetBotProperty(KLBot bot, bool value) => Task.FromResult(() => bot["FuckModule"].Enabled = value);
+    public override Task SetBotProperty(KLBot bot, bool value) => Task.Run(() => bot["FuckModule"].Enabled = value);
 }
 [DefaultCommand]
 internal class FuckModCascadeCmd : ExternalSwitchCommand

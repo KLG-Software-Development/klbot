@@ -345,7 +345,9 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
         string conversationId;
         JQuery query;
         string traceId;
-        string from = "chatbox";
+        #pragma warning disable CS0414 //理由：虽然该字段未被使用，但是为了保证服务器认可JSON选择保留
+        string fromfrom = "chatbox";
+        #pragma warning restore CS0414
         public JChatterBotRequest(string conversationId, JQuery query, string traceId)
         {
             this.conversationId = conversationId;
