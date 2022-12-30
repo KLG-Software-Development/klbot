@@ -64,13 +64,13 @@ public class DebugMessageServer : IMessageServer
         return msgs;
     }
     /// <inheritdoc/>
-    public Task<Exception?> SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
         SendMessageCallback.Invoke(module, context, userId, groupId, content);
-        return Task.FromResult<Exception?>(null);
+        return Task.CompletedTask;
     }
     /// <inheritdoc/>
-    public Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath)
+    public Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
     {
         UploadFileCallback.Invoke(module, groupId, uploadPath, filePath);
         return Task.FromResult<Exception?>(null);

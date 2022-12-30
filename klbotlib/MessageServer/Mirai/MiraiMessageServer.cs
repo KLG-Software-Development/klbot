@@ -17,8 +17,6 @@ namespace klbotlib.MessageServer.Mirai;
 /// </summary>
 public class MiraiMessageServer : IMessageServer
 {
-    private Task<Exception?> _networkTask;   //网络相关任务队列
-
     /// <summary>
     /// Mirai服务器URL
     /// </summary>
@@ -29,7 +27,6 @@ public class MiraiMessageServer : IMessageServer
     public MiraiMessageServer(string serverUrl)
     {
         ServerURL = serverUrl;
-        _networkTask = Task.Run(() => (Exception?)null);
     }
 
     /// <summary>
@@ -119,7 +116,7 @@ public class MiraiMessageServer : IMessageServer
     /// <param name="groupId">目标群组ID</param>
     /// <param name="content">MsgMarker内容</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
-    public async Task<Exception?> SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
         Exception? exception = null;
         //编译MsgMarker文本到json消息链
@@ -135,9 +132,8 @@ public class MiraiMessageServer : IMessageServer
         }
         //创建完整JSON字符串
         string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
-        exception = await TrySendMessage(context, fullJson);
+        await TrySendMessage(context, fullJson);
         await CheckNetworkTaskResult(exception, module, userId, groupId, context);
-        return exception;
     }
     /// <summary>
     /// 上传群文件
@@ -148,11 +144,10 @@ public class MiraiMessageServer : IMessageServer
     /// <param name="filePath">文件本地路径</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
     [Obsolete("该方法仍有问题")]
-    public async Task<Exception?> UploadFile(Module module, long groupId, string uploadPath, string filePath)
+    public async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
     {
         throw new NotImplementedException();
 #pragma warning disable CS0162 // 检测到无法访问的代码
-        Exception exception = null;
         try
         {
             var multipart = new MultipartFormDataContent();
@@ -164,11 +159,10 @@ public class MiraiMessageServer : IMessageServer
             Exception? ex = await TryUploadFile(MessageContext.Group, fs, multipart);
             await CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
         }
-        catch (Exception ex)
+        catch
         {
-            return ex;
+            throw;
         }
-        return exception;
 #pragma warning restore CS0162 // 检测到无法访问的代码
     }
     /// <inheritdoc/>
@@ -203,22 +197,21 @@ public class MiraiMessageServer : IMessageServer
 
     //**** Helper函数 ****
     // 发送给定消息.
-    private async Task<Exception?> TrySendMessage(MessageContext context, string fullMsgJson)
+    private async Task TrySendMessage(MessageContext context, string fullMsgJson)
     {
         string url = MiraiNetworkHelper.GetSendMessageUrl(ServerURL, context);
         try
         {
             (bool result, string responseStr) = await GeneralNetworkHelper.PostPlainText(url, fullMsgJson);
             if (!result)
-                throw new Exception($"非成功返回码：{responseStr}");
+                throw new Exception($"HTTP返回码非成功：{responseStr}");
             var response = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
             if (response.code != 0)
                 throw new MiraiException(response.code, response.msg);
-            return null;
         }
-        catch (Exception ex)
+        catch
         {
-            return ex;
+            throw;
         }
     }
     // 发送给定消息.

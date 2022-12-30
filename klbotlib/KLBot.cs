@@ -298,9 +298,7 @@ namespace klbotlib
         [Obsolete("该方法仍有问题")]
         internal async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
         {
-            Exception? ex = await _msgServer.UploadFile(module, groupId, uploadPath, filePath);
-            if (ex != null)
-                throw ex;
+            await _msgServer.UploadFile(module, groupId, uploadPath, filePath);
         } 
         /// <summary>
         /// 回复消息
