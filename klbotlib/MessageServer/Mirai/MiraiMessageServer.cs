@@ -17,6 +17,7 @@ namespace klbotlib.MessageServer.Mirai;
 /// </summary>
 public class MiraiMessageServer : IMessageServer
 {
+    private const string _errorMsgLogPath = "errorMsg.log";
     /// <summary>
     /// Mirai服务器URL
     /// </summary>
@@ -50,14 +51,14 @@ public class MiraiMessageServer : IMessageServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"JSON解析失败：{ex.Message}");
-                File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
-                Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+                Console.WriteLine($"消息列表获取失败：JSON解析失败。{ex.Message}");
+                File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+                Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
                 Console.Write("> ");
                 continue;
             }
             if (obj == null || obj.data == null)
-                throw new JsonDeserializationException("JSON解析失败", response);
+                throw new JsonDeserializationException("JSON解析失败。构建的对象为null。服务器响应：", response);
             List<JMiraiMessagePackage> jmsgs = obj.data.ToList();
             foreach (JMiraiMessagePackage jmsg in jmsgs)
             {
@@ -68,8 +69,8 @@ public class MiraiMessageServer : IMessageServer
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Message对象构造失败：{ex.Message}");
-                    File.AppendAllText("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
-                    Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+                    File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+                    Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
                     Console.Write("> ");
                     continue;
                 }
@@ -89,9 +90,9 @@ public class MiraiMessageServer : IMessageServer
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"JSON解析失败：{ex.Message}");
-            await File.AppendAllTextAsync("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
-            Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+            Console.WriteLine($"消息ID获取失败：JSON解析失败。{ex.Message}");
+            await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+            Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
         }
         try
         {
@@ -102,8 +103,8 @@ public class MiraiMessageServer : IMessageServer
         catch (Exception ex)
         {
             Console.WriteLine($"Message对象构造失败：{ex.Message}");
-            await File.AppendAllTextAsync("errorMsg.log", $"[{DateTime.Now:G}]\n{response}");
-            Console.WriteLine($"错误源JSON字符串已记录至“errorMsg.json”");
+            await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+            Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
             throw ex;
         }
     }
