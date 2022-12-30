@@ -15,12 +15,12 @@ public interface IMessageServer
     /// </summary>
     /// <param name="key">验证密钥</param>
     /// <returns>验证是否成功</returns>
-    bool Verify(string key);
+    Task<bool> Verify(string key);
     /// <summary>
     /// 获取接收到的消息
     /// </summary>
     /// <returns>消息列表</returns>
-    List<Message> FetchMessages();
+    Task<List<Message>> FetchMessages();
     /// <summary>
     /// 根据消息ID，从服务器获取给定消息
     /// </summary>

@@ -381,11 +381,11 @@ namespace klbotlib
         /// <summary>
         /// 从服务器获取新消息并进行初步过滤
         /// </summary>
-        public List<Message> FetchMessages()
+        public async Task<List<Message>> FetchMessages()
         {
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
-            List<Message> msgs = _msgServer.FetchMessages().Where(msg => 
+            List<Message> msgs = (await _msgServer.FetchMessages()).Where(msg => 
             (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
             || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
@@ -431,7 +431,7 @@ start:
             {
                 while (IsLoopOn)
                 {
-                    List<Message> msgs = FetchMessages();
+                    List<Message> msgs = await FetchMessages();
                     if (isLoopRestarting)
                     {
                         if (msgs.Count != 0)
@@ -494,7 +494,7 @@ start:
         /// <summary>
         /// 总循环。包括消息循环和命令循环
         /// </summary>
-        public void DefaultLoop()
+        public async Task DefaultLoop()
         {
             object sync = new object();
             var waitForPauseMsgLoopSignal = new ManualResetEvent(true);
@@ -502,7 +502,7 @@ start:
             //消息循环线程
             //开始之前向服务器验证身份
             _console.WriteLn("正在向mirai服务器验证身份...", ConsoleMessageType.Task);
-            bool verifyResult = _msgServer.Verify(Key);
+            bool verifyResult = await _msgServer.Verify(Key);
             if (!verifyResult)
             {
                 _console.WriteLn("验证失败。请检查密钥和网络是否正确\n正在退出...", ConsoleMessageType.Error);

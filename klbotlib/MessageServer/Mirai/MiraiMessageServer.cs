@@ -33,13 +33,13 @@ public class MiraiMessageServer : IMessageServer
     /// 返回未读消息列表
     /// </summary>
     /// <returns></returns>
-    public List<Message> FetchMessages()
+    public async Task<List<Message>> FetchMessages()
     {
         List<Message> msgs = new();
         JMiraiFetchMessageResponse? obj = null;
         do
         {
-            string response = MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
+            string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
             try
             {
                 //构建直接JSON对象
@@ -166,11 +166,11 @@ public class MiraiMessageServer : IMessageServer
 #pragma warning restore CS0162 // 检测到无法访问的代码
     }
     /// <inheritdoc/>
-    public bool Verify(string key)
+    public async Task<bool> Verify(string key)
     {
         try
         {
-            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(MiraiNetworkHelper.Verify(ServerURL, key));
+            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(await MiraiNetworkHelper.Verify(ServerURL, key));
             response.CheckStatusCode();
             return true;
         }

@@ -51,7 +51,7 @@ start:
             await klg.AddModule(new ChatXiaoIceModule());
             await klg.AddModule(new FuckModule());
             Console.WriteLine(klg.GetModuleChainString());
-            klg.DefaultLoop();
+            await klg.DefaultLoop();
         }
         catch (Exception ex)
         {

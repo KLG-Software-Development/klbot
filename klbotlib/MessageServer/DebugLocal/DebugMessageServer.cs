@@ -57,11 +57,11 @@ public class DebugMessageServer : IMessageServer
     }
 
     /// <inheritdoc/>
-    public List<Message> FetchMessages()
+    public Task<List<Message>> FetchMessages()
     {
         List<Message> msgs = new(_msgBuffer);
         _msgBuffer.Clear();  //清理缓冲区
-        return msgs;
+        return Task.FromResult<List<Message>>(msgs);
     }
     /// <inheritdoc/>
     public Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
@@ -98,9 +98,9 @@ public class DebugMessageServer : IMessageServer
         return Task.FromResult(_msgCache[messageId]);
     }
     /// <inheritdoc/>
-    public bool Verify(string key)
+    public Task<bool> Verify(string key)
     {
-        return true;
+        return Task.FromResult<bool>(true);
     }
     /// <inheritdoc/>
     public Task Mute(Module module, long userId, long groupId, uint durationSeconds)

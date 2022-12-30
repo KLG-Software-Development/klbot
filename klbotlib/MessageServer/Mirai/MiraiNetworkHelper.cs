@@ -39,18 +39,18 @@ internal static class MiraiNetworkHelper
     //返回从ID获取消息的url
     internal static string GetMessageFromIDUrl(string serverUrl)
         => $"{serverUrl}/messageFromId";
-    internal static string FetchMessageListJSON(string serverUrl)
+    internal static async Task<string> FetchMessageListJSON(string serverUrl)
     {
-        return _client.GetStringAsync(GetFetchMessageUrl(serverUrl)).Result;
+        return await _client.GetStringAsync(GetFetchMessageUrl(serverUrl));
     }
     //验证身份
-    internal static string Verify(string serverUrl, string key)
+    internal static async Task<string> Verify(string serverUrl, string key)
     {
         if (_verifyRequestBody == null)
             _verifyRequestBody = new StringContent("{\"verifyKey\":\"" + key + "\"}");
-        HttpResponseMessage response = _client.PostAsync(GetVerifyUrl(serverUrl), _verifyRequestBody).Result;
+        HttpResponseMessage response = await _client.PostAsync(GetVerifyUrl(serverUrl), _verifyRequestBody);
         response.EnsureSuccessStatusCode();
-        return response.Content.ReadAsStringAsync().Result;
+        return await response.Content.ReadAsStringAsync();
     }
     //禁言
     internal static async Task<string> Mute(string serverUrl, long userId, long groupId, uint durationSeconds)

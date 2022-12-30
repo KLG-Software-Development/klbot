@@ -215,7 +215,7 @@ start:
                 continue;
             SplitCommand(s, out string cmd, out string arg);
             ProcessCommand(lcb, cmd, arg);
-            lcb.ProcessMessages(lcb.FetchMessages()).Wait();
+            lcb.ProcessMessages(lcb.FetchMessages().Result).Wait();
             Thread.Sleep(1000);
         }
     }

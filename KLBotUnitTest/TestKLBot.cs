@@ -36,13 +36,13 @@ public class TestKLBot
         Assert.AreEqual(0, bot.DiagData.SuccessPackageCount);
         MessagePlain msg = new(MessageContext.Group, -1, -1, "some non-sense");
         server.AddReceivedMessage(msg);
-        bot.ProcessMessages(bot.FetchMessages()).Wait();
+        bot.ProcessMessages(bot.FetchMessages().Result).Wait();
         Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(1, bot.DiagData.SuccessPackageCount);
         msg = new(MessageContext.Group, -1, -1, "##help");
         server.AddReceivedMessage(msg);
-        bot.ProcessMessages(bot.FetchMessages()).Wait();
+        bot.ProcessMessages(bot.FetchMessages().Result).Wait();
         Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(1, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(2, bot.DiagData.SuccessPackageCount);
