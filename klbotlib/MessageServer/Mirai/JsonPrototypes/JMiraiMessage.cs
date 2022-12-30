@@ -6,6 +6,7 @@
     internal class JMiraiMessage
     {
         public string? type;
+        public string? id;  //用于：Source/Quote/File/MarketFace
         public long time;
         public long target;
         public string? text;
