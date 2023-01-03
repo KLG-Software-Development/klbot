@@ -73,7 +73,7 @@ public class Consoleee
         WriteLn(obj.ToNotNullString());
         Console.ForegroundColor = tmp;
     }
-    public void WriteLn(object obj, ConsoleMessageType level, string prefix = "") => Write(obj.ToString() + "\n", level, prefix);
+    public void WriteLn(object obj, ConsoleMessageType level, string prefix = "") => Write($"{obj}\n", level, prefix);
     public void WriteLnWithLock(object obj, ConsoleColor c)
     {
         lock (this)
@@ -85,26 +85,26 @@ public class Consoleee
     {
         lock (this)
         {
-            Write(obj.ToString() + "\n", level, prefix);
+            Write($"{obj}\n", level, prefix);
         }
     }
-    public void WriteNewLn(object obj) => WriteLn("\n" + obj.ToString());
-    public void WriteNewLn(object obj, ConsoleColor c) => WriteLn("\n" + obj.ToString(), c);
-    public void WriteNewLn(object obj, ConsoleMessageType level) => WriteLn("\n" + obj.ToString(), level);
+    public void WriteNewLn(object obj) => WriteLn($"\n{obj}");
+    public void WriteNewLn(object obj, ConsoleColor c) => WriteLn($"\n{obj}", c);
+    public void WriteNewLn(object obj, ConsoleMessageType level) => WriteLn($"\n{obj}", level);
     public void WriteOperationLn(string description, Action operation)
     {
         Write($"[Task{_indentLevel}]", ConsoleColor.Magenta);
-        WriteWithoutIndent(description + "...\n");
+        WriteWithoutIndent($"{description}...\n");
         _indentLevel++;
         operation();
         _indentLevel--;
         Write($"[Task{_indentLevel}]", ConsoleColor.Magenta);
-        WriteWithoutIndent(TaskFinishMessage + "\n", ConsoleColor.Green);
+        WriteWithoutIndent($"{TaskFinishMessage}\n", ConsoleColor.Green);
     }
     [Obsolete("已过时")]
     public bool WriteOperationLn(string description, Func<bool> operation, ConsoleMessageType errorLevel = ConsoleMessageType.Default, string successString = "[Success]", string failedString = "[Failed]", ConsoleColor successColor = ConsoleColor.Green, ConsoleColor failedColor = ConsoleColor.Red)
     {
-        WriteLn(description + "...", errorLevel);
+        WriteLn($"{description}...", errorLevel);
         bool result = operation();
         Write(description);
         if (result)
