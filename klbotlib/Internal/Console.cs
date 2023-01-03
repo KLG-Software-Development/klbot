@@ -122,21 +122,6 @@ public class Consoleee
             WriteWithoutIndent($"{TaskFinishMessage}\n", ConsoleColor.Green);
         }
     }
-    [Obsolete("已过时")]
-    public bool WriteOperationLn(string description, Func<bool> operation, ConsoleMessageType errorLevel = ConsoleMessageType.Default, string successString = "[Success]", string failedString = "[Failed]", ConsoleColor successColor = ConsoleColor.Green, ConsoleColor failedColor = ConsoleColor.Red)
-    {
-        lock (_lockObj)
-        {
-            WriteLn($"{description}...", errorLevel);
-            bool result = operation();
-            Write(description);
-            if (result)
-                WriteLn(successString, successColor);
-            else
-                WriteLn(failedString, failedColor);
-            return result;
-        }
-    }
     public void ClearCurrentLine()
     {
         lock (_lockObj)
