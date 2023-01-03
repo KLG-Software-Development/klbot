@@ -10,9 +10,6 @@ namespace Gleee.Consoleee;
 /// </summary>
 public class Consoleee
 {
-    private int _bufferCursor = 0;
-    private readonly List<char> _inputCharBuffer = new();
-    public string InputBuffer { get => new(_inputCharBuffer.ToArray()); }
     private int _indentLevel = 0;
     public string TaskFinishMessage { get; set; }
     public void Clear() => Console.Clear();
@@ -142,67 +139,7 @@ public class Consoleee
             return string.Empty;
         else
             return s;
-    } 
-    public string BufferedReadLn()
-    {
-        while (true)
-        {
-            var key = Console.ReadKey(true);
-            if (key.Key == ConsoleKey.Enter)
-            {
-                Console.Write("\n");
-                break;
-            }
-            else if (key.Key == ConsoleKey.Backspace)
-            {
-                if (_bufferCursor != 0)
-                {
-                    Console.CursorVisible = false;
-                    int c = Console.CursorLeft;
-                    Console.Write(string.Concat("\b", InputBuffer.AsSpan(_bufferCursor), " "));
-                    Console.SetCursorPosition(c - 1, Console.CursorTop);
-                    Console.CursorVisible = true;
-                    _bufferCursor--;
-                    _inputCharBuffer.RemoveAt(_bufferCursor);
-                }
-            }
-            else if (key.Key == ConsoleKey.LeftArrow)
-            {
-                if (_bufferCursor != 0)
-                {
-                    _bufferCursor--;
-                    Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
-                }
-            }
-            else if (key.Key == ConsoleKey.RightArrow)
-            {
-                if (_bufferCursor != InputBuffer.Length)
-                {
-                    _bufferCursor++;
-                    Console.SetCursorPosition(Console.CursorLeft + 1, Console.CursorTop);
-                }
-            }
-            else if (key.KeyChar is (>= ' ' and not ((char)127)) or '\t')
-            {
-                Console.CursorVisible = false;
-                int tmp_left = Console.CursorLeft;
-                Console.Write(key.KeyChar + InputBuffer[_bufferCursor..]);
-                Console.SetCursorPosition(tmp_left + 1, Console.CursorTop);
-                Console.CursorVisible = true;
-                _inputCharBuffer.Insert(_bufferCursor, key.KeyChar);
-                _bufferCursor++;
-            }
-        }
-        string result = InputBuffer;
-        ClearInputBuffer();
-        return result;
     }
-    public void ClearInputBuffer()
-    {
-        _inputCharBuffer.Clear();
-        _bufferCursor = 0;
-    }
-
     public Consoleee(string taskFinishMsg = "Operation done.")
     {
         TaskFinishMessage = taskFinishMsg;
