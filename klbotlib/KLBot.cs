@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -466,7 +467,6 @@ namespace klbotlib
                         {
                             successCounterCache = DiagData.SuccessPackageCount;    //记录此次错误的位置
                             _console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
-                            _console.ClearInputBuffer();
                             _console.Write("> ", ConsoleColor.DarkYellow);
                             isLoopRestarting = true;
                             goto start;
@@ -474,7 +474,6 @@ namespace klbotlib
                     }
                 quit:
                     _console.WriteLn("[Error]消息循环线程已退出。排查问题后可使用\"start\"命令尝试重启", ConsoleColor.Red);
-                    _console.ClearInputBuffer();
                     _console.Write("> ", ConsoleColor.DarkYellow);
                 }
 #endif
