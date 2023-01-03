@@ -2,16 +2,31 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Release (win-x64)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build (release)",
+            "program": "${workspaceFolder}/bin/Release/net7.0/win-x64/klbot.dll",
+            "args": [
+                "http://wslhost:3356"
+            ],
+            "cwd": "${workspaceFolder}/klbot/bin/Release/net7.0/win-x64/klbot.dll",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
             // Use IntelliSense to find out which attributes exist for C# debugging
             // Use hover for the description of the existing attributes
             // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-            "name": ".NET Core Launch (console)",
+            "name": "Debug (win-x64)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/klbot/bin/Debug/net7.0/win-x64/klbot.dll",
-            "args": ["http://wslhost:3356"],
+            "args": [
+                "http://wslhost:3356"
+            ],
             "cwd": "${workspaceFolder}/klbot/bin/Debug/net7.0/win-x64/",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "externalTerminal",
