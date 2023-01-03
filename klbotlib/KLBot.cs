@@ -27,7 +27,6 @@ namespace klbotlib
         private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
         private readonly StringBuilder _sb = new();
-        private CmdLoopStatus _cmdStat = CmdLoopStatus.NotStarted;     //命令循环状态。仅用于ModulePrint方法的实现
         private IMessageServer _msgServer;
 
         /// <summary>
@@ -75,7 +74,7 @@ namespace klbotlib
         /// </summary>
         public string Key { get; set; } = string.Empty;
 
-        private KLBot(IMessageServer server, ISet<long> targetGroups) 
+        private KLBot(IMessageServer server, ISet<long> targetGroups)
         {
             _msgServer = server;
             foreach (var group in targetGroups)
@@ -287,7 +286,7 @@ namespace klbotlib
         /// <param name="userId">目标用户ID</param>
         /// <param name="content">MsgMarker文本</param>
         internal Task SendPrivateMessage(Module module, long userId, string content)
-            => SendMessage(module, MessageContext.Group,  userId, -1, content);
+            => SendMessage(module, MessageContext.Group, userId, -1, content);
         /// <summary>
         /// 上传群文件
         /// </summary>
@@ -299,7 +298,7 @@ namespace klbotlib
         internal async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
         {
             await _msgServer.UploadFile(module, groupId, uploadPath, filePath);
-        } 
+        }
         /// <summary>
         /// 回复消息
         /// </summary>
@@ -358,17 +357,9 @@ namespace klbotlib
         {
             if (IsSilent)
                 return;
-            while (_cmdStat == CmdLoopStatus.Output)
-            { Thread.Sleep(1); }
-
             string sourceName = source is Module m ? m.ModuleID : source.GetType().Name;
-            if (_cmdStat == CmdLoopStatus.ReadLn)
-            {
-                _console.WriteLn($"[{sourceName}] {message}", msgType, "\b" + prefix);
-                _console.Write("> ", ConsoleColor.DarkYellow);
-            }
-            else
-                _console.WriteLn($"[{sourceName}] {message}", msgType, prefix);
+            _console.WriteLn($"[{sourceName}] {message}", msgType, prefix);
+            _console.Write("> ", ConsoleColor.DarkYellow);
         }
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
@@ -385,7 +376,7 @@ namespace klbotlib
         {
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
-            List<Message> msgs = (await _msgServer.FetchMessages()).Where(msg => 
+            List<Message> msgs = (await _msgServer.FetchMessages()).Where(msg =>
             (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
             || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
@@ -421,7 +412,7 @@ namespace klbotlib
 #pragma warning disable CS0219 // 从未使用变量
 #pragma warning disable CS0164 // 标签未被引用
             long successCounterCache = 0, continuousErrorCounter = 0;
-start:
+        start:
 #pragma warning restore CS0219 // 从未使用变量
 #pragma warning restore CS0164 // 标签未被引用
             bool isLoopRestarting = true;
@@ -516,9 +507,7 @@ start:
             while (!exitFlag)
             {
                 _console.Write("> ", ConsoleColor.DarkYellow);
-                _cmdStat = CmdLoopStatus.ReadLn;
                 string? cmd = _console.ReadLn();
-                _cmdStat = CmdLoopStatus.Output;
                 try
                 {
                     if (cmd == "")
@@ -737,7 +726,7 @@ start:
         /// </summary>
         public void OnExit()
         {
-            ModuleChain.ForEach( m => SaveModuleStatus(m));
+            ModuleChain.ForEach(m => SaveModuleStatus(m));
             _console.WriteLn("有序退出完成", ConsoleMessageType.Info);
         }
 
