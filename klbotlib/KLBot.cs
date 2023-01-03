@@ -649,11 +649,11 @@ namespace klbotlib
         /// </summary>
         public async Task ReloadAllModules()
         {
-            foreach (var module in ModuleChain)
+            await Parallel.ForEachAsync<Module>(ModuleChain, async (module, _) =>
             {
                 await LoadModuleSetup(module);
                 await LoadModuleStatus(module);
-            }
+            });
         }
         // 保存该模块的配置
         [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
