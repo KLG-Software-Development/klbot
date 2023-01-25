@@ -2,11 +2,8 @@
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace klbotlib.Modules;
 
@@ -17,9 +14,9 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
     [ModuleSetup]
     private int _bitLength = 256;
     [ModuleSetup]
-    private string _conversationId = "ce1d6f9b-26c8-4ae2-9353-3f665c2ca411";
+    private string _conversationId = "e67a1a2b-3dd8-4208-a733-3911b4791b38";
     [ModuleSetup]
-    private string _traceId = "634382b22783467fa57f45e7539c8152";
+    private string _traceId = "63d15134a3184bc78a8422efb9b4836a";
     [ModuleSetup]
     private string _password = "3d9d5f16-5df0-43d7-902e-19274eecdc41";
     private static readonly byte[] _sBox = {
@@ -55,7 +52,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
         { 54, 0, 0, 0}
     };
 
-    private const string _url = "https://www.bing.com/english/zochatv2?cc=cn&ensearch=0";
+    private const string _url = "https://cn.bing.com/english/zochatv2?cc=cn&ensearch=0";
     private static readonly HttpClient _client = new();
     private readonly StringBuilder _sb = new();
     private readonly Random _ro = new();
@@ -78,7 +75,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
     {
         string normalizedQuery = AesEncrypt(msg.Text, _password, _bitLength);
         //JChatterBotRequest requestObj = new(_conversationId, new JQuery(normalizedQuery), _traceId);
-        string s = "{\"conversationId\":\"" + _conversationId + "\",\"query\":{\"NormalizedQuery\":\"" + normalizedQuery + "\"},\"from\":\"chatbox\",\"traceId\":\"" + _traceId + "\"}";
+        string s = "{\"conversationId\":\"" + _conversationId + "\",\"query\":{\"NormalizedQuery\":\"" + normalizedQuery + "\"},\"from\":\"chatbox\",\"traceId\":\"" + _traceId + "\",\"zoIsGCSResponse\":\"true\"}";
         StringContent jsonAsPlainText = new(s);
         using (jsonAsPlainText)
         {
@@ -100,8 +97,19 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
             ;
             HttpResponseMessage response = await _client.PostAsync(_url, jsonAsPlainText);
             response.EnsureSuccessStatusCode();
-            string jreply = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<JChatterBotReply>(jreply).content;
+            string reply = response.Content.ReadAsStringAsync().Result;
+            JChatterBotReply? jreply = JsonConvert.DeserializeObject<JChatterBotReply>(reply);
+            if (jreply == null)
+            {
+                ModulePrint($"请求成功，但无法从服务器返回内容中构建回复对象，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");
+                return string.Empty;
+            }
+            else if (jreply.content == null)
+            {
+                ModulePrint($"请求成功且已从服务器返回内容中构建回复对象，但内容字段为null，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");
+                return string.Empty;
+            }
+            return jreply.content;
         }
     }
     //AES加密
