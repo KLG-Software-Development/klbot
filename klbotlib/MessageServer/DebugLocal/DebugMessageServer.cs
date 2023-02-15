@@ -12,6 +12,7 @@ public class DebugMessageServer : IMessageServer
 {
     private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
     private readonly List<Message> _msgBuffer = new();
+    private readonly long _selfId;
 
     /// <summary>
     /// 消息缓冲区加入新消息时触发的回调。参数为消息本身
@@ -38,17 +39,19 @@ public class DebugMessageServer : IMessageServer
     /// <summary>
     /// 创建本地模拟消息服务器
     /// </summary>
+    /// <param name="selfId">自身ID</param>
     /// <param name="addMsgCallback">消息缓冲区加入新消息时触发的回调</param>
     /// <param name="sendMsgCallback">机器人发送消息时触发的回调</param>
     /// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
     /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
     /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
-    public DebugMessageServer(Action<Message> addMsgCallback, 
+    public DebugMessageServer(long selfId, Action<Message> addMsgCallback, 
         Action<Module, MessageContext, long, long, string> sendMsgCallback, 
         Action<Module, long, string, string> uploadFileCallback,
         Action<Module, long, long, uint> muteCallback,
         Action<Module, long, long> unmuteCallback)
     {
+        _selfId = selfId;
         AddMessageCallback = addMsgCallback;
         SendMessageCallback = sendMsgCallback;
         UploadFileCallback = uploadFileCallback;
@@ -113,5 +116,10 @@ public class DebugMessageServer : IMessageServer
     {
         UnmuteCallback.Invoke(module, userId, groupId);
         return Task.CompletedTask;
+    }
+    /// <inheritdoc/>
+    public Task<long> GetSelfID()
+    {
+        return Task.FromResult(_selfId);
     }
 }

@@ -86,13 +86,10 @@ namespace klbotlib
     [JsonObject(MemberSerialization.Fields)]
     internal class JQQConfig : Config
     {
-        //Bot账号的自身ID
-        public long SelfID;
         //Bot监听的群组的ID列表
         public HashSet<long> TargetGroupIDList;
         public JQQConfig(long selfID, IEnumerable<long> targetGroupIDList)
         {
-            SelfID = selfID;
             TargetGroupIDList = new();
             foreach (var target in targetGroupIDList)
             {

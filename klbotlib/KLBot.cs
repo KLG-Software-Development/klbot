@@ -1,4 +1,4 @@
-﻿using Gleee.Consoleee;
+using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Json;
@@ -55,7 +55,7 @@ namespace klbotlib
         /// <summary>
         /// 配置项：此KLBot自身的QQ号
         /// </summary>
-        public long SelfID { get; }
+        public long SelfID { get; private set; }
         /// <summary>
         /// 配置项：此KLBot的监听群组QQ号列表
         /// </summary>
@@ -86,17 +86,14 @@ namespace klbotlib
         /// </summary>
         /// <param name="server">消息服务器</param>
         /// <param name="targetGroups">监听的群组</param>
-        /// <param name="selfID">KLBot自身ID。默认为33550336</param>
         /// <param name="isSilent">是否开启安静模式。开启时ObjectPrint()不打印任何内容</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageServer server, Assembly moduleCollection, ISet<long> targetGroups, long selfID = 33550336, bool isSilent = true) : this(server, targetGroups)
+        public KLBot(IMessageServer server, Assembly moduleCollection, ISet<long> targetGroups, bool isSilent = true) : this(server, targetGroups)
         {
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _msgServer = server;
             _isBooting = true;
             IsSilent = isSilent;
-            //TargetGroupIDList = new();
-            SelfID = selfID;
             ModulesCacheDir = "ModuleCacheDir";
             ModulesSaveDir = "ModuleSaveDir";
             CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
@@ -148,7 +145,6 @@ namespace klbotlib
                 _console.WriteLn($"加载配置...", ConsoleMessageType.Info);
                 //导出Config
                 Key = Config.Verification.Key;
-                SelfID = Config.QQ.SelfID;
                 TargetGroupIDList = Config.QQ.TargetGroupIDList;
                 ModulesCacheDir = Config.Pathes.ModulesCacheDir;
                 ModulesSaveDir = Config.Pathes.ModulesSaveDir;
@@ -489,7 +485,7 @@ namespace klbotlib
             DiagData.SuccessPackageCount = 0;
             //消息循环线程
             //开始之前向服务器验证身份
-            _console.WriteLn("正在向mirai服务器验证身份...", ConsoleMessageType.Task);
+            _console.WriteLn("正在向服务器验证身份...", ConsoleMessageType.Task);
             bool verifyResult = await _msgServer.Verify(Key);
             if (!verifyResult)
             {
@@ -498,6 +494,10 @@ namespace klbotlib
             }
             else
                 _console.WriteLn("验证成功", ConsoleMessageType.Info);
+            //获取自身ID
+            _console.WriteLn("正在向服务器获取自身ID...", ConsoleMessageType.Task);
+            SelfID = await _msgServer.GetSelfID();
+            _console.WriteLn($"获取成功。自身ID：{SelfID}", ConsoleMessageType.Info);
             var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
             bool exitFlag = false;
             //命令循环线程

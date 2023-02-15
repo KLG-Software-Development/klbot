@@ -61,4 +61,8 @@ public interface IMessageServer
     /// <param name="userId">解除禁言用户ID</param>
     /// <param name="groupId">群聊ID</param>
     Task Unmute(Module module, long userId, long groupId);
+    /// <summary>
+    /// 获取自身ID接口
+    /// </summary>
+    Task<long> GetSelfID();
 }

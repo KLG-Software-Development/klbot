@@ -16,6 +16,7 @@ public class Program
 {
     private static readonly HashSet<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
     private static readonly DebugMessageServer _localServer = new(
+        33550336,   //自身ID
         AddMsgCallback_PrintInfo, 
         SendMsgCallback_PrintInfo, 
         UploadCallback_PrintInfo,

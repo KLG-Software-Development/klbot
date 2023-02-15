@@ -195,6 +195,21 @@ public class MiraiMessageServer : IMessageServer
         JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
         CheckMiraiResponse(responseJson, response);
     }
+    /// <inheritdoc/>
+    public async Task<long> GetSelfID()
+    {
+        string botListJson = await MiraiNetworkHelper.GetBotListJson(ServerURL);
+        JMiraiGetBotListResponse? response = JsonConvert.DeserializeObject<JMiraiGetBotListResponse>(botListJson);
+        response.CheckStatusCode();
+        if (response.data == null)
+            throw new JsonDeserializationException("自身ID获取失败：无法从JSON中解析机器人列表", botListJson);
+        else if (response.data.Length == 0)
+            throw new Exception("自身ID获取失败：机器人列表为空");
+        else if (response.data.Length != 1)
+            throw new Exception("自身ID获取失败：机器人不唯一");
+        else
+            return response.data[0];
+    }
 
     //**** Helper函数 ****
     // 发送给定消息.

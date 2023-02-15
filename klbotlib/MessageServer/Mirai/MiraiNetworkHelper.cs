@@ -32,7 +32,6 @@ internal static class MiraiNetworkHelper
         => serverUrl + "/mute";
     internal static string GetUnmuteUrl(string serverUrl)
         => serverUrl + "/unmute";
-
     //返回获取消息的url
     internal static string GetFetchMessageUrl(string serverUrl)
         => $"{serverUrl}/fetchMessage";
@@ -43,6 +42,7 @@ internal static class MiraiNetworkHelper
     {
         return await _client.GetStringAsync(GetFetchMessageUrl(serverUrl));
     }
+    
     //验证身份
     internal static async Task<string> Verify(string serverUrl, string key)
     {
@@ -68,7 +68,14 @@ internal static class MiraiNetworkHelper
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }
-
+    //获取机器人列表
+    internal static async Task<string> GetBotListJson(string serverUrl)
+    {
+        HttpResponseMessage response = await _client.GetAsync($"{serverUrl}/botList");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
+    
     internal static async Task<string> GetMessageByIdJSON(string serverUrl, long target, long messageId)
     {
         return await _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + $"?messageId={messageId}&target={target}");
