@@ -1,5 +1,4 @@
 ﻿using klbotlib.Modules;
-using System;
 using System.Threading.Tasks;
 
 namespace klbotlib

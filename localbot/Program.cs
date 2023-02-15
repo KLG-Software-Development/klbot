@@ -3,11 +3,7 @@ using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
-using ModuleCollection;
-using System;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Threading;
 using Module = klbotlib.Modules.Module;
 
 namespace localbot;

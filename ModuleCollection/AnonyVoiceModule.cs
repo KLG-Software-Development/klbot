@@ -1,5 +1,4 @@
-﻿using klbotlib.Extensions;
-using klbotlib.Modules.ModuleUtils;
+﻿using klbotlib.Modules.ModuleUtils;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
