@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ModuleCollection;
+namespace klbotlib.Modules;
 
 /// <summary>
 /// 僵尸文学模块
