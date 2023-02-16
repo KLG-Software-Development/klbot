@@ -124,7 +124,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// 尝试用当前设定的源语言和目标语言翻译指定内容
     /// </summary>
     /// <param name="query">待翻译内容</param>
-    /// <returns>翻译是否成功</returns>
+    /// <returns>元组：(翻译是否成功, 返回消息, 翻译结果)</returns>
     public async Task<(bool, string, string)> TryTranslate(string query)
         => await TryTranslate(query, _srcLang, _dstLang);
     /// <summary>
@@ -132,13 +132,13 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// </summary>
     /// <param name="query">待翻译内容</param>
     /// <param name="srcLang">源语言</param>
-    /// <returns>翻译是否成功</returns>
+    /// <returns>元组：(翻译是否成功, 返回消息, 翻译结果)</returns>
     public async Task<(bool, string, string)> TryTranslate(string query, string srcLang)
         => await TryTranslate(query, srcLang, _dstLang);
     /// <summary>
     /// 尝试生成一段僵尸文学
     /// </summary>
-    /// <returns>生成是否成功</returns>
+    /// <returns>元组：(生成是否成功, 返回消息, 生成结果)</returns>
     public async Task<(bool, string, string)> TryGenerate()
     {
         string seed = GenerateSentences(_ro.Next(1, 7));
@@ -149,7 +149,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     /// 尝试快速生成一短句僵尸文学。
     /// 此方法中句子长度锁定为1，反射次数锁定为2，以保证速度。
     /// </summary>
-    /// <returns>生成是否成功</returns>
+    /// <returns>元组：(生成是否成功, 返回消息, 生成结果)</returns>
     public async Task<(bool, string, string)> TryFastGenerate()
     {
         string seed = GenerateSingleSentence();
