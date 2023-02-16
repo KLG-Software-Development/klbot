@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net; //Debug配置下无用，但Release配置下需要
 using System.Reflection;
 using System.Text;
 using System.Threading;
