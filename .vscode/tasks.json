@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build all",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -14,15 +14,14 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "build (release)",
+            "label": "build localbot",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/klbot/klbot.csproj",
+                "${workspaceFolder}/localbot/localbot.csproj",
                 "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary",
-                "/configuration:Release"
+                "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
