@@ -1,5 +1,4 @@
-﻿using ModuleCollection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -71,11 +70,10 @@ public class 上号Module : SingleTypeModule<MessagePlain>
             case "跟风":
                 return msgText;
             case "蛤儿":
-                (bool success, _, _) = await ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate();
+                (bool success, _, string result) = await ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate();
                 if (success)
-                    return _halReply;
-                else
-                    return "快速生成错误";
+                    return result + _halReply;
+                return _halReply;
             default:
                 throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\"");
         }
