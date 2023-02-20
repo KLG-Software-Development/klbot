@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using klbotlib.Modules.ModuleUtils;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -53,7 +54,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
     };
 
     private const string _url = "https://cn.bing.com/english/zochatv2?cc=cn&ensearch=0";
-    private static readonly HttpClient _client = new();
+    private readonly HttpHelper _helper = new();
     private readonly StringBuilder _sb = new();
     private readonly Random _ro = new();
 
@@ -95,7 +96,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
             request.Headers.AcceptEncoding.ParseAdd(new("br"));
             request.Headers.Referrer = new Uri("https://www.bing.com/search?q=c&qs=HS&sc=8-0&cvid=2B5E29D953D249AB9AADB000E841C382&FORM=QBLH&sp=1");
             ;
-            HttpResponseMessage response = await _client.PostAsync(_url, jsonAsPlainText);
+            HttpResponseMessage response = await _helper.InnerClient.PostAsync(_url, jsonAsPlainText);
             response.EnsureSuccessStatusCode();
             string reply = response.Content.ReadAsStringAsync().Result;
             JChatterBotReply? jreply = JsonConvert.DeserializeObject<JChatterBotReply>(reply);

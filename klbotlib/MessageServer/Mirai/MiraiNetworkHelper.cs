@@ -1,6 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using klbotlib.Exceptions;
+using klbotlib.MessageServer.Mirai.JsonPrototypes;
+using Newtonsoft.Json;
 
 namespace klbotlib.MessageServer.Mirai;
 
@@ -75,7 +80,45 @@ internal static class MiraiNetworkHelper
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }
-    
+    //尝试发送消息
+    internal static async Task TrySendMessage(string serverUrl, MessageContext context, string fullMsgJson)
+    {
+        string url = MiraiNetworkHelper.GetSendMessageUrl(serverUrl, context);
+        StringContent content = new StringContent(fullMsgJson, Encoding.UTF8);
+        HttpResponseMessage response = await _client.PostAsync(url, content);
+        response.EnsureSuccessStatusCode();
+        bool result = response.IsSuccessStatusCode;
+        string responseStr = await response.Content.ReadAsStringAsync();
+        if (!result)
+            throw new Exception($"HTTP返回码非成功：{responseStr}");
+        var miraiResponse = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
+        if (miraiResponse.code != 0)
+            throw new MiraiException(miraiResponse.code, miraiResponse.msg);
+    }
+    //尝试上传文件
+    internal static async Task<Exception?> TryUploadFile(string serverUrl, MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
+    {
+        string url = MiraiNetworkHelper.GetUploadFileUrl(serverUrl, context);
+        try
+        {
+            var response = await _client.PostAsync(url, fullContent);
+            bool result = response.IsSuccessStatusCode;
+            string responseMsg = response.Content.ReadAsStringAsync().Result;
+            if (!result)
+                throw new Exception($"非成功返回码：{responseMsg}");
+            var miraiResponse = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseMsg);
+            if (miraiResponse.code != 0 || miraiResponse.msg == null)
+                throw new MiraiException(miraiResponse.code, miraiResponse.msg);
+            fs.Close();
+            return null;
+        }
+        catch (Exception ex)    //错误会被记录在DiagData中
+        {
+            fs.Close();
+            return ex;
+        }
+    }
+
     internal static async Task<string> GetMessageByIdJSON(string serverUrl, long target, long messageId)
     {
         return await _client.GetStringAsync(GetMessageFromIDUrl(serverUrl) + $"?messageId={messageId}&target={target}");

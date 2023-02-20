@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using klbotlib.Modules.ModuleUtils;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -11,7 +12,7 @@ namespace klbotlib.Modules;
 public class ChatQYKModule : SingleTypeModule<MessagePlain>
 {
     private const string _url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
-    private static readonly HttpClient _client = new();
+    private static readonly HttpHelper _helper = new();
 
     /// <inheritdoc/>
     public sealed override bool IsTransparent => false;
@@ -26,8 +27,7 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override async Task<string> Processor(MessagePlain msg, string? _)
     {
-        Uri host = new(_url + msg.Text);
-        string jreply = await _client.GetStringAsync(host);
+        string jreply = await _helper.GetStringAsync(_url + msg.Text);
         return JsonConvert.DeserializeObject<ChatterBotReply>(jreply).FormattedContent();
     }
 

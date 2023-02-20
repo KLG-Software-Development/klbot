@@ -1,10 +1,10 @@
 ﻿using klbotlib.Extensions;
+using klbotlib.Modules.ModuleUtils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -16,7 +16,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
 {
     private readonly static Regex _pattern = new(@"来点(\S+?)图", RegexOptions.Compiled);
     private readonly static Random _ro = new();
-    private readonly HttpClient _client = new();
+    private readonly HttpHelper _helper = new();
     private readonly Stopwatch _sw = new();
     private readonly NameValueCollection _query = HttpUtility.ParseQueryString(string.Empty);
 
@@ -43,10 +43,8 @@ public class ImageModule : SingleTypeModule<MessagePlain>
     /// 构造函数
     public ImageModule()
     {
-        _client.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2");
-        _client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86; rv:60.0) Gecko/20100101 Firefox/60.0");
-        _client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
-        //client.Headers.Add("X-Forwarded-For", $"{ro.Next(255)}.{ro.Next(255)}.{ro.Next(255)}.{ro.Next(255)}");
+        _helper.InnerClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2");
+        _helper.InnerClient.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
         _query.Clear();
         _query["charset"] = "UTF-8";
         _query["tn"]= "resultjson_com";
@@ -133,7 +131,7 @@ not_found:
         _query["pn"] = pn.ToString();
         _sw.Stop();
         _lastDownloadTime = _sw.Elapsed.ToMsString();
-        var response = await _client.GetAsync($"{_url}?{_query}");
+        var response = await _helper.GetAsync($"{_url}?{_query}");
 
         return await response.Content.ReadAsStringAsync();
     }
