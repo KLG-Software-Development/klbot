@@ -218,7 +218,7 @@ public class MiraiMessageServer : IMessageServer
         string url = MiraiNetworkHelper.GetSendMessageUrl(ServerURL, context);
         try
         {
-            (bool result, string responseStr) = await GeneralNetworkHelper.PostPlainText(url, fullMsgJson);
+            (bool result, string responseStr) = await InternalNetworkHelper.PostPlainText(url, fullMsgJson);
             if (!result)
                 throw new Exception($"HTTP返回码非成功：{responseStr}");
             var response = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
@@ -236,7 +236,7 @@ public class MiraiMessageServer : IMessageServer
         string url = MiraiNetworkHelper.GetUploadFileUrl(ServerURL, context);
         try
         {
-            (bool result, string responseStr) = await GeneralNetworkHelper.PostMultipart(url, fullContent);
+            (bool result, string responseStr) = await InternalNetworkHelper.PostMultipart(url, fullContent);
             if (!result)
                 throw new Exception($"非成功返回码：{responseStr}");
             var response = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
