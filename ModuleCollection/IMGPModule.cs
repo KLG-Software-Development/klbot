@@ -86,12 +86,10 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
     private async Task<(bool, string)> TryMergeWithBase64Async(MessageImagePlain msg)
     {
-        string b641 = await _imgHelper.DownloadAsBase64Async(msg.UrlList[0]);
-        //HostBot.ReplyPlainMessage(this, msg, "正在下载母本并转换为base64...");
-        string b642 = await _imgHelper.DownloadAsBase64Async(msg.UrlList[1]);
+        string b641 = await _httpHelper.GetAsBase64Async(msg.UrlList[0]);
+        string b642 = await _httpHelper.GetAsBase64Async(msg.UrlList[1]);
         string queryString = "?type=merge&apiType=face";
         JMergeRequest request = new(new JImage(b642, "BASE64"), new JImage(b641, "BASE64"), "2.0");
-        //string body = "{\"image_template\":{\"image\":\"" + b641 + "\",\"image_type\":\"BASE64\"},\"image_target\":{\"image\":\"" + b642 + "\",\"image_type\":\"BASE64\"},\"version\":\"2.0\"}";
         string json = await _httpHelper.PostJsonAsync(_postUrl + queryString, request);
         JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(json);
         //错误检查
@@ -160,8 +158,8 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         switch (filterOut)
         {
             case "merge":
-                _httpHelper.Headers.Clear();
-                _httpHelper.Headers.Add("Referer", "https://ai.baidu.com/tech/face/merge");
+                _httpHelper.InnerClient.DefaultRequestHeaders.Clear();
+                _httpHelper.InnerClient.DefaultRequestHeaders.Add("Referer", "https://ai.baidu.com/tech/face/merge");
                 await Messaging.ReplyMessage(msg, "转换中...");
                 (bool isSuccess, string result) = await TryMergeWithBase64Async(msg);
                 if (!isSuccess)
@@ -178,8 +176,8 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 if (!_typeByWordRecg.ContainsKey(word))
                     return GetFuck() + "，这个不会";
                 string type = _typeByWordRecg[word];
-                _httpHelper.Headers.Clear();
-                _httpHelper.Headers.Add("Referer", $"https://ai.baidu.com/tech/imagerecognition/{type}");
+                _httpHelper.InnerClient.DefaultRequestHeaders.Clear();
+                _httpHelper.InnerClient.DefaultRequestHeaders.Add("Referer", $"https://ai.baidu.com/tech/imagerecognition/{type}");
                 string body = $"image&image_url={escUrl}&type={type}&show=true";
                 await Messaging.ReplyMessage(msg, "识别中...");
                 if (type == "landmark")
@@ -222,7 +220,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return $"{age}岁，{beauty}分";
             case "compress": //本地压缩
                 await Messaging.ReplyMessage(msg, $"正在下载图片...");
-                (Bitmap bmp, int originalSize) = await _imgHelper.DownloadImageAsync(msg.UrlList[0]);
+                (Bitmap bmp, int originalSize) = _imgHelper.BinToBitmap(await _httpHelper.GetBytesAsync(msg.UrlList[0]));
                 MemoryStream ms = new();
                 await Messaging.ReplyMessage(msg, "本地压缩中...");
                 bmp.Save(ms, ImageFormat.Jpeg);

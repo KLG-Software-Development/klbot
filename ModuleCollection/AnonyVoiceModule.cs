@@ -38,7 +38,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     /// </summary>
     public AnonyVoiceModule()
     {
-        _httpHelper.Headers.Add("Referer", "https://ai.baidu.com/tech/speech/tts_online");
+        _httpHelper.InnerClient.DefaultRequestHeaders.Add("Referer", "https://ai.baidu.com/tech/speech/tts_online");
     }
 
     /// <inheritdoc/>

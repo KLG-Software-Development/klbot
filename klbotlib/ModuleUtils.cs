@@ -45,20 +45,23 @@ namespace klbotlib.Modules.ModuleUtils
                     Console.WriteLine($"警告: 设置编码为\"{value}\"失败。编码未改变");
             }
         }
-        
+
         /// <summary>
         /// 创建新的HttpHelper对象
         /// </summary>
         /// <param name="timeout">超时(毫秒)</param>
         /// <param name="contentEncoding">默认Encoding</param>
         /// <param name="useSystemProxy">是否使用系统代理</param>
-        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8", bool useSystemProxy = false)
+        /// <param name="ua">请求时使用的UA标识。默认为Firefox</param>
+        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8", bool useSystemProxy = false, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
         {
             Timeout = timeout;
             ContentEncoding = contentEncoding;
             InnerClient = useSystemProxy
                 ? new()
                 : new(_noProxyHandler);
+            InnerClient.DefaultRequestHeaders.UserAgent.Clear();
+            InnerClient.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
         }
 
         /// <summary>
@@ -84,6 +87,14 @@ namespace klbotlib.Modules.ModuleUtils
         public async Task<string> GetStringAsync(string url)
         {
             return await InnerClient.GetStringAsync(url, _cancellationToken);
+        }
+        /// <summary>
+        /// GET内容并转换为Base64字符串
+        /// </summary>
+        /// <param name="url">地址</param>
+        public async Task<string> GetAsBase64Async(string url)
+        {
+            return Convert.ToBase64String(await InnerClient.GetByteArrayAsync(url, _cancellationToken));
         }
         /// <summary>
         /// 向指定地址POST一条字符串
@@ -137,19 +148,12 @@ namespace klbotlib.Modules.ModuleUtils
     /// </summary>
     public class ImageHelper
     {
-        private HttpClient _client = new();
-
         /// <summary>
-        /// 下载一张图片，并解析为Bitmap对象。默认使用伪装的Firefox UserAgent
+        /// 将字节数组并解析为Bitmap对象
         /// </summary>
-        /// <param name="url">图片地址</param>
-        /// <param name="ua">下载时使用的UserAgent</param>
-        public async Task<(Bitmap, int)> DownloadImageAsync(string url, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
+        /// <param name="bin"></param>
+        public (Bitmap, int) BinToBitmap(byte[] bin)
         {
-            byte[] bin;
-            _client.DefaultRequestHeaders.UserAgent.Clear();
-            _client.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
-            bin = await _client.GetByteArrayAsync(url);
             int size = bin.Length;
             using (var ms = new MemoryStream(bin))
             {
@@ -157,14 +161,6 @@ namespace klbotlib.Modules.ModuleUtils
                 Console.WriteLine($"完成");
                 return (bmp, size);
             }
-        }
-        /// <summary>
-        /// 下载图片为Base64字符串
-        /// </summary>
-        /// <param name="url">图像地址</param>
-        public async Task<string> DownloadAsBase64Async(string url)
-        {
-            return Convert.ToBase64String(await _client.GetByteArrayAsync(url));
         }
         /// <summary>
         /// 缩放一张图片到指定分辨率

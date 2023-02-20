@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using klbotlib.Modules.ModuleUtils;
 
 namespace klbotlib.Modules;
 
@@ -58,7 +59,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     private readonly StringBuilder _sb = new();
     private static readonly Random _ro = new();
     private static readonly MD5 _md5 = MD5.Create();
-    private readonly HttpClient _client = new();
+    private readonly HttpHelper _helper = new();
     private readonly Regex _dstPat = new(@""",""dst"":""(.*)""}]}$", RegexOptions.Compiled);
     private readonly Regex _errorCodePat = new(@"""error_code"":""(\d+)""", RegexOptions.Compiled);
     private readonly Dictionary<int, double> _generalizedHarmonicNumber = new();
@@ -169,7 +170,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
             string salt = _ro.Next().ToString();
             string sign = CalculateSign(query, salt);
             string url = GetRequestUrl(query, srcLang, dstLang, salt, sign);
-            HttpResponseMessage response = await _client.GetAsync(url);
+            HttpResponseMessage response = await _helper.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
                 message = $"请求返回异常状态码[{response.StatusCode}]";
