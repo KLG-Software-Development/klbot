@@ -29,12 +29,8 @@ namespace klbotlib.Modules.ModuleUtils
         /// </summary>
         public int Timeout 
         {
-            get => InnerClient.Timeout.Milliseconds;
-            set
-            {
-                lock (InnerClient)
-                    InnerClient.Timeout = new TimeSpan(0, 0, 0, value, 0);
-            } 
+            get => InnerClient.Timeout.Seconds;
+            set => InnerClient.Timeout = new TimeSpan(0, 0, 0, value, 0);
         }
         /// <summary>
         /// 进行所有请求时使用的编码
@@ -44,18 +40,12 @@ namespace klbotlib.Modules.ModuleUtils
             get => InnerClient.DefaultRequestHeaders.AcceptEncoding.First().ToString();
             set
             {
-                lock (InnerClient)
-                {
-                    InnerClient.DefaultRequestHeaders.AcceptEncoding.Clear();
-                    if (!InnerClient.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(value))
-                        Console.WriteLine($"警告: 设置编码为\"{value}\"失败。编码未改变");
-                }
+                InnerClient.DefaultRequestHeaders.AcceptEncoding.Clear();
+                if (!InnerClient.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(value))
+                    Console.WriteLine($"警告: 设置编码为\"{value}\"失败。编码未改变");
             }
         }
-        /// <summary>
-        /// 其他自定义Header
-        /// </summary>
-        public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
+        
         /// <summary>
         /// 创建新的HttpHelper对象
         /// </summary>
@@ -72,16 +62,19 @@ namespace klbotlib.Modules.ModuleUtils
         }
 
         /// <summary>
+        /// 向指定地址发送GET请求
+        /// </summary>
+        /// <param name="url">地址</param>
+        public async Task<HttpResponseMessage> GetAsync(string url)
+        {
+            return await InnerClient.GetAsync(url, _cancellationToken);
+        }
+        /// <summary>
         /// 从指定地址GET字节数组
         /// </summary>
         /// <param name="url">地址</param>
         public async Task<byte[]> GetBytesAsync(string url)
         {
-            foreach (var kvp in Headers)
-            {
-                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
-                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
-            }
             return await InnerClient.GetByteArrayAsync(url, _cancellationToken);
         }
         /// <summary>
@@ -90,11 +83,6 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="url">地址</param>
         public async Task<string> GetStringAsync(string url)
         {
-            foreach (var kvp in Headers)
-            {
-                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
-                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
-            }
             return await InnerClient.GetStringAsync(url, _cancellationToken);
         }
         /// <summary>
@@ -104,11 +92,6 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="body">内容</param>
         public async Task<string> PostStringAsync(string url, string body)
         {
-            foreach (var kvp in Headers)
-            {
-                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
-                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
-            }
             StringContent content = new(body, Encoding.GetEncoding(ContentEncoding));
             return await InnerClient.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
@@ -120,11 +103,6 @@ namespace klbotlib.Modules.ModuleUtils
         /// <returns></returns>
         public async Task<string> PostFormUrlEncodedAsync(string url, string body)
         {
-            foreach (var kvp in Headers)
-            {
-                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
-                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
-            }
             if (body.StartsWith("?"))
                 body = body[1..];
             //解析formUrlEncoded
@@ -150,11 +128,6 @@ namespace klbotlib.Modules.ModuleUtils
         /// <returns></returns>
         public async Task<string> PostJsonAsync<T>(string url, T body)
         {
-            foreach (var kvp in Headers)
-            {
-                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
-                    Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
-            }
             JsonContent content = JsonContent.Create(body);
             return await InnerClient.PostAsJsonAsync(url, body).Result.Content.ReadAsStringAsync();
         }
