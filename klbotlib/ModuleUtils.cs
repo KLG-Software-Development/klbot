@@ -55,11 +55,11 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="ua">请求时使用的UA标识。默认为Firefox</param>
         public HttpHelper(int timeout = 15, string contentEncoding = "utf-8", bool useSystemProxy = false, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
         {
-            Timeout = timeout;
-            ContentEncoding = contentEncoding;
             InnerClient = useSystemProxy
                 ? new()
                 : new(_noProxyHandler);
+            Timeout = timeout;
+            ContentEncoding = contentEncoding;
             InnerClient.DefaultRequestHeaders.UserAgent.Clear();
             InnerClient.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
         }
