@@ -17,17 +17,23 @@ namespace klbotlib.Modules.ModuleUtils
     public class HttpHelper
     {
         private CancellationToken _cancellationToken = new CancellationToken();
-        private HttpClient _client = new();
+        private static HttpClientHandler _noProxyHandler = new() { UseProxy = false };
+
+        /// <summary>
+        /// 进行所有请求时使用的HttpClient对象
+        /// </summary>
+        public HttpClient InnerClient { get; }
+        
         /// <summary>
         /// 进行所有请求时的超时时间（秒）。默认为15。
         /// </summary>
         public int Timeout 
         {
-            get => _client.Timeout.Milliseconds;
+            get => InnerClient.Timeout.Milliseconds;
             set
             {
-                lock (_client)
-                    _client.Timeout = new TimeSpan(0, 0, 0, value, 0);
+                lock (InnerClient)
+                    InnerClient.Timeout = new TimeSpan(0, 0, 0, value, 0);
             } 
         }
         /// <summary>
@@ -35,13 +41,13 @@ namespace klbotlib.Modules.ModuleUtils
         /// </summary>
         public string ContentEncoding 
         { 
-            get => _client.DefaultRequestHeaders.AcceptEncoding.First().ToString();
+            get => InnerClient.DefaultRequestHeaders.AcceptEncoding.First().ToString();
             set
             {
-                lock (_client)
+                lock (InnerClient)
                 {
-                    _client.DefaultRequestHeaders.AcceptEncoding.Clear();
-                    if (!_client.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(value))
+                    InnerClient.DefaultRequestHeaders.AcceptEncoding.Clear();
+                    if (!InnerClient.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(value))
                         Console.WriteLine($"警告: 设置编码为\"{value}\"失败。编码未改变");
                 }
             }
@@ -55,10 +61,14 @@ namespace klbotlib.Modules.ModuleUtils
         /// </summary>
         /// <param name="timeout">超时(毫秒)</param>
         /// <param name="contentEncoding">默认Encoding</param>
-        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8")
+        /// <param name="useSystemProxy">是否使用系统代理</param>
+        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8", bool useSystemProxy = false)
         {
             Timeout = timeout;
             ContentEncoding = contentEncoding;
+            InnerClient = useSystemProxy
+                ? new()
+                : new(_noProxyHandler);
         }
 
         /// <summary>
@@ -69,10 +79,10 @@ namespace klbotlib.Modules.ModuleUtils
         {
             foreach (var kvp in Headers)
             {
-                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            return await _client.GetByteArrayAsync(url, _cancellationToken);
+            return await InnerClient.GetByteArrayAsync(url, _cancellationToken);
         }
         /// <summary>
         /// 从指定地址GET一条字符串
@@ -82,10 +92,10 @@ namespace klbotlib.Modules.ModuleUtils
         {
             foreach (var kvp in Headers)
             {
-                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
-            return await _client.GetStringAsync(url, _cancellationToken);
+            return await InnerClient.GetStringAsync(url, _cancellationToken);
         }
         /// <summary>
         /// 向指定地址POST一条字符串
@@ -96,11 +106,11 @@ namespace klbotlib.Modules.ModuleUtils
         {
             foreach (var kvp in Headers)
             {
-                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
             StringContent content = new(body, Encoding.GetEncoding(ContentEncoding));
-            return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
+            return await InnerClient.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
         /// <summary>
         /// 向指定地址POST一组x-www-form-urlencoded内容
@@ -112,7 +122,7 @@ namespace klbotlib.Modules.ModuleUtils
         {
             foreach (var kvp in Headers)
             {
-                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
             if (body.StartsWith("?"))
@@ -129,7 +139,7 @@ namespace klbotlib.Modules.ModuleUtils
                     form.Add(new KeyValuePair<string,string>(kvp[0], ""));
             }
             FormUrlEncodedContent content = new(form);
-            return await _client.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
+            return await InnerClient.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
         /// <summary>
         /// 向指定地址POST一段JSON内容
@@ -142,11 +152,11 @@ namespace klbotlib.Modules.ModuleUtils
         {
             foreach (var kvp in Headers)
             {
-                if (!_client.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                if (!InnerClient.DefaultRequestHeaders.TryAddWithoutValidation(kvp.Key, kvp.Value))
                     Console.WriteLine($"警告：设置header \"{kvp.Key}\"-\"{kvp.Value}\"失败。Header未添加");
             }
             JsonContent content = JsonContent.Create(body);
-            return await _client.PostAsJsonAsync(url, body).Result.Content.ReadAsStringAsync();
+            return await InnerClient.PostAsJsonAsync(url, body).Result.Content.ReadAsStringAsync();
         }
     }
     /// <summary>
