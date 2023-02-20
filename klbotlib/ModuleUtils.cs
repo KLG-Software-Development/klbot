@@ -53,7 +53,7 @@ namespace klbotlib.Modules.ModuleUtils
         /// <param name="contentEncoding">默认Encoding</param>
         /// <param name="useSystemProxy">是否使用系统代理</param>
         /// <param name="ua">请求时使用的UA标识。默认为Firefox</param>
-        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8", bool useSystemProxy = false, string ua = "User-Agent:Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
+        public HttpHelper(int timeout = 15, string contentEncoding = "utf-8", bool useSystemProxy = false, string ua = "Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20210713 Firefox/90.0")
         {
             InnerClient = useSystemProxy
                 ? new()
