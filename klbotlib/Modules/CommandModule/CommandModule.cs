@@ -56,7 +56,7 @@ namespace klbotlib.Modules
         {
             if (HostBot == null)
                 throw new NullReferenceException("模块尚未链接到主机机器人上");
-            string cmdStr = _cmdPat.Match(msg.Text).Groups[1].Value.ToLower();
+            string cmdStr = _cmdPat.Match(msg.Text).Groups[1].Value;
             //遍历命令模块中的命令列表，寻找第一个匹配
             foreach (var cmd in _cmds)
             {
@@ -155,7 +155,7 @@ namespace klbotlib.Modules.CommandModuleNamespace
                 else if (TrySplitAtFirst(token, '=', out string key, out string val))
                     KeyValuePairs.TryAdd(key, val);
                 else
-                    Arguments.Add(val);
+                    Arguments.Add(token);
             }
         }
     

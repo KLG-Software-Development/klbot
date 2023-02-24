@@ -364,16 +364,29 @@ internal class PtiCmd : AssignmentCommand<int>
     public override void SetBotProperty(KLBot bot, int value) => bot.PollingTimeInterval = value;
     public override bool TryParseCmdStringValue(string valueString, out int value) => int.TryParse(valueString, out value);
 }
-//嘴臭模块命令
 [DefaultCommand]
-internal class FuckModEnabledCmd : SwitchCommand
+internal class ModuleSwitchCmd : Command
 {
     public override AuthorType AuthorityRequirment => AuthorType.野人;
-    public override string SwitchName => "嘴臭模块-总开关";
-    public override string Format => "fuckmod enabled";
-    public override bool GetBotProperty(KLBot bot) => bot["FuckModule"].Enabled;
-    public override Task SetBotProperty(KLBot bot, bool value) => Task.Run(() => bot["FuckModule"].Enabled = value);
+    public override string Format => "switch [module-id]";
+    public override string Usage => "启用/禁用模块";
+    
+    public override bool IsCmd(string cmd)
+        => cmd.StartsWith("switch");
+    public override Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmdStr, CommandArgument args)
+    {
+        if (args.Length < 1)
+            return Task.FromResult($"参数错误。格式：{Format}");
+        if (!bot.ModuleChain.TryGetModule(args.Arguments[0], out Module? module))
+            return Task.FromResult($"找不到ID为{args.Arguments[0]}的模块");
+        if (module.GetType().Assembly == this.GetType().Assembly)
+            return Task.FromResult($"{module.FriendlyName}为核心模块，禁止禁用");
+        module.Enabled = !module.Enabled;
+        string action = module.Enabled ? "启用" : "禁用";
+        return Task.FromResult($"{module.FriendlyName}已{action}");
+    }
 }
+//嘴臭模块命令
 [DefaultCommand]
 internal class FuckModCascadeCmd : ExternalSwitchCommand
 {

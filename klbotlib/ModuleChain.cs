@@ -3,6 +3,7 @@ using klbotlib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace klbotlib
 {
@@ -85,7 +86,7 @@ namespace klbotlib
         /// </summary>
         /// <param name="moduleId">模块ID</param>
         /// <param name="module">获取到的模块对象。失败时为null</param>
-        public bool TryGetModule(string moduleId, out Module? module)
+        public bool TryGetModule(string moduleId, [NotNullWhen(returnValue: true)]out Module? module)
         {
             if (!_indexById.ContainsKey(moduleId))
             {
