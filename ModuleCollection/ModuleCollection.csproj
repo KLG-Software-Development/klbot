@@ -28,4 +28,10 @@
   <ItemGroup>
     <ProjectReference Include="..\klbotlib\klbotlib.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="KLG.CloudApi.Huawei">
+      <HintPath>..\..\KLG.CloudApi.Huawei\KLG.CloudApi.Huawei\bin\Release\net7.0\KLG.CloudApi.Huawei.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>
