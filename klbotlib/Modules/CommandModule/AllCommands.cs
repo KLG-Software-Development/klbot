@@ -24,7 +24,7 @@ internal abstract class SimpleActionCommand : Command
     public sealed override string Format => CommandString;
     public sealed override string Usage => $"执行{ActionDescription}操作";
     public sealed override bool IsCmd(string cmd) => cmd == CommandString;
-    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string __)
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string _, CommandArgument __)
     {
         _sw.Restart();
         await Action(bot, cmdMsg);
@@ -49,7 +49,7 @@ internal abstract class ActionCommand<T> : Command
     public sealed override string Format => $"{CommandString} [{ParameterDescription}]";
     public sealed override string Usage => ActionDescription;
     public sealed override bool IsCmd(string cmd) => cmd.StartsWith($"{CommandString} ");
-    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmd)
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmd, CommandArgument _)
     {
         _sw.Restart();
         string valueString = cmd[(CommandString.Length + 1)..];
@@ -76,7 +76,7 @@ internal abstract class InfoCommand : Command
     public sealed override string Format => CommandString;
     public sealed override string Usage => $"获取{InfoDescription}";
     public sealed override bool IsCmd(string cmd) => cmd == CommandString;
-    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain _, string __) => await GetInfo(bot);
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain _, string __, CommandArgument ___) => await GetInfo(bot);
 }
 /// <summary>
 /// 开关型命令的基类. 统一调用方法：^[命令字符串]$
@@ -87,7 +87,7 @@ internal abstract class SwitchCommand : Command
     public abstract bool GetBotProperty(KLBot bot);
     public abstract Task SetBotProperty(KLBot bot, bool value);
     public sealed override string Usage => "打开/关闭" + SwitchName;
-    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain _, string __)
+    public sealed override async Task<string> CommandTask(KLBot bot, MessagePlain _, string __, CommandArgument ___)
     {
         bool currentState = GetBotProperty(bot);
         await SetBotProperty(bot, !currentState);
@@ -135,7 +135,7 @@ internal abstract class AssignmentCommand<T> : Command
     public sealed override string Usage => "查询/设置" + PropertyName;
     public sealed override string Format => $"查询：{CommandString} ?\r\n设置：{CommandString} [{ParameterDescription}]";
     public sealed override bool IsCmd(string cmd) => cmd.StartsWith($"{CommandString} ");
-    public sealed override Task<string> CommandTask(KLBot bot, MessagePlain msg, string cmd)
+    public sealed override Task<string> CommandTask(KLBot bot, MessagePlain msg, string cmd, CommandArgument _)
     {
         T currentValue = GetBotProperty(bot);
         string valueString = cmd[(CommandString.Length + 1)..];

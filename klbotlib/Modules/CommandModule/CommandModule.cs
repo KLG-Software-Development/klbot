@@ -96,8 +96,9 @@ namespace klbotlib.Modules.CommandModuleNamespace
         /// <param name="bot">需要执行的机器人</param>
         /// <param name="cmdMsg">命令的原始文本消息对象</param>
         /// <param name="cmdStr">命令的文本(不含前缀)</param>
+        /// <param name="args">命令参数</param>
         /// <returns></returns>
-        public abstract Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmdStr);
+        public abstract Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmdStr, CommandArgument args);
 
         public async Task<string> Run(KLBot bot, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
@@ -107,7 +108,7 @@ namespace klbotlib.Modules.CommandModuleNamespace
                 if (authority < AuthorityRequirment)
                     return $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}";
                 else
-                    return await CommandTask(bot, msg, cmd);
+                    return await CommandTask(bot, msg, cmd, new CommandArgument(cmd));
             }
             catch (Exception ex)
             {
@@ -134,6 +135,45 @@ namespace klbotlib.Modules.CommandModuleNamespace
                 return $"错误：拒绝访问。\r\n调用者权限级别：{authority}\r\n命令权限级别：{AuthorityRequirment}";
             else
                 return Task(bot, targetObject, msg, cmd);
+        }
+    }
+    internal class CommandArgument
+    {
+        public string Command { get; }
+        public List<string> Arguments { get; } = new();
+        public Dictionary<string, string> KeyValuePairs { get; } = new();
+        public int Length { get => Arguments.Count; }
+        public CommandArgument(string cmdStr)
+        {
+            ReadOnlySpan<string> cmdTokens = cmdStr.Split();
+            Command = cmdTokens[0];
+            for (int i = 1; i < cmdTokens.Length; i++)
+            {
+                string token = cmdTokens[i].Trim();
+                if (token.Length == 0)
+                    continue;
+                else if (TrySplitAtFirst(token, '=', out string key, out string val))
+                    KeyValuePairs.TryAdd(key, val);
+                else
+                    Arguments.Add(val);
+            }
+        }
+    
+        private bool TrySplitAtFirst(string s, char c, out string pre, out string suf)
+        {
+            
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == c)
+                {
+                    pre = s[..i];
+                    suf = s[i..];
+                    return true;
+                }
+            }
+            pre = s;
+            suf = string.Empty;
+            return false;
         }
     }
 }
