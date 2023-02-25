@@ -1,9 +1,6 @@
 ﻿using KLG.CloudApi.Huawei;
 using KLG.CloudApi.Huawei.Apis;
 using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -23,17 +20,15 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
     [ModuleSetup]
     private readonly string _domain = string.Empty;
     [ModuleStatus]
-    private readonly string _iamToken = string.Empty;
+    private HuaweiToken? _iamToken;
     
-    private readonly RequestUriInfo _uri;
     private readonly HuaweiCloudApiCaller _caller;
     private readonly GetIamTokenApi _iamTokenApi;
 
     /// <inheritdoc/>
     public HuaweiCloudModule()
     {
-        _uri = new(_endpoint);
-        _caller = new(_uri);
+        _caller = new(_endpoint);
         _iamTokenApi = new(_user, _password, _domain);
     }
 
@@ -87,44 +82,32 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         }
     }
 
-    private async Task<ApiResult<string>> GetIamToken()
+    /* Helper */
+    private async Task<ApiResult<HuaweiToken>> GetIamToken()
     {
         ModulePrint("Getting IAM token...");
-        var baseRequest = _iamTokenApi.BuildBaseRequest(_uri);
-        var content = _iamTokenApi.BuildRequestContent();
-        var json = await content.ReadAsStringAsync();
-        ModulePrint("Sending Request...");
-        HttpResponseMessage response;
-        string message = string.Empty;
-        try
-        {
-            response = await _caller.CallAPI(_iamTokenApi, false);
-            
-        }
-        catch (Exception ex)
-        {
-            message = ex.Message;
-            goto failed;
-        }
-        if (response.StatusCode != HttpStatusCode.Created)
-        {
-            message = $"网络错误：HTTP返回码异常。{response.StatusCode}";
-            goto failed;
-        }
-        string[] tokens = (string[])response.Headers.GetValues("X-Subject-Token");
-        if (tokens.Length == 0)
-        {
-            message = "返回值";
-            goto failed;
-        }
-    failed:
-        return new(false, message, null);
+        var result = await _caller.CallAPI(_iamTokenApi, false);
+        if (result.Success)
+            _iamToken = result.Value;
+        return result;
     }
-    
-    //Helper
+    //更新IAM token。成功或不需要返回true，失败返回false
+    private async Task<ApiResult> UpdateIamToken()
+    {
+        //更新IAM token
+        if (_iamToken == null || _iamToken.IsExpired)
+        {
+            var getIamResult = await GetIamToken();
+            return getIamResult.ToNonGeneric();
+        }
+        return new(true, "Token already up-to-date");
+    }
     private async Task<ApiResult<bool>> EcsStatus()
     {
-        ApiResult<bool> result = new(true, string.Empty, true);
+        var updateResult = await UpdateIamToken();
+        if (!updateResult)
+            return updateResult.ToGeneric<bool>();
+        
         throw new NotImplementedException();
     }
     private async Task<ApiResult> EcsOn()
