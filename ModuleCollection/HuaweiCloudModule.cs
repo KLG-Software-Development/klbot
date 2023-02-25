@@ -1,6 +1,9 @@
 ﻿using KLG.CloudApi.Huawei;
 using KLG.CloudApi.Huawei.Apis;
 using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -19,7 +22,9 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
     private readonly string _password = string.Empty;
     [ModuleSetup]
     private readonly string _domain = string.Empty;
-
+    [ModuleStatus]
+    private readonly string _iamToken = string.Empty;
+    
     private readonly RequestUriInfo _uri;
     private readonly HuaweiCloudApiCaller _caller;
     private readonly GetIamTokenApi _iamTokenApi;
@@ -60,16 +65,20 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         switch (filterOut)
         {
             case "ecs-on":
-                if (await EcsStatus())
-                    return "ECS已处于开机状态";
-                (bool success, string output) = await EcsOn();
-                if (success)
-                    return "开机命令已成功下发";
-                else
-                    return $"开机命令下发失败。原因：{output}";
-                return string.Empty;
+                //确定ECS不处于开机状态，否则无需开机
+                var statusResult = await EcsStatus();
+                if (!statusResult.Success)
+                    return $"ECS状态查询失败。信息：{statusResult.Message}";
+                if (statusResult.Value)
+                    return "ECS已处于开机状态，无需开机";
+                
+                var onResult = await EcsOn();
+                if (!onResult.Success)
+                    return $"开机命令下发失败。原因：{onResult.Message}"; 
+                return "开机命令已成功下发";
             case "ecs":
             case "ecs-status":
+                
                 return string.Empty;
             case "ecs-off":
                 return string.Empty;
@@ -78,23 +87,49 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         }
     }
 
-    private async Task<(bool, string)> GetIamToken()
+    private async Task<ApiResult<string>> GetIamToken()
     {
         ModulePrint("Getting IAM token...");
         var baseRequest = _iamTokenApi.BuildBaseRequest(_uri);
         var content = _iamTokenApi.BuildRequestContent();
         var json = await content.ReadAsStringAsync();
         ModulePrint("Sending Request...");
-        var response = await _caller.CallAPI(_iamTokenApi, false);
-        //response.Content.Co
+        HttpResponseMessage response;
+        string message = string.Empty;
+        try
+        {
+            response = await _caller.CallAPI(_iamTokenApi, false);
+            
+        }
+        catch (Exception ex)
+        {
+            message = ex.Message;
+            goto failed;
+        }
+        if (response.StatusCode != HttpStatusCode.Created)
+        {
+            message = $"网络错误：HTTP返回码异常。{response.StatusCode}";
+            goto failed;
+        }
+        string[] tokens = (string[])response.Headers.GetValues("X-Subject-Token");
+        if (tokens.Length == 0)
+        {
+            message = "返回值";
+            goto failed;
+        }
+    failed:
+        return new(false, message, null);
     }
-    private async Task<bool> EcsStatus()
+    
+    //Helper
+    private async Task<ApiResult<bool>> EcsStatus()
     {
-
+        ApiResult<bool> result = new(true, string.Empty, true);
+        throw new NotImplementedException();
     }
-    private async Task<(bool, string)> EcsOn()
+    private async Task<ApiResult> EcsOn()
     {
-        string output = string.Empty;
-        return (true, output);
+        string message = string.Empty;
+        throw new NotImplementedException();
     }
 }
