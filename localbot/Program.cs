@@ -37,7 +37,7 @@ start:
             if (asm == null)
                 throw new NullReferenceException("无法获取模块集合所在的程序集");
             lcb = new KLBot(_localServer, asm, _debugTargetGroupID);
-            await lcb.AddModule(new CounterBanModule());
+            await lcb.AddModule(new HuaweiCloudModule());
 
             Console.WriteLine(lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。命令调用格式：<命令> <值>");
