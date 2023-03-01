@@ -111,11 +111,13 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         _iamTokenApi.User = _user;
         _iamTokenApi.Password = _password;
         _iamTokenApi.Domain = _domain;
+        _ecsStatusApi.ProjectId = _projectId;
+        _ecsStatusApi.ServerId = _serverId;
     }
     private async Task<ApiResult<HuaweiToken>> GetIamToken()
     {
         ModulePrint("Getting IAM token...");
-        var result = await _caller.CallApi(_iamTokenApi, false);
+        var result = await _caller.CallApi("iam.", _iamTokenApi, false);
         if (result.Success)
             _iamToken = result.Value;
         return result;
@@ -133,20 +135,21 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
     }
     private async Task<ApiResult<HuaweiServer>> EcsStatus()
     {
+        Console.WriteLine($"Token expires: {_iamToken.Expires}");
         var updateResult = await UpdateIamToken();
         if (!updateResult)
             return updateResult.ToGeneric<HuaweiServer>();
         if (_iamToken == null)
             return new(false, "更新IAM token失败：更新后IAM token意外为null", default);
-        var result = await _caller.CallApi(_ecsStatusApi, true, _iamToken);
+        var result = await _caller.CallApi("ecs.", _ecsStatusApi, true, _iamToken);
         return result;
     }
     private async Task<ApiResult> EcsUp()
     {
-        return await _caller.CallApi(_ecsSwitchApi, false, _iamToken.TokenValue, true);
+        return await _caller.CallApi("ecs", _ecsSwitchApi, false, _iamToken.TokenValue, true);
     }
     private async Task<ApiResult> EcsDown()
     {
-        return await _caller.CallApi(_ecsSwitchApi, false, _iamToken.TokenValue, false);
+        return await _caller.CallApi("ecs", _ecsSwitchApi, false, _iamToken.TokenValue, false);
     }
 }
