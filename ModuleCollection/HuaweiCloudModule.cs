@@ -114,8 +114,22 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         _ecsStatusApi.ProjectId = _projectId;
         _ecsStatusApi.ServerId = _serverId;
     }
+    private ApiResult VerifyProperties(params string[] properties)
+    {
+        for (int i = 0; i < properties.Length; i++)
+        {
+            if (string.IsNullOrEmpty(properties[i]))
+                return new ApiResult(false, $"属性[{i}]为空，检查模块配置文件");
+        }
+        return new ApiResult(true, string.Empty);
+    }
+    private ApiResult VerifyAllProperties()
+        => VerifyProperties(_caller.Endpoint, _iamTokenApi.User, _iamTokenApi.Password, _iamTokenApi.Domain, _ecsStatusApi.ProjectId, _ecsStatusApi.ServerId);
     private async Task<ApiResult<HuaweiToken>> GetIamToken()
     {
+        var verifyResult = VerifyAllProperties();
+        if (!verifyResult.Success)
+            return verifyResult.ToGeneric<HuaweiToken>();
         ModulePrint("Getting IAM token...");
         var result = await _caller.CallApi("iam.", _iamTokenApi, false);
         if (result.Success)
@@ -135,6 +149,9 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
     }
     private async Task<ApiResult<HuaweiServer>> EcsStatus()
     {
+        var verifyResult = VerifyAllProperties();
+        if (!verifyResult.Success)
+            return verifyResult.ToGeneric<HuaweiServer>();
         Console.WriteLine($"Token expires: {_iamToken.Expires}");
         var updateResult = await UpdateIamToken();
         if (!updateResult)
@@ -146,10 +163,16 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
     }
     private async Task<ApiResult> EcsUp()
     {
-        return await _caller.CallApi("ecs", _ecsSwitchApi, false, _iamToken.TokenValue, true);
+        var verifyResult = VerifyAllProperties();
+        if (!verifyResult.Success)
+            return verifyResult;
+        return await _caller.CallApi("ecs.", _ecsSwitchApi, false, _iamToken.TokenValue, true);
     }
     private async Task<ApiResult> EcsDown()
     {
+        var verifyResult = VerifyAllProperties();
+        if (!verifyResult.Success)
+            return verifyResult;
         return await _caller.CallApi("ecs", _ecsSwitchApi, false, _iamToken.TokenValue, false);
     }
 }
