@@ -83,7 +83,13 @@ public class ImageModule : SingleTypeModule<MessagePlain>
             _ => throw new Exception("意外遇到未实现的情况。检查处理器实现是否完整"),
         };
         if (_enhanceKeyword.Contains(word))
-            return $@"\image:\url:{ModuleAccess.GetModule<PLJJModule>().GetRandomUrl()}";
+        {
+            (bool success, url) = await ModuleAccess.GetModule<PLJJModule>(0).GetRandomUrl(word, msg);
+            if (success)
+                return $@"\image:\url:{url}";
+            else
+                return "运气太差，放弃获取";
+        }
         //每次都使用上一次缓存的list_num（如果存在）
         bool isCached = false;
         int listNum = 0;
