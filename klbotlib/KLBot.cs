@@ -570,19 +570,19 @@ namespace klbotlib
                     else if (cmd == "save")
                     {
                         _console.WriteLn("手动保存所有模块状态到存档...", ConsoleMessageType.Info);
-                        ModuleChain.ForEach(x =>
+                        ModuleChain.ForEach(async m =>
                         {
-                            SaveModuleStatus(x);
+                            await SaveModuleStatus(m);
                         });
                     }
                     else if (cmd == "save all")
                     {
                         _console.WriteLn("手动保存所有模块状态和模块配置到存档...", ConsoleMessageType.Info);
-                        ModuleChain.ForEach(x =>
+                        ModuleChain.ForEach(async m =>
                         {
-                            SaveModuleStatus(x);
+                            await SaveModuleStatus(m);
 #pragma warning disable CS0618 // 类型或成员已过时
-                            SaveModuleSetup(x);
+                            await SaveModuleSetup(m);
 #pragma warning restore CS0618 // 类型或成员已过时
                         });
                     }
@@ -652,18 +652,22 @@ namespace klbotlib
                 await LoadModuleStatus(module);
             });
         }
-        // 保存该模块的配置
+        /// <summary>
+        /// 保存该模块的配置
+        /// </summary>
         [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
-        private void SaveModuleSetup(Module module, bool printInfo = true)
+        public async Task SaveModuleSetup(Module module, bool printInfo = true)
         {
             string json = JsonConvert.SerializeObject(module.ExportSetupDict(), JsonHelper.JsonSettings.FileSetting);
             string filePath = GetModuleSetupPath(module);
             if (printInfo)
                 _console.WriteLn($"正在保存模块{module}的配置至\"{filePath}\"...", ConsoleMessageType.Task);
-            File.WriteAllText(filePath, json);
+            await File.WriteAllTextAsync(filePath, json);
         }
-        //保存模块的状态
-        private void SaveModuleStatus(Module module, bool printInfo = true)
+        /// <summary>
+        /// 保存该模块的状态
+        /// </summary>
+        public async Task SaveModuleStatus(Module module, bool printInfo = true)
         {
             string json = JsonConvert.SerializeObject(module.ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
             string filePath = GetModuleStatusPath(module);
@@ -672,7 +676,7 @@ namespace klbotlib
                 //由于涉及并行处理 需要加锁输出
                 _console.WriteLn($"正在保存模块{module}的状态至\"{filePath}\"...", ConsoleMessageType.Task);
             }
-            File.WriteAllText(filePath, json);
+            await File.WriteAllTextAsync(filePath, json);
         }
         //载入模块的状态
         private async Task LoadModuleStatus(Module module, bool printInfo = true)
@@ -723,7 +727,7 @@ namespace klbotlib
         /// </summary>
         public void OnExit()
         {
-            ModuleChain.ForEach(m => SaveModuleStatus(m));
+            ModuleChain.ForEach(m => SaveModuleStatus(m).Wait());
             _console.WriteLn("有序退出完成", ConsoleMessageType.Info);
         }
 

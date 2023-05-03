@@ -24,26 +24,27 @@ public class Program
     private static bool _tagMe = false;
     private static bool _verbose = false;
 
+    private static KLBot? _lcb = null;
+
     public static async Task Main()
     {
         Console.ResetColor();
         long queryCounterCache = 0;
         int fatalFailureCounter = 0;
 start:
-        KLBot lcb = null;
         try
         {
             Assembly? asm = Assembly.GetAssembly(typeof(ImageModule));
             if (asm == null)
                 throw new NullReferenceException("无法获取模块集合所在的程序集");
-            lcb = new KLBot(_localServer, asm, _debugTargetGroupID);
-            await lcb.AddModule(new HuaweiCloudModule());
+            _lcb = new KLBot(_localServer, asm, _debugTargetGroupID);
+            await _lcb.AddModule(new HuaweiCloudModule());
 
-            Console.WriteLine(lcb.GetModuleChainString());
+            Console.WriteLine(_lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。命令调用格式：<命令> <值>");
             PrintHelp();
             Console.WriteLine("输入命令开始调试");
-            MainLoop(lcb);
+            MainLoop(_lcb);
         }
         catch (Exception ex)
         {
@@ -68,22 +69,22 @@ start:
                 Console.WriteLine(ex.Message);
                 Console.WriteLine($"意外异常：{ex.Message}\n调用栈：\n{ex.StackTrace}\n");
                 Console.ResetColor();
-                if (lcb != null && queryCounterCache == lcb.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
+                if (_lcb != null && queryCounterCache == _lcb.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
                     fatalFailureCounter++;
                 else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
                     fatalFailureCounter = 0;
                 if (fatalFailureCounter > 10)
                 {
                     Console.WriteLine("连续10次发生致命错误。将停止重试并有序退出");
-                    if (lcb != null)
-                        lcb.OnExit();
+                    if (_lcb != null)
+                        _lcb.OnExit();
                     return;
                 }
                 else
                 {
                     //query_counter_cache = klg.DiagData.SuccessPackageCount;
-                    if (lcb != null)
-                        lcb.OnExit();
+                    if (_lcb != null)
+                        _lcb.OnExit();
                     Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
                     goto start;
                 }
@@ -234,8 +235,10 @@ start:
         Console.WriteLine("send-voice <URL>                              发送语音消息");
         Console.WriteLine("\n其他操作：");                                
         Console.WriteLine("recall <author>,<message id>                  撤回指定消息");
-        Console.WriteLine("mute <user>,<duration (s)>                     禁言指定用户");
+        Console.WriteLine("mute <user>,<duration (s)>                    禁言指定用户");
         Console.WriteLine("unmute <user>                                 解禁指定用户");
+        Console.WriteLine("\n调试命令：");
+        Console.WriteLine("save all                                      保存所有模块的配置与状态");
     }
     private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
     {
@@ -326,7 +329,17 @@ start:
             case "mute":
                 CommandMute(arg);
                 return;
+            case "save":
+                _lcb.ModuleChain.ForEach(async m =>
+                {
+#pragma warning disable CS0618 // 类型或成员已过时
+                    await _lcb.SaveModuleSetup(m);
+#pragma warning restore CS0618 // 类型或成员已过时
+                    await _lcb.SaveModuleStatus(m);
+                });
+                return;
             default:
+                Console.WriteLine("Unknown command.");
                 return;
         }
     }
@@ -422,7 +435,10 @@ start:
         MessageMute unmute = new(true, _groupId, _userId, userId);
         _localServer.AddReceivedMessage(unmute);
     }
-
+    private static void CommandSaveAll(string arg)
+    {
+        
+    }
     private static void PrintVerboseInfoIfRequired(Message msg)
     {
         if (_verbose)
