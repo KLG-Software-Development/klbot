@@ -13,6 +13,10 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
 {
 
     [ModuleSetup]
+    private readonly string _ak = string.Empty;
+    [ModuleSetup]
+    private readonly string _sk = string.Empty;
+    [ModuleSetup]
     private readonly string _endpoint = string.Empty;
     [ModuleSetup]
     private readonly string _user = string.Empty;
@@ -124,14 +128,24 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         return new ApiResult(true, string.Empty);
     }
     private ApiResult VerifyAllProperties()
-        => VerifyProperties(_caller.Endpoint, _iamTokenApi.User, _iamTokenApi.Password, _iamTokenApi.Domain, _ecsStatusApi.ProjectId, _ecsStatusApi.ServerId);
+    {
+        return VerifyProperties(
+            _ak,
+            _sk,
+            _caller.Endpoint, 
+            _iamTokenApi.User, 
+            _iamTokenApi.Password, 
+            _iamTokenApi.Domain, 
+            _ecsStatusApi.ProjectId, 
+            _ecsStatusApi.ServerId);
+    }
     private async Task<ApiResult<HuaweiToken>> GetIamToken()
     {
         var verifyResult = VerifyAllProperties();
         if (!verifyResult.Success)
             return verifyResult.ToGeneric<HuaweiToken>();
         ModulePrint("Getting IAM token...");
-        var result = await _caller.CallApi("iam.", _iamTokenApi, false);
+        var result = await _caller.CallApi("iam.", _iamTokenApi);
         if (result.Success)
             _iamToken = result.Value;
         return result;
@@ -140,7 +154,7 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
     private async Task<ApiResult> UpdateIamToken()
     {
         //更新IAM token
-        if (_iamToken == null || _iamToken.IsExpired)
+        if (!(_iamToken == null || _iamToken.IsExpired))
         {
             var getIamResult = await GetIamToken();
             return getIamResult.ToNonGeneric();
@@ -158,7 +172,7 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
             return updateResult.ToGeneric<HuaweiServer>();
         if (_iamToken == null)
             return new(false, "更新IAM token失败：更新后IAM token意外为null", default);
-        var result = await _caller.CallApi("ecs.", _ecsStatusApi, true, _iamToken);
+        var result = await _caller.CallApi("ecs.", _ecsStatusApi, _iamToken.TokenValue);
         return result;
     }
     private async Task<ApiResult> EcsUp()
