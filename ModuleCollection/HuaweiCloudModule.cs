@@ -145,7 +145,7 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
         if (!verifyResult.Success)
             return verifyResult.ToGeneric<HuaweiToken>();
         ModulePrint("Getting IAM token...");
-        var result = await _caller.CallApi("iam.", _iamTokenApi);
+        var result = await _caller.CallApi("iam.", _iamTokenApi, false);
         if (result.Success)
             _iamToken = result.Value;
         return result;
@@ -172,7 +172,7 @@ public class HuaweiCloudModule : SingleTypeModule<MessagePlain>
             return updateResult.ToGeneric<HuaweiServer>();
         if (_iamToken == null)
             return new(false, "更新IAM token失败：更新后IAM token意外为null", default);
-        var result = await _caller.CallApi("ecs.", _ecsStatusApi, _iamToken.TokenValue);
+        var result = await _caller.CallApi("ecs.", _ecsStatusApi, false, _iamToken.TokenValue);
         return result;
     }
     private async Task<ApiResult> EcsUp()
