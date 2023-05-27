@@ -3,7 +3,6 @@ using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.MessageServer.Mirai;
 using klbotlib.Modules;
-using ModuleCollection;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;

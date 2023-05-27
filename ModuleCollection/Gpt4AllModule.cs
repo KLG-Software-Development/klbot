@@ -10,7 +10,7 @@ namespace klbotlib.Modules;
 public class Gpt4AllModule : SingleTypeModule<MessagePlain>
 {
     [ModuleSetup]
-    private static string _modelPath = "ggml-alpaca-7b-q4.bin";
+    private static string _modelPath = "D:\\DeepLearning\\models\\ggml-vicuna-7b-1.1-q4_2.bin";
     private IGpt4AllModel _model;
 
     /// <inheritdoc/>
@@ -42,12 +42,14 @@ public class Gpt4AllModule : SingleTypeModule<MessagePlain>
         await foreach (var token in result.GetPredictionStreamingAsync())
         {
             sb.Append(token);
-            if (token.EndsWith('\n') || token.EndsWith('.')) //每次换行或句号时发送消息
+            string s = sb.ToString();
+            Console.Write(token);
+            if (s.EndsWith('\n') || s.EndsWith('.')) //每次换行或句号时发送消息
             {
-                await Messaging.ReplyMessage(msg, sb.ToString());
+                //await Messaging.ReplyMessage(msg, s);
                 sb.Clear();
             }
         }
-        return string.Empty;
+        return "[GPT4ALL Response End]";
     }
 }
