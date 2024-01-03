@@ -33,7 +33,6 @@ start:
             else
                 miraiServer = new(args[0]);
             klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
-            await klg.AddModule(new Gpt4AllModule());
             await klg.AddModule(new ResetModule());
             await klg.AddModule(new PLJJModule());
             await klg.AddModule(new ZombieeeModule());

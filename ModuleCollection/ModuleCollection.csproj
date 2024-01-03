@@ -15,8 +15,6 @@
     <Version>0.5.0</Version>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>6.0</AnalysisLevel>
-    <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
-    <TieredCompilation>True</TieredCompilation>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -27,14 +25,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\klbotlib\klbotlib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="KLG.CloudApi.Huawei">
-      <HintPath>..\..\KLG.CloudApi.Huawei\KLG.CloudApi.Huawei\bin\Release\net7.0\KLG.CloudApi.Huawei.dll</HintPath>
-    </Reference>
-    <Reference Include="Gpt4All">
-      <HintPath>..\..\gpt4all\gpt4all-bindings\csharp\Gpt4All\bin\Release\net8.0\Gpt4All.dll</HintPath>
-    </Reference>
   </ItemGroup>
 </Project>

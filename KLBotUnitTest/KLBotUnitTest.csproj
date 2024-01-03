@@ -5,7 +5,6 @@
     <IsPackable>false</IsPackable>
     <AnalysisLevel>6.0</AnalysisLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <TieredCompilation>True</TieredCompilation>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <Nullable>enable</Nullable>
   </PropertyGroup>
