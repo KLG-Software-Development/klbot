@@ -1,11 +1,16 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Web;
 
 namespace klbotlib.Json
 {
     static class JsonHelper
     {
+        internal static MediaTypeHeaderValue JsonMime { get; } = MediaTypeHeaderValue.Parse("application/json");
+        internal static StringContent CreateAsJson(string s)
+            => new StringContent(s, JsonMime);
         internal static class JsonSettings
         {
             //用于文件存储的Json序列化配置

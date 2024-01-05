@@ -2,7 +2,7 @@
   "profiles": {
     "klbot": {
       "commandName": "Project",
-      "commandLineArgs": "http://mp:3356"
+      "commandLineArgs": "http://100.123.10.200:8080"
     }
   }
 }
