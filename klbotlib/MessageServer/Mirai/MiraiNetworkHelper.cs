@@ -54,17 +54,9 @@ internal static class MiraiNetworkHelper
     {
         if (_verifyRequestBody == null)
             _verifyRequestBody = JsonHelper.CreateAsJson("{\"verifyKey\":\"" + key + "\"}");
-        try
-        {
-            HttpResponseMessage response = await _client.PostAsync(GetVerifyUrl(serverUrl), _verifyRequestBody);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return "failed";
-        }
+        HttpResponseMessage response = await _client.PostAsync(GetVerifyUrl(serverUrl), _verifyRequestBody);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
     }
     //禁言
     internal static async Task<string> Mute(string serverUrl, long userId, long groupId, uint durationSeconds)
