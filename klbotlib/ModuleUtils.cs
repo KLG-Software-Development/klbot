@@ -101,9 +101,10 @@ namespace klbotlib.Modules.ModuleUtils
         /// </summary>
         /// <param name="url">地址</param>
         /// <param name="body">内容</param>
-        public async Task<string> PostStringAsync(string url, string body)
+        /// <param name="mime">MIME类型，默认为JSON</param>
+        public async Task<string> PostStringAsync(string url, string body, string mime = "application/json")
         {
-            StringContent content = new(body, Encoding.GetEncoding(ContentEncoding));
+            StringContent content = new(body, Encoding.GetEncoding(ContentEncoding), mime);
             return await InnerClient.PostAsync(url, content, _cancellationToken).Result.Content.ReadAsStringAsync();
         }
         /// <summary>

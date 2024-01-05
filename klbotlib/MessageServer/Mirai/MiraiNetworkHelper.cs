@@ -92,8 +92,8 @@ internal static class MiraiNetworkHelper
     //尝试发送消息
     internal static async Task TrySendMessage(string serverUrl, MessageContext context, string fullMsgJson)
     {
-        string url = MiraiNetworkHelper.GetSendMessageUrl(serverUrl, context);
-        StringContent content = new StringContent(fullMsgJson, Encoding.UTF8);
+        string url = GetSendMessageUrl(serverUrl, context);
+        StringContent content = JsonHelper.CreateAsJson(fullMsgJson);
         HttpResponseMessage response = await _client.PostAsync(url, content);
         response.EnsureSuccessStatusCode();
         bool result = response.IsSuccessStatusCode;

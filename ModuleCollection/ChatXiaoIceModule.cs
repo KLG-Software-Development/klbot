@@ -77,7 +77,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
         string normalizedQuery = AesEncrypt(msg.Text, _password, _bitLength);
         //JChatterBotRequest requestObj = new(_conversationId, new JQuery(normalizedQuery), _traceId);
         string s = "{\"conversationId\":\"" + _conversationId + "\",\"query\":{\"NormalizedQuery\":\"" + normalizedQuery + "\"},\"from\":\"chatbox\",\"traceId\":\"" + _traceId + "\",\"zoIsGCSResponse\":\"true\"}";
-        StringContent jsonAsPlainText = new(s);
+        StringContent jsonAsPlainText = new(s, Encoding.UTF8, "application/json");
         using (jsonAsPlainText)
         {
             HttpRequestMessage request = new();
