@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using klbotlib.Exceptions;
+using klbotlib.Json;
 using klbotlib.MessageServer.Mirai.JsonPrototypes;
 using Newtonsoft.Json;
 
@@ -52,7 +53,7 @@ internal static class MiraiNetworkHelper
     internal static async Task<string> Verify(string serverUrl, string key)
     {
         if (_verifyRequestBody == null)
-            _verifyRequestBody = new StringContent("{\"verifyKey\":\"" + key + "\"}");
+            _verifyRequestBody = JsonHelper.CreateAsJson("{\"verifyKey\":\"" + key + "\"}");
         HttpResponseMessage response = await _client.PostAsync(GetVerifyUrl(serverUrl), _verifyRequestBody);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
@@ -60,7 +61,7 @@ internal static class MiraiNetworkHelper
     //禁言
     internal static async Task<string> Mute(string serverUrl, long userId, long groupId, uint durationSeconds)
     {
-        StringContent content = new($"{{\"target\":{groupId},\"memberId\":{userId},\"time\":{durationSeconds}}}");
+        StringContent content = JsonHelper.CreateAsJson($"{{\"target\":{groupId},\"memberId\":{userId},\"time\":{durationSeconds}}}");
         HttpResponseMessage response = await _client.PostAsync(GetMuteUrl(serverUrl), content);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
@@ -68,7 +69,7 @@ internal static class MiraiNetworkHelper
     //解除禁言
     internal static async Task<string> Unmute(string serverUrl, long userId, long groupId)
     {
-        StringContent content = new($"{{\"target\":{groupId},\"memberId\":{userId}}}");
+        StringContent content = JsonHelper.CreateAsJson($"{{\"target\":{groupId},\"memberId\":{userId}}}");
         HttpResponseMessage response = await _client.PostAsync(GetUnmuteUrl(serverUrl), content);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
@@ -83,8 +84,8 @@ internal static class MiraiNetworkHelper
     //尝试发送消息
     internal static async Task TrySendMessage(string serverUrl, MessageContext context, string fullMsgJson)
     {
-        string url = MiraiNetworkHelper.GetSendMessageUrl(serverUrl, context);
-        StringContent content = new StringContent(fullMsgJson, Encoding.UTF8);
+        string url = GetSendMessageUrl(serverUrl, context);
+        StringContent content = JsonHelper.CreateAsJson(fullMsgJson);
         HttpResponseMessage response = await _client.PostAsync(url, content);
         response.EnsureSuccessStatusCode();
         bool result = response.IsSuccessStatusCode;
