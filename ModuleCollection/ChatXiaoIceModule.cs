@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace klbotlib.Modules;
 
 ///聊天bot模块
+[Obsolete("Bing小冰网页端目前已无法正常使用，因此此模块将不能正常工作")]
 public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
 {
     private const string _digits = "0123456789abcdef";

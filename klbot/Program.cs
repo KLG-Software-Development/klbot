@@ -47,7 +47,6 @@ start:
             await klg.AddModule(new AnonyVoiceModule());
             await klg.AddModule(new TimeModule());
             await klg.AddModule(new 上号Module());
-            await klg.AddModule(new ChatXiaoIceModule());
             await klg.AddModule(new ChatQYKModule());
             await klg.AddModule(new FuckModule());
             Console.WriteLine(klg.GetModuleChainString());
