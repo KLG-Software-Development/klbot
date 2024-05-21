@@ -3,12 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace klbotlib.MessageServer.Debug;
+namespace klbotlib.MessageClient.Debug;
 
 /// <summary>
 /// 调试用本地模拟消息服务器
 /// </summary>
-public class DebugMessageServer : IMessageServer
+public class DebugMessageClient : IMessageClient
 {
     private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
     private readonly List<Message> _msgBuffer = new();
@@ -45,7 +45,7 @@ public class DebugMessageServer : IMessageServer
     /// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
     /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
     /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
-    public DebugMessageServer(long selfId, Action<Message> addMsgCallback, 
+    public DebugMessageClient(long selfId, Action<Message> addMsgCallback, 
         Action<Module, MessageContext, long, long, string> sendMsgCallback, 
         Action<Module, long, string, string> uploadFileCallback,
         Action<Module, long, long, uint> muteCallback,

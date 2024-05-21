@@ -1,5 +1,5 @@
 ﻿using klbotlib;
-using klbotlib.MessageServer.Debug;
+using klbotlib.MessageClient.Debug;
 using klbotlib.Modules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -12,8 +12,8 @@ public class TestModule
     [TestMethod]
     public void TestIsAttach()
     {
-        DebugMessageServer server = TestConst.GetTestServer();
-        KLBot test_bot = new(server, "config/unit_test_config.json");
+        DebugMessageClient client = TestConst.GetTestClient();
+        KLBot test_bot = new(client, "config/unit_test_config.json");
         var tm = new TimeModule();
         Assert.AreEqual(false, tm.IsAttached, "模块初始情况下模块应处于未附加状态（IsAttach=false）");
         test_bot.AddModule(tm).Wait();

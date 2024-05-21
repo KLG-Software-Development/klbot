@@ -1,6 +1,6 @@
 ﻿using klbotlib;
 using klbotlib.Exceptions;
-using klbotlib.MessageServer.Debug;
+using klbotlib.MessageClient.Debug;
 using klbotlib.Modules;
 using System.Reflection;
 using Module = klbotlib.Modules.Module;
@@ -10,7 +10,7 @@ namespace localbot;
 public class Program
 {
     private static readonly HashSet<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
-    private static readonly DebugMessageServer _localServer = new(
+    private static readonly DebugMessageClient _localServer = new(
         33550336,   //自身ID
         AddMsgCallback_PrintInfo, 
         SendMsgCallback_PrintInfo, 

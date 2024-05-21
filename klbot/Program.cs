@@ -1,7 +1,7 @@
 ﻿using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.MessageServer.Mirai;
+using klbotlib.MessageClient.Mirai;
 using klbotlib.Modules;
 using System;
 using System.Reflection;
@@ -27,12 +27,12 @@ start:
         KLBot? klg = null;
         try
         {
-            MiraiMessageServer miraiServer;
+            MessageClient_MiraiHttp miraiClient;
             if (args.Length == 0)
-                miraiServer = new("http://localhost:3356");
+                miraiClient = new("http://localhost:3356");
             else
-                miraiServer = new(args[0]);
-            klg = new KLBot(miraiServer, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+                miraiClient = new(args[0]);
+            klg = new KLBot(miraiClient, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
             await klg.AddModule(new ResetModule());
             await klg.AddModule(new PLJJModule());
             await klg.AddModule(new ZombieeeModule());

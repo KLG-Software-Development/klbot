@@ -1,13 +1,13 @@
 ﻿using klbotlib.Exceptions;
 using klbotlib.Json;
-using klbotlib.MessageServer.Mirai.JsonPrototypes;
+using klbotlib.MessageClient.Mirai.JsonPrototypes;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace klbotlib.MessageServer.Mirai;
+namespace klbotlib.MessageClient.Mirai;
 
 internal static class MiraiNetworkHelper
 {
