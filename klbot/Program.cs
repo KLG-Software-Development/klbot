@@ -33,6 +33,7 @@ start:
             else
                 miraiClient = new(args[0]);
             klg = new KLBot(miraiClient, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+            Console.CancelKeyPress += (_, _) => klg.OnExit();
             await klg.AddModule(new ResetModule());
             await klg.AddModule(new PLJJModule());
             await klg.AddModule(new ZombieeeModule());
