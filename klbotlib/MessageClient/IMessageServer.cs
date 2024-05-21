@@ -20,7 +20,7 @@ public interface IMessageClient
     /// 获取接收到的消息
     /// </summary>
     /// <returns>消息列表</returns>
-    Task<List<Message>> FetchMessages();
+    Task<List<Message>?> FetchMessages();
     /// <summary>
     /// 根据消息ID，从服务器获取给定消息
     /// </summary>

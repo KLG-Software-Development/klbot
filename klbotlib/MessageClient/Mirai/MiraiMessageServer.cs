@@ -33,7 +33,7 @@ public class MiraiMessageClient : IMessageClient
     /// 返回未读消息列表
     /// </summary>
     /// <returns></returns>
-    public async Task<List<Message>> FetchMessages()
+    public async Task<List<Message>?> FetchMessages()
     {
         List<Message> msgs = new();
         JMiraiFetchMessageResponse? obj = null;
