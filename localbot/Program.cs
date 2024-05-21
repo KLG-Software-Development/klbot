@@ -1,5 +1,4 @@
-﻿#pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
-using klbotlib;
+﻿using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.MessageServer.Debug;
 using klbotlib.Modules;
@@ -208,7 +207,7 @@ start:
         while (true)
         {
             Console.Write("\n>");
-            string s = Console.ReadLine();
+            string? s = Console.ReadLine();
             if (s == null)
                 continue;
             SplitCommand(s, out string cmd, out string arg);
