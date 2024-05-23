@@ -21,6 +21,10 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// Mirai消息服务器URL
     /// </summary>
     public string ServerURL { get; }
+
+    /// <inheritdoc/>
+    public string DriverInfo => $"Mirai message driver @{ServerURL}";
+
     /// <summary>
     /// 创建一个基于Mirai消息服务的消息驱动器
     /// </summary>
@@ -29,10 +33,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         ServerURL = serverUrl;
     }
 
-    /// <summary>
-    /// 返回未读消息列表
-    /// </summary>
-    /// <returns></returns>
+    /// <inheritdoc/>
     public async Task<List<Message>?> FetchMessages()
     {
         List<Message> msgs = new();

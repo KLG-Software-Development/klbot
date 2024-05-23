@@ -1,10 +1,11 @@
-namespace klbotlib.MessageClient.OneBot.JsonPrototypes;
+namespace klbotlib.MessageDriver.OneBot.JsonPrototypes;
 
 internal record JOneBotUser();
 internal record JOneBotMessageObj(
     long Time, long SelfId, string? MessageType, string? SubType, uint MessageId, long UserId, long GroupId,
     JOneBotMessageContent? Message, JOneBotUser? Sender);
 internal record JOneBotUserInfo(long UserId, string? Nickname);
+internal record JOneBotSentMessage(int MessageId);
 
 internal static class JOneBotMessageExtension
 {

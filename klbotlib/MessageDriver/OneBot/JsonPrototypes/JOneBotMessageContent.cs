@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
 
-namespace klbotlib.MessageClient.OneBot.JsonPrototypes;
+namespace klbotlib.MessageDriver.OneBot.JsonPrototypes;
 
 internal record JOneBotMessageContent(string? Type, JsonObject? Data);

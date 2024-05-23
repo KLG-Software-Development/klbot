@@ -11,6 +11,10 @@ namespace klbotlib;
 public interface IMessageDriver
 {
     /// <summary>
+    /// 获取消息驱动信息
+    /// </summary>
+    string DriverInfo { get; }
+    /// <summary>
     /// 向消息服务器验证身份
     /// </summary>
     /// <param name="key">验证密钥</param>
@@ -44,7 +48,6 @@ public interface IMessageDriver
     /// <param name="groupId">群聊ID</param>
     /// <param name="uploadPath">上传的目标路径</param>
     /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
-    [Obsolete]
     Task UploadFile(Module module, long groupId, string uploadPath, string filePath);
     /// <summary>
     /// 禁言接口

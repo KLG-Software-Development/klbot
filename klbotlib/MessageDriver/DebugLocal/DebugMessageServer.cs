@@ -60,6 +60,9 @@ public class MessageDriver_Debug : IMessageDriver
     }
 
     /// <inheritdoc/>
+    public string DriverInfo => "Local debug message driver";
+
+    /// <inheritdoc/>
     public Task<List<Message>?> FetchMessages()
     {
         List<Message> msgs = new(_msgBuffer);

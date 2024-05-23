@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Module = klbotlib.Modules.Module;
 
 namespace klbotlib
@@ -23,7 +24,7 @@ namespace klbotlib
     /// </summary>
     public class KLBot
     {
-        private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
+        private bool _newlyStarted = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
         private readonly StringBuilder _sb = new();
         private IMessageDriver _msgDriver;
@@ -59,23 +60,34 @@ namespace klbotlib
         /// <summary>
         /// 配置项：此KLBot的监听群组QQ号列表
         /// </summary>
-        public HashSet<long> TargetGroupIDList { get; } = new();
+        public HashSet<long> TargetGroupIDList { get; private set; } = new();
         /// <summary>
         /// 配置项：模块私有目录。用来存取模块自己的自定义文件
         /// </summary>
-        public string ModulesCacheDir { get; } = string.Empty;
+        public string ModulesCacheDir { get; private set; } = string.Empty;
         /// <summary>
         /// 配置项：模块存档目录。KLBot保存或读取模块配置和模块状态的路径
         /// </summary>
-        public string ModulesSaveDir { get; } = string.Empty;
+        public string ModulesSaveDir { get; private set; } = string.Empty;
         /// <summary>
         /// 配置项：身份密钥。用于讨mirai服务器开心
         /// </summary>
         public string Key { get; set; } = string.Empty;
 
-        private KLBot(IMessageDriver driver, ISet<long> targetGroups)
+        // 最基本的私有构造函数
+        private KLBot(IConfiguration config, IMessageDriver driver)
         {
+            _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _msgDriver = driver;
+            _console.WriteLn($"Driver info: {_msgDriver.DriverInfo}", ConsoleMessageType.Info);
+            _newlyStarted = true;
+            LoadConfig(config);
+            //创建模块存档目录（如果不存在）
+            CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
+        }
+        // 构造并添加目标群组
+        private KLBot(IConfiguration config, IMessageDriver driver, ISet<long> targetGroups) : this(config, driver)
+        {
             foreach (var group in targetGroups)
             {
                 TargetGroupIDList.Add(group);
@@ -84,19 +96,52 @@ namespace klbotlib
         /// <summary>
         /// 构造函数。可用于模块开发调试
         /// </summary>
+        /// <param name="config">使用的配置</param>
         /// <param name="driver">消息驱动器</param>
         /// <param name="targetGroups">监听的群组</param>
         /// <param name="isSilent">是否开启安静模式。开启时ObjectPrint()不打印任何内容</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageDriver driver, Assembly moduleCollection, ISet<long> targetGroups, bool isSilent = true) : this(driver, targetGroups)
+        public KLBot(IConfiguration config, IMessageDriver driver, Assembly moduleCollection, ISet<long> targetGroups, bool isSilent = true) : this(config, driver, targetGroups)
         {
-            _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
-            _msgDriver = driver;
-            _isBooting = true;
             IsSilent = isSilent;
-            ModulesCacheDir = "ModuleCacheDir";
-            ModulesSaveDir = "ModuleSaveDir";
-            CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
+            LoadCoreModule();
+            if (moduleCollection != null)
+                Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
+            _console.WriteLn(GetListeningGroupListString());
+        }
+        /// <summary>
+        /// 公开构造函数。基本构造后添加默认核心模块
+        /// </summary>
+        /// <param name="config">使用的配置</param>
+        /// <param name="driver">KLBot使用的消息驱动器</param>
+        /// <param name="loadCoreModule">是否加载核心模块</param>
+        /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
+        public KLBot(IConfiguration config, IMessageDriver driver, bool loadCoreModule = true, Assembly? moduleCollection = null) : this(config, driver)
+        {
+            if (loadCoreModule)
+                LoadCoreModule();
+            if (moduleCollection != null)
+                Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
+        }
+
+        /// <summary>
+        /// 加载配置
+        /// </summary>
+        /// <param name="config">待加载的配置</param>
+        public void LoadConfig(IConfiguration config)
+        {
+            _console.WriteLn("加载配置...", ConsoleMessageType.Info);
+            Key = config.ReadValue("key");
+            TargetGroupIDList = config.ReadArray("targets").Select(long.Parse).ToHashSet();
+            ModulesCacheDir = config.ReadValue("cache_dir", "paths");
+            ModulesSaveDir = config.ReadValue("save_dir", "paths");
+        }
+        /// <summary>
+        /// 加载核心模块
+        /// </summary>
+        /// <exception cref="KLBotInitializationException"></exception>
+        public void LoadCoreModule()
+        {
             try
             {
                 //加载核心模块
@@ -108,85 +153,7 @@ namespace klbotlib
             {
                 throw new KLBotInitializationException($"核心模块加载失败异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
             }
-            if (moduleCollection != null)
-                Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
-            _console.WriteLn($"成功初始化KLBot: ");
-            if (_msgDriver is MessageDriver_MiraiHttp miraiDriver)
-                _console.WriteLn($"Url: {miraiDriver.ServerURL}");
-            _console.WriteLn(GetListeningGroupListString());
         }
-        /// <summary>
-        /// 私有构造函数。最基本的构造函数
-        /// </summary>
-        /// <param name="configPath">配置文件路径"</param>
-        /// <param name="driver">KLBot使用的消息驱动器</param>
-        private KLBot(IMessageDriver driver, string configPath)
-        {
-            _msgDriver = driver;
-            _isBooting = true;
-            _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
-            _console.WriteLn($"正在从\"{configPath}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
-            try
-            {
-                if (!File.Exists(configPath))
-                {
-                    _console.WriteLn($"KLBot配置文件{configPath}不存在", ConsoleMessageType.Error);
-                    throw new KLBotInitializationException($"KLBot初始化失败：KLBot配置文件{configPath}不存在");
-                }
-                string json = File.ReadAllText(configPath);
-                JKLBotConfig? Config = JsonConvert.DeserializeObject<JKLBotConfig>(json);
-                if (Config == null)
-                    throw new JsonDeserializationException($"无法反序列化KLBot配置文件“{configPath}”", json);
-                if (Config.HasNull(out string fieldName))
-                {
-                    _console.WriteLn($"KLBot配置文件解析结果中的{fieldName}字段为null。请检查配置文件", ConsoleMessageType.Error);
-                    throw new KLBotInitializationException("KLBot初始化失败：KLBot配置文件中含有null");
-                }
-                _console.WriteLn($"加载配置...", ConsoleMessageType.Info);
-                //导出Config
-                Key = Config.Verification.Key;
-                TargetGroupIDList = Config.QQ.TargetGroupIDList;
-                ModulesCacheDir = Config.Pathes.ModulesCacheDir;
-                ModulesSaveDir = Config.Pathes.ModulesSaveDir;
-                //创建模块存档目录（如果不存在）
-                CreateDirectoryIfNotExist(Config.Pathes.ModulesSaveDir, "模块存档目录");
-                _console.WriteLn($"成功初始化KLBot: ");
-                if (_msgDriver is MessageDriver_MiraiHttp miraiDriver)
-                    _console.WriteLn($"Url: {miraiDriver.ServerURL}");
-                _console.WriteLn(GetListeningGroupListString());
-            }
-            catch (Exception ex)
-            {
-                throw new KLBotInitializationException($"意外异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
-            }
-        }
-        /// <summary>
-        /// 公开构造函数。基本构造后添加默认核心模块
-        /// </summary>
-        /// <param name="configPath">配置文件路径</param>
-        /// <param name="driver">KLBot使用的消息驱动器</param>
-        /// <param name="loadCoreModule">是否加载核心模块</param>
-        /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageDriver driver, string configPath = "config/config.json", bool loadCoreModule = true, Assembly? moduleCollection = null) : this(driver, configPath)
-        {
-            if (loadCoreModule)
-            {
-                try
-                {
-                    //加载核心模块
-                    _console.WriteLn("加载自带核心模块...", ConsoleMessageType.Info);
-                    AddModule(new CommandModule(this)).Wait();
-                    _console.WriteLn(GetModuleChainString());
-                }
-                catch (Exception ex)
-                {
-                    throw new KLBotInitializationException($"核心模块加载失败异常：{ex.Message}\n调用栈：\n{ex.StackTrace}");
-                }
-            }
-            if (moduleCollection != null)
-                Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
-        }
-
         /// <summary>
         /// 把给定群号添加到监听列表
         /// </summary>
@@ -289,7 +256,6 @@ namespace klbotlib
         /// <param name="groupId">群聊ID</param>
         /// <param name="uploadPath">上传的目标路径</param>
         /// <param name="filePath">文件相对于模块私有目录的本地路径</param>
-        [Obsolete("该方法仍有问题")]
         internal async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
         {
             await _msgDriver.UploadFile(module, groupId, uploadPath, filePath);
@@ -394,10 +360,10 @@ namespace klbotlib
         /// <returns>已处理的消息数量</returns>
         public async Task ProcessMessages(List<Message> msgs, Func<Message, Task> mainProcessor)
         {
-            if (_isBooting && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
+            if (_newlyStarted && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
             {
                 msgs = new List<Message> { msgs.Last() };
-                _isBooting = false;
+                _newlyStarted = false;
             }
             foreach (var msg in msgs)
             {
@@ -499,7 +465,20 @@ namespace klbotlib
                 _console.WriteLn("验证成功", ConsoleMessageType.Info);
             //获取自身ID
             _console.WriteLn("正在向服务器获取自身ID...", ConsoleMessageType.Task);
-            SelfID = await _msgDriver.GetSelfID();
+            bool getSelfIdSuccess = false;
+            while (!getSelfIdSuccess)
+            {
+                try
+                {
+                    SelfID = await _msgDriver.GetSelfID();
+                    getSelfIdSuccess = true;
+                }
+                catch (Exception ex)
+                {
+                    _console.WriteLn($"获取自身ID失败：{ex.Message}. 将重试. \n{ex.StackTrace}");
+                }
+                Thread.Sleep(1000);
+            }
             _console.WriteLn($"获取成功。自身ID：{SelfID}", ConsoleMessageType.Info);
             var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
             bool exitFlag = false;
@@ -529,7 +508,7 @@ namespace klbotlib
                     }
                     else if (cmd == "resume")
                     {
-                        _isBooting = true;   //为暂停继续情形引入重启忽略机制
+                        _newlyStarted = true;   //为暂停继续情形引入重启忽略机制
                         waitForPauseMsgLoopSignal.Set();
                         _console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
                     }
@@ -693,7 +672,7 @@ namespace klbotlib
                         _console.WriteLn($"正在从\"{filePath}\"加载模块{module}的状态...", ConsoleMessageType.Task);
                     var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
                     if (statusDict != null)
-                        module.ImportDict(statusDict);
+                        module.ImportDict(statusDict, true);
                 }
             }
             catch (Exception ex)

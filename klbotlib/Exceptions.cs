@@ -8,7 +8,8 @@ namespace klbotlib.Exceptions
     /// </summary>
     public class KLBotInitializationException : Exception
     {
-        internal KLBotInitializationException(string msg) : base($"KLBot初始化失败：{msg}") { }
+        /// <inheritdoc/>
+        public KLBotInitializationException(string msg) : base($"KLBot初始化失败：{msg}") { }
     }
     /// <summary>
     /// 模块配置异常

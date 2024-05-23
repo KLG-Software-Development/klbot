@@ -351,18 +351,23 @@ namespace klbotlib.Modules
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
-        internal void ImportDict(Dictionary<string, object> statusDict)
+        internal void ImportDict(Dictionary<string, object> dict, bool ignoreNull = false)
         {
             Type type = GetType();
-            foreach (var kvp in statusDict)
+            foreach (var kvp in dict)
             {
                 PropertyInfo? property = type.GetProperty_All(kvp.Key);
                 if (property != null)
                 {
                     if (!property.CanWrite)
+                    {
                         ModulePrint($"配置文件或状态存档中包含模块{ModuleID}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", ConsoleMessageType.Warning);
+                        continue;
+                    }
                     else if (kvp.Value == null)
                     {
+                        if (ignoreNull)
+                            continue;
                         ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
                         throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                     }
@@ -378,6 +383,8 @@ namespace klbotlib.Modules
                     {
                         if (kvp.Value == null)
                         {
+                            if (ignoreNull)
+                                continue;
                             ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
                             throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                         }
