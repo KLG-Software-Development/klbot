@@ -2,7 +2,7 @@ using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Json;
-using klbotlib.MessageClient.Mirai;
+using klbotlib.MessageDriver.Mirai;
 using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
@@ -26,7 +26,7 @@ namespace klbotlib
         private bool _isBooting = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
         private readonly StringBuilder _sb = new();
-        private IMessageClient _msgClient;
+        private IMessageDriver _msgDriver;
 
         /// <summary>
         /// KLBot的模块链条。这个类可以被枚举
@@ -73,9 +73,9 @@ namespace klbotlib
         /// </summary>
         public string Key { get; set; } = string.Empty;
 
-        private KLBot(IMessageClient client, ISet<long> targetGroups)
+        private KLBot(IMessageDriver driver, ISet<long> targetGroups)
         {
-            _msgClient = client;
+            _msgDriver = driver;
             foreach (var group in targetGroups)
             {
                 TargetGroupIDList.Add(group);
@@ -84,14 +84,14 @@ namespace klbotlib
         /// <summary>
         /// 构造函数。可用于模块开发调试
         /// </summary>
-        /// <param name="client">消息服务器</param>
+        /// <param name="driver">消息驱动器</param>
         /// <param name="targetGroups">监听的群组</param>
         /// <param name="isSilent">是否开启安静模式。开启时ObjectPrint()不打印任何内容</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageClient client, Assembly moduleCollection, ISet<long> targetGroups, bool isSilent = true) : this(client, targetGroups)
+        public KLBot(IMessageDriver driver, Assembly moduleCollection, ISet<long> targetGroups, bool isSilent = true) : this(driver, targetGroups)
         {
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
-            _msgClient = client;
+            _msgDriver = driver;
             _isBooting = true;
             IsSilent = isSilent;
             ModulesCacheDir = "ModuleCacheDir";
@@ -111,18 +111,18 @@ namespace klbotlib
             if (moduleCollection != null)
                 Info.ModuleCollectionInfo.SetMCVersion(moduleCollection);
             _console.WriteLn($"成功初始化KLBot: ");
-            if (_msgClient is MiraiMessageClient miraiClient)
-                _console.WriteLn($"Url: {miraiClient.ServerURL}");
+            if (_msgDriver is MessageDriver_MiraiHttp miraiDriver)
+                _console.WriteLn($"Url: {miraiDriver.ServerURL}");
             _console.WriteLn(GetListeningGroupListString());
         }
         /// <summary>
         /// 私有构造函数。最基本的构造函数
         /// </summary>
         /// <param name="configPath">配置文件路径"</param>
-        /// <param name="client">KLBot使用的消息服务器</param>
-        private KLBot(IMessageClient client, string configPath)
+        /// <param name="driver">KLBot使用的消息驱动器</param>
+        private KLBot(IMessageDriver driver, string configPath)
         {
-            _msgClient = client;
+            _msgDriver = driver;
             _isBooting = true;
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _console.WriteLn($"正在从\"{configPath}\"读取并解析KLBot配置...", ConsoleMessageType.Info);
@@ -151,8 +151,8 @@ namespace klbotlib
                 //创建模块存档目录（如果不存在）
                 CreateDirectoryIfNotExist(Config.Pathes.ModulesSaveDir, "模块存档目录");
                 _console.WriteLn($"成功初始化KLBot: ");
-                if (_msgClient is MiraiMessageClient miraiClient)
-                    _console.WriteLn($"Url: {miraiClient.ServerURL}");
+                if (_msgDriver is MessageDriver_MiraiHttp miraiDriver)
+                    _console.WriteLn($"Url: {miraiDriver.ServerURL}");
                 _console.WriteLn(GetListeningGroupListString());
             }
             catch (Exception ex)
@@ -164,10 +164,10 @@ namespace klbotlib
         /// 公开构造函数。基本构造后添加默认核心模块
         /// </summary>
         /// <param name="configPath">配置文件路径</param>
-        /// <param name="client">KLBot使用的消息服务器</param>
+        /// <param name="driver">KLBot使用的消息驱动器</param>
         /// <param name="loadCoreModule">是否加载核心模块</param>
         /// <param name="moduleCollection">模块合集程序集。此参数仅用于读取程序集版本</param>
-        public KLBot(IMessageClient client, string configPath = "config/config.json", bool loadCoreModule = true, Assembly? moduleCollection = null) : this(client, configPath)
+        public KLBot(IMessageDriver driver, string configPath = "config/config.json", bool loadCoreModule = true, Assembly? moduleCollection = null) : this(driver, configPath)
         {
             if (loadCoreModule)
             {
@@ -246,7 +246,7 @@ namespace klbotlib
         //**** 内部API ****//
         //消息
         internal Task<Message> GetMessageFromID(long target, long messageId)
-            => _msgClient.GetMessageFromID(target, messageId);
+            => _msgDriver.GetMessageFromID(target, messageId);
         /// <summary>
         /// 发送消息
         /// </summary>
@@ -256,7 +256,7 @@ namespace klbotlib
         /// <param name="groupId">群组ID</param>
         /// <param name="content">待编译MsgMarker文本</param>
         internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
-            => await _msgClient.SendMessage(module, context, userId, groupId, content);
+            => await _msgDriver.SendMessage(module, context, userId, groupId, content);
         /// <summary>
         /// 发送群消息
         /// </summary>
@@ -292,7 +292,7 @@ namespace klbotlib
         [Obsolete("该方法仍有问题")]
         internal async Task UploadFile(Module module, long groupId, string uploadPath, string filePath)
         {
-            await _msgClient.UploadFile(module, groupId, uploadPath, filePath);
+            await _msgDriver.UploadFile(module, groupId, uploadPath, filePath);
         }
         /// <summary>
         /// 回复消息
@@ -327,7 +327,7 @@ namespace klbotlib
         /// <param name="durationSeconds">禁言时长</param>
         internal async Task Mute(Module module, long userId, long groupId, uint durationSeconds)
         {
-            await _msgClient.Mute(module, userId, groupId, durationSeconds);
+            await _msgDriver.Mute(module, userId, groupId, durationSeconds);
         }
         /// <summary>
         /// 取消禁言
@@ -337,7 +337,7 @@ namespace klbotlib
         /// <param name="groupId">群聊ID</param>
         internal async Task Unmute(Module module, long userId, long groupId)
         {
-            await _msgClient.Unmute(module, userId, groupId);
+            await _msgDriver.Unmute(module, userId, groupId);
         }
 
         //暴露给Module类的一些成员
@@ -371,7 +371,10 @@ namespace klbotlib
         {
             DiagData.SuccessPackageCount++;
             //过滤掉非监听群消息
-            List<Message> msgs = (await _msgClient.FetchMessages()).Where(msg =>
+            var rawMsgs = await _msgDriver.FetchMessages();
+            if (rawMsgs == null)
+                return [];
+            List<Message> msgs = rawMsgs.Where(msg =>
             (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
             || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
             DiagData.ReceivedMessageCount += msgs.Count;
@@ -486,7 +489,7 @@ namespace klbotlib
             //消息循环线程
             //开始之前向服务器验证身份
             _console.WriteLn("正在向服务器验证身份...", ConsoleMessageType.Task);
-            bool verifyResult = await _msgClient.Verify(Key);
+            bool verifyResult = await _msgDriver.Verify(Key);
             if (!verifyResult)
             {
                 _console.WriteLn("验证失败。请检查密钥和网络是否正确\n正在退出...", ConsoleMessageType.Error);
@@ -496,7 +499,7 @@ namespace klbotlib
                 _console.WriteLn("验证成功", ConsoleMessageType.Info);
             //获取自身ID
             _console.WriteLn("正在向服务器获取自身ID...", ConsoleMessageType.Task);
-            SelfID = await _msgClient.GetSelfID();
+            SelfID = await _msgDriver.GetSelfID();
             _console.WriteLn($"获取成功。自身ID：{SelfID}", ConsoleMessageType.Info);
             var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
             bool exitFlag = false;

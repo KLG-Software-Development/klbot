@@ -1,6 +1,6 @@
 ﻿using klbotlib;
 using klbotlib.Exceptions;
-using klbotlib.MessageClient.Debug;
+using klbotlib.MessageDriver.DebugLocal;
 using klbotlib.Modules;
 using System.Reflection;
 using Module = klbotlib.Modules.Module;
@@ -10,13 +10,13 @@ namespace localbot;
 public class Program
 {
     private static readonly HashSet<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
-    private static readonly DebugMessageClient _localServer = new(
+    private static readonly MessageDriver_Debug _localServer = new(
         33550336,   //自身ID
         AddMsgCallback_PrintInfo, 
         SendMsgCallback_PrintInfo, 
         UploadCallback_PrintInfo,
         MuteCallback_PrintInfo,
-        UnmuteCallback_PrintInfo); //调试用消息服务器
+        UnmuteCallback_PrintInfo); //调试用消息驱动器
     private static long _userId = 2044164212;    //调试时发出的所有消息的用户ID
     private static long _groupId = 7355608;   //调试时发出的所有消息的群组ID
     private static MessageContext _context = MessageContext.Group;   //调试时发出的所有消息的上下文类型。默认为群组

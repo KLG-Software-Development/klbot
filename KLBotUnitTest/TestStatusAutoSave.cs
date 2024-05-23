@@ -1,5 +1,5 @@
 ﻿using klbotlib;
-using klbotlib.MessageClient.Debug;
+using klbotlib.MessageDriver.DebugLocal;
 using klbotlib.Modules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
@@ -17,14 +17,14 @@ public class TestStatusAutoSave
     [TestMethod]
     public void StatusAutoSaveForAllModuleWhenCoreModuleProcessed()
     {
-        DebugMessageClient client = TestConst.GetTestClient();
-        KLBot bot = new(client, "config/unit_test_config.json");
+        MessageDriver_Debug driver = TestConst.GetTestDriver();
+        KLBot bot = new(driver, "config/unit_test_config.json");
         FuckModule module = new();
         bot.AddModule(module).Wait();
         bool initState = module.Enabled;
         //通过命令模块修改启用状态
         MessagePlain msg = new(MessageContext.Group, -1, -1, "##switch FuckModule"); //unit_test_config.json中应将-1设置为监听群
-        client.AddReceivedMessage(msg);
+        driver.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages().Result).Wait();   
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         //Test save file

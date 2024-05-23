@@ -13,7 +13,7 @@ public class TestKLBot
     [TestMethod]
     public void TestModuleCount()
     {
-        KLBot bot = new(TestConst.GetTestClient(), "config/unit_test_config.json");
+        KLBot bot = new(TestConst.GetTestDriver(), "config/unit_test_config.json");
         Assert.AreEqual(TestConst.CoreModuleCount, bot.ModuleCount);
         bot.AddModule(new TimeModule()).Wait();
         Assert.AreEqual(TestConst.CoreModuleCount + 1, bot.ModuleCount);
@@ -27,19 +27,19 @@ public class TestKLBot
     [TestMethod]
     public void TestKLBotDiagData()
     {
-        var client = TestConst.GetTestClient();
-        KLBot bot = new(client, "config/unit_test_config.json");
+        var driver = TestConst.GetTestDriver();
+        KLBot bot = new(driver, "config/unit_test_config.json");
         Assert.AreEqual(0, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(0, bot.DiagData.SuccessPackageCount);
         MessagePlain msg = new(MessageContext.Group, -1, -1, "some non-sense");
-        client.AddReceivedMessage(msg);
+        driver.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages().Result).Wait();
         Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
         Assert.AreEqual(1, bot.DiagData.SuccessPackageCount);
         msg = new(MessageContext.Group, -1, -1, "##help");
-        client.AddReceivedMessage(msg);
+        driver.AddReceivedMessage(msg);
         bot.ProcessMessages(bot.FetchMessages().Result).Wait();
         Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(1, bot.DiagData.ProcessedMessageCount);

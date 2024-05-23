@@ -3,12 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace klbotlib.MessageClient.Debug;
+namespace klbotlib.MessageDriver.DebugLocal;
 
 /// <summary>
-/// 调试用本地模拟消息服务器
+/// 调试用本地模拟消息驱动器
 /// </summary>
-public class DebugMessageClient : IMessageClient
+public class MessageDriver_Debug : IMessageDriver
 {
     private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
     private readonly List<Message> _msgBuffer = new();
@@ -37,7 +37,7 @@ public class DebugMessageClient : IMessageClient
 
 
     /// <summary>
-    /// 创建本地模拟消息服务器
+    /// 创建本地模拟消息驱动器
     /// </summary>
     /// <param name="selfId">自身ID</param>
     /// <param name="addMsgCallback">消息缓冲区加入新消息时触发的回调</param>
@@ -45,7 +45,7 @@ public class DebugMessageClient : IMessageClient
     /// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
     /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
     /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
-    public DebugMessageClient(long selfId, Action<Message> addMsgCallback, 
+    public MessageDriver_Debug(long selfId, Action<Message> addMsgCallback, 
         Action<Module, MessageContext, long, long, string> sendMsgCallback, 
         Action<Module, long, string, string> uploadFileCallback,
         Action<Module, long, long, uint> muteCallback,
@@ -60,11 +60,11 @@ public class DebugMessageClient : IMessageClient
     }
 
     /// <inheritdoc/>
-    public Task<List<Message>> FetchMessages()
+    public Task<List<Message>?> FetchMessages()
     {
         List<Message> msgs = new(_msgBuffer);
         _msgBuffer.Clear();  //清理缓冲区
-        return Task.FromResult<List<Message>>(msgs);
+        return Task.FromResult<List<Message>?>(msgs);
     }
     /// <inheritdoc/>
     public Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
@@ -79,7 +79,7 @@ public class DebugMessageClient : IMessageClient
         return Task.FromResult<Exception?>(null);
     }
     /// <summary>
-    /// 向消息服务器中添加未读消息
+    /// 向消息驱动中添加未读消息
     /// </summary>
     /// <param name="msgs">待加入的消息</param>
     public void AddReceivedMessage(params Message[] msgs)

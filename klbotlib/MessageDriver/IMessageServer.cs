@@ -8,7 +8,7 @@ namespace klbotlib;
 /// <summary>
 /// 消息服务器接口。提供消息收发API
 /// </summary>
-public interface IMessageClient
+public interface IMessageDriver
 {
     /// <summary>
     /// 向消息服务器验证身份

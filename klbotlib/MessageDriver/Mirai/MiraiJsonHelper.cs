@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Web;
 
-namespace klbotlib.MessageClient.Mirai
+namespace klbotlib.MessageDriver.Mirai
 {
     static class MiraiJsonHelper
     {

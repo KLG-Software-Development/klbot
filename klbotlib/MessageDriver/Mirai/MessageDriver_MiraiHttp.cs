@@ -1,5 +1,5 @@
 ﻿using klbotlib.Exceptions;
-using klbotlib.MessageClient.Mirai.JsonPrototypes;
+using klbotlib.MessageDriver.Mirai.JsonPrototypes;
 using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
@@ -9,22 +9,22 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace klbotlib.MessageClient.Mirai;
+namespace klbotlib.MessageDriver.Mirai;
 
 /// <summary>
-/// IMessageClient的Mirai兼容实现
+/// IMessageDriver的Mirai兼容实现
 /// </summary>
-public class MiraiMessageClient : IMessageClient
+public class MessageDriver_MiraiHttp : IMessageDriver
 {
     private const string _errorMsgLogPath = "errorMsg.log";
     /// <summary>
-    /// Mirai服务器URL
+    /// Mirai消息服务器URL
     /// </summary>
     public string ServerURL { get; }
     /// <summary>
-    /// 创建一个Mirai消息服务器
+    /// 创建一个基于Mirai消息服务的消息驱动器
     /// </summary>
-    public MiraiMessageClient(string serverUrl)
+    public MessageDriver_MiraiHttp(string serverUrl)
     {
         ServerURL = serverUrl;
     }

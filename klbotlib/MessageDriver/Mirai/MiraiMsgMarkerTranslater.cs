@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace klbotlib.MessageClient.Mirai
+namespace klbotlib.MessageDriver.Mirai
 {
     // 翻译MessageMarker文本到mirai_json文本
     internal static class MiraiMsgMarkerTranslater
