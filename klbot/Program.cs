@@ -9,6 +9,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using System.Threading;
+using klbotlib.MessageDriver;
+using System.Diagnostics;
 
 namespace klbot;
 
@@ -20,13 +22,13 @@ class Program
         string driverId = _config.ReadValue("driver_id");
         switch (driverId)
         {
-            case "mirai-http":
-                string serviceUrl = _config.ReadValue("service_url");
+            case BuiltinMessageDriverId.MiraiHttpId:
+                string serviceUrl = _config.ReadValue("service_url", driverId);
                 return new MessageDriver_MiraiHttp(serviceUrl);
-            case "onebot-http":
-                serviceUrl = _config.ReadValue("service_url");
-                string webhookBindUrl = _config.ReadValue("webhook_url");
-                string token = _config.ReadValue("token");
+            case BuiltinMessageDriverId.OneBotHttpId:
+                serviceUrl = _config.ReadValue("service_url", driverId);
+                string webhookBindUrl = _config.ReadValue("webhook_url", driverId);
+                string token = _config.ReadValue("token", driverId);
                 return new MessageDriver_OneBotHttp(serviceUrl, webhookBindUrl, token);
             default:
                 throw new KLBotInitializationException($"Unknown message driver ID \"{driverId}\"");
@@ -57,8 +59,19 @@ class Program
         }
     }
 
+    private static void InitLog()
+    {
+        Trace.Listeners.Clear();
+        DefaultTraceListener fileLog = new();
+        fileLog.LogFileName = $"klbot.log";
+        Trace.Listeners.Add(fileLog);
+        ConsoleTraceListener consoleLog = new();
+        Trace.Listeners.Add(consoleLog);
+    }
+
     private static async Task Main(string[] args)
     {
+        InitLog();
         string? configPath = args.Length == 0 ? null : args[0];
         Init(configPath);
 start:
