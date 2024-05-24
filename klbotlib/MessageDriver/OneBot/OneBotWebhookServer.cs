@@ -13,11 +13,9 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
     private readonly HttpListener _server = new();
     private readonly string _token = token;
     public string BindAddr { get; } = bindAddr.EndsWith('/') ? bindAddr : $"{bindAddr}/";
-    public event EventHandler<OneBotEventArgs>? OneBotEventReceived;
+    public event EventHandler<OneBotEventArgs> OneBotEventReceived = (_, _) => { };
 
     public string LogUnitName => "Driver/OneBot/Webhook";
-
-    public event EventHandler<OneBotEventArgs> OneBotEventReceived = (_, _) => { };
 
     public async Task Start()
     {
@@ -27,7 +25,7 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
         while (true)
         {
             var context = await _server.GetContextAsync().ConfigureAwait(false);
-            this.Log($"[from:{context.Request.RemoteEndPoint}] [{context.Request.RawUrl}] [type:{context.Request.ContentType}]");
+            this.Log($"from: {context.Request.RemoteEndPoint} url: {context.Request.RawUrl} type: {context.Request.ContentType} ");
             var request = context.Request;
             if (request.ContentType != "application/json")
             {
@@ -55,7 +53,6 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
             }
             context.Response.StatusCode = 204;
             context.Response.Close();
-            this.DebugLog("Processed.");
             continue;
         error:
             this.DebugLog("500 fuckoff");
@@ -70,7 +67,7 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
     {
         if (rawEvent.Time == default || rawEvent.SelfId == default ||rawEvent.PostType == null)
             throw new Exception($"Failed to build OneBot event: Invalid event data: {rawEvent}");
+        Console.WriteLine(OneBotEventReceived.GetInvocationList().Length);
         OneBotEventReceived.Invoke(this, new(rawEvent.Time, rawEvent.SelfId, rawEvent.PostType, rawEvent));
-        this.Log("Raised!");
     }
 }

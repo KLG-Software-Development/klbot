@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using klbotlib.Events;
 using klbotlib.Extensions;
@@ -35,7 +36,11 @@ public class MessageDriver_OneBotHttp : IMessageDriver
 
     private void OneBotEventLog(object? obj, OneBotEventArgs e)
     {
-        this.Log($"[Event][{e.Time}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
+        this.Log($"[Event][{e.Time.AsUnixTimestamp():yyMMdd/HH:mm:ss:fff}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
+        foreach (var msg in e.RawEventData.Message)
+        {
+            this.Log(msg.ToString());
+        }
     }
 
     // 将OneBot事件路由至MessageDriver事件，从而通知KLBot
@@ -88,19 +93,37 @@ public class MessageDriver_OneBotHttp : IMessageDriver
 
     private async Task CallApiAsync<TResponse>(string uri, string? paramJson)
     {
-        var response = await _caller.Call<TResponse>(uri, paramJson);
-        if (response.Data == null)
-            throw new Exception($"[OneBotV11-protocol] Invalid response: {response}");
+        try
+        {
+            var response = await _caller.Call<TResponse>(uri, paramJson);
+            if (response.Data == null)
+                this.Log($"Invalid response: {response}");
+        }
+        catch (Exception ex)
+        {
+            this.Log(ex.ToString());
+        }
     }
 
     private async Task<TOut?> CallApiAsync<TResponse, TOut>(string uri, string? paramJson, Func<TResponse, TOut>? extractor)
     {
-        var response = await _caller.Call<TResponse>(uri, paramJson);
-        if (response.Data == null)
-            throw new Exception($"[OneBotV11-protocol] Invalid response: {response}");
-        if (extractor == null)
+        try
+        {
+            var response = await _caller.Call<TResponse>(uri, paramJson);
+            if (response.Data == null)
+            {
+                this.Log($"Invalid response: {response}");
+                return default;
+            }
+            if (extractor == null)
+                return default;
+            return extractor(response.Data);
+        }
+        catch (Exception ex)
+        {
+            this.Log(ex.ToString());
             return default;
-        return extractor(response.Data);
+        }
     }
 
     // -------- 以下为接口实现 --------
@@ -144,17 +167,17 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
-        
+        var encoded = JsonEncodedText.Encode(content);
         switch (context)
         {
             case MessageContext.Private:
-                await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{user_id:{userId},message:{content}}}", null);
+                await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{\"user_id\":{userId},\"message\":\"{encoded.Value}\"}}", null);
                 return;
             case MessageContext.Group:
-                await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{group_id:{groupId},message:{content}}}", null);
+                await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{\"group_id\":{groupId},\"message\":\"{encoded.Value}\"}}", null);
                 return;
             case MessageContext.Temp:
-                await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{user_id:{userId},group_id:{groupId},message:{content}}}", null);
+                await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{\"user_id\":{userId},\"group_id\":{groupId},\"message\":\"{encoded.Value}\"}}", null);
                 return;            
             default:
                 throw new Exception($"Unsupported message context: {context}");

@@ -2,7 +2,9 @@ using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Mime;
 using System.Text.Json;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace klbotlib.MessageDriver.OneBot;
@@ -16,17 +18,19 @@ internal class OneBotHttpApiCaller(string serverUrl, string token) : IKLBotLogUn
 
     public string LogUnitName => "Driver/OneBot/Caller";
 
-    public async Task<JOneBotResponse<TOut>?> Call<TOut>(string uri, string? json)
+    public async Task<JOneBotResponse<TOut>?> Call<TOut>(string uri, string? data)
     {
         using HttpRequestMessage request = new();
         request.Method = HttpMethod.Post;
         request.RequestUri = BuildUri(uri);
-        if (json != null)
-            request.Content = JsonContent.Create(json, options: OneBotJsonSerializerOptions.Options);
+        if (data != null)
+            request.Content = new StringContent(data, new MediaTypeHeaderValue(MediaTypeNames.Application.Json));
         request.Headers.Add("Authorization", _token);
-        this.DebugLog($"[{request.RequestUri}] {json}");
+        this.DebugLog($"[{request.RequestUri}] {data}");
         var response = await _client.SendAsync(request);
-        var ret = await JsonSerializer.DeserializeAsync<JOneBotResponse<TOut>>(await response.Content.ReadAsStreamAsync(), options: OneBotJsonSerializerOptions.Options);
+        string responseJson = await response.Content.ReadAsStringAsync();
+        this.DebugLog(responseJson);
+        var ret = JsonSerializer.Deserialize<JOneBotResponse<TOut>>(responseJson, options: OneBotJsonSerializerOptions.Options);
         if (ret == null)
             throw new JsonException("Failed to deserialize JSON");
         if (ret.Retcode != 0)
