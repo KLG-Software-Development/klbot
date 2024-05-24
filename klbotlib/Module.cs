@@ -289,7 +289,7 @@ namespace klbotlib.Modules
         Task IMessagingAPI.SendTempMessage(long userId, long groupId, string content)
             => HostBot.SendMessage(this, MessageContext.Group, userId, groupId, content);
         Task IMessagingAPI.SendPrivateMessage(long userId, string content)
-            => HostBot.SendMessage(this, MessageContext.Group, userId, -1, content);
+            => HostBot.SendMessage(this, MessageContext.Private, userId, -1, content);
         [Obsolete]
         Task IMessagingAPI.UploadFile(MessageContext context, long groupID, string uploadPath, string filePath)
         {
