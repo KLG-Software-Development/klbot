@@ -23,6 +23,8 @@ public class MessageDriver_MiraiHttp : IMessageDriver
 
     /// <inheritdoc/>
     public string DriverInfo => $"Mirai message driver @{ServerURL}";
+    /// <inheritdoc/>
+    public string LogUnitName => "Driver/MiraiHttp";
 
     /// <summary>
     /// 创建一个基于Mirai消息服务的消息驱动器
