@@ -33,9 +33,9 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         _ = _webhookServer.Start();
     }
 
-    private static void OneBotEventLog(object? obj, OneBotEventArgs e)
+    private void OneBotEventLog(object? obj, OneBotEventArgs e)
     {
-        Console.WriteLine($"[OneBotEvent][{e.Time}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
+        this.Log($"[Event][{e.Time}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
     }
 
     // 将OneBot事件路由至MessageDriver事件，从而通知KLBot
@@ -47,7 +47,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
                 OnMessageReceived.Invoke(this, new(e.Time.AsUnixTimestamp(), BuildMessageFromEvent(e)));
                 return;
             default:
-                Console.WriteLine($"[OneBotEvent] Dispatcher not configured for post type [{e.PostType}]");
+                this.Log($"Dispatcher not configured for post type [{e.PostType}]");
                 return;
         }
     }
@@ -104,6 +104,8 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     // -------- 以下为接口实现 --------
+    /// <inheritdoc/>
+    public string LogUnitName => "Driver/OneBotHttp";
 
     /// <inheritdoc/>
     public string DriverInfo => $"OneBot message driver [HTTP@{_caller.ServerUrl}] [Webhook@{_webhookServer.BindAddr}]";

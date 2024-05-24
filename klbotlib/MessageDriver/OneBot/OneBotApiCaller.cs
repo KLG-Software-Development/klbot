@@ -1,19 +1,20 @@
+using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 using System;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 
 namespace klbotlib.MessageDriver.OneBot;
 
-internal class OneBotHttpApiCaller(string serverUrl, string token)
+internal class OneBotHttpApiCaller(string serverUrl, string token) : IKLBotLogUnit
 {
     private static readonly HttpClient _client = new();
     private readonly string _token = $"Bearer {token}";
 
     public string ServerUrl { get; } = serverUrl;
+
+    public string LogUnitName => "Driver/OneBot/Caller";
 
     public async Task<JOneBotResponse<TOut>?> Call<TOut>(string uri, string? json)
     {
@@ -23,7 +24,7 @@ internal class OneBotHttpApiCaller(string serverUrl, string token)
         if (json != null)
             request.Content = JsonContent.Create(json, options: OneBotJsonSerializerOptions.Options);
         request.Headers.Add("Authorization", _token);
-        Console.WriteLine($"[OneBotAPI] [{request.RequestUri}] {json}");
+        this.DebugLog($"[{request.RequestUri}] {json}");
         var response = await _client.SendAsync(request);
         var ret = await JsonSerializer.DeserializeAsync<JOneBotResponse<TOut>>(await response.Content.ReadAsStreamAsync(), options: OneBotJsonSerializerOptions.Options);
         if (ret == null)

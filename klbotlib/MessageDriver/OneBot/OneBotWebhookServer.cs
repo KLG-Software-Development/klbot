@@ -8,61 +8,61 @@ using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 
 namespace klbotlib.MessageDriver.OneBot;
 
-internal class OneBotWebhookServer(string bindAddr, string token)
+internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUnit
 {
     private readonly HttpListener _server = new();
     private readonly string _token = token;
     public string BindAddr { get; } = bindAddr.EndsWith('/') ? bindAddr : $"{bindAddr}/";
     public event EventHandler<OneBotEventArgs>? OneBotEventReceived;
 
+    public string LogUnitName => "Driver/OneBot/Webhook";
+
+    public event EventHandler<OneBotEventArgs> OneBotEventReceived = (_, _) => { };
+
     public async Task Start()
     {
         _server.Prefixes.Add(BindAddr);
-        Console.WriteLine($"[OneBotWebhook] Webhook server started at {BindAddr}");
+        this.Log($"Webhook server started at {BindAddr}");
         _server.Start();
         while (true)
         {
-            DebugLog("Getting context...");
             var context = await _server.GetContextAsync().ConfigureAwait(false);
-            Debug.Print($"[OneBotWebhook] [from:{context.Request.RemoteEndPoint}] [@{context.Request.RawUrl}] [type:{context.Request.ContentType}]");
+            this.Log($"[from:{context.Request.RemoteEndPoint}] [{context.Request.RawUrl}] [type:{context.Request.ContentType}]");
             var request = context.Request;
-            var auth = request.Headers["Authorization"];
-            if (auth == null || auth != $"Bearer {_token}")
-            {
-Console.WriteLine($"[OneBotWebhook] Bad auth: \"{auth}\"");
-                goto error;
-            }
             if (request.ContentType != "application/json")
             {
-Console.WriteLine($"[OneBotWebhook] Bad ContentType: \"{request.ContentType}\"");
+                this.Log($"Bad ContentType: \"{request.ContentType}\"");
                 goto error;
             }
             try
             {
-                var jobj = await JsonSerializer.DeserializeAsync<JOneBotEvent>(context.Request.InputStream, OneBotJsonSerializerOptions.Options).ConfigureAwait(false);
-                if (jobj == null)
+                var jEvent = await JsonSerializer.DeserializeAsync<JOneBotEvent>(context.Request.InputStream, OneBotJsonSerializerOptions.Options).ConfigureAwait(false);
+                this.DebugLog(jEvent.ToString());
+                if (jEvent == null)
                 {
-Console.WriteLine($"[OneBotWebhook] Bad ContentType: \"{request.ContentType}\"");
+                    this.Log($"Bad content: {jEvent}");
                     goto error;
                 }
-                ProcessEvent(jobj);
+                ProcessEvent(jEvent);
             }
             catch (Exception ex)
             {
                 using StreamWriter sw = new(context.Response.OutputStream);
                 await sw.WriteLineAsync(ex.ToString());
+                this.Log(ex.ToString());
                 sw.Close();
                 goto error;
             }
             context.Response.StatusCode = 204;
             context.Response.Close();
-            return;
+            this.DebugLog("Processed.");
+            continue;
         error:
-            Console.WriteLine("[OneBotWebhook] 500 fuckoff");
+            this.DebugLog("500 fuckoff");
             context.Response.StatusCode = 500;
             context.Response.StatusDescription = "FUCKOFF";
             context.Response.Close();
-            return;
+            continue;
         }
     }
 
@@ -71,9 +71,6 @@ Console.WriteLine($"[OneBotWebhook] Bad ContentType: \"{request.ContentType}\"")
         if (rawEvent.Time == default || rawEvent.SelfId == default ||rawEvent.PostType == null)
             throw new Exception($"Failed to build OneBot event: Invalid event data: {rawEvent}");
         OneBotEventReceived.Invoke(this, new(rawEvent.Time, rawEvent.SelfId, rawEvent.PostType, rawEvent));
+        this.Log("Raised!");
     }
-
-    [Conditional("DEBUG")]
-    private void DebugLog(string s)
-        => Debug.Print($"[OneBotWebhook] {s}");
 }

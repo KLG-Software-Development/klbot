@@ -6,6 +6,6 @@ internal class OneBotJsonSerializerOptions
 {
     public static JsonSerializerOptions Options { get; } = new()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
     };
 }
