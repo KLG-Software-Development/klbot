@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 using klbotlib.Modules;
@@ -26,7 +25,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     {
         _caller = new(httpServiceUrl, token);
         _webhookServer = new(webhookBindUrl, token);
-        Task.Factory.StartNew(() => MessageServerDaemon().Wait());
+        _ = _webhookServer.Start();
     }
 
     /// <inheritdoc/>
@@ -113,12 +112,5 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         if (extractor == null)
             return default;
         return extractor(response.Data);
-    }
-
-    private async Task MessageServerDaemon()
-    {
-        Console.WriteLine("MessageServerDaemon");
-        await _webhookServer.Start().ConfigureAwait(false);
-        Environment.Exit(-1);
     }
 }

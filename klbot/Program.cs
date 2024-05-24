@@ -52,7 +52,7 @@ class Program
         }
         else
         {
-            Console.WriteLine($"Config file: {configPath}");
+            Console.WriteLine($"Config file: {configPath}\n");
             _config.AddIniFile(configPath);
         }
     }

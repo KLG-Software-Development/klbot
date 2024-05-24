@@ -11,9 +11,20 @@ internal class OneBotEventArgs(long time, long selfId, string postType, JsonObje
     public JsonObject? Data { get; } = data;
 }
 
-internal class OneBotEventRaiser
+internal class OneBotEventManager
 {
     public event EventHandler<OneBotEventArgs>? OneBotEventReceived;
-    public void RaiseEvent(long time, long selfId, string postType, JsonObject? data) =>
+
+    public OneBotEventManager()
+    {
+        OneBotEventReceived += OneBotEventLog; // 默认事件
+    }
+
+    public void RaiseOneBotEvent(long time, long selfId, string postType, JsonObject? data) =>
         OneBotEventReceived?.Invoke(this, new(time, selfId, postType, data));
+    
+    private static void OneBotEventLog(object? obj, OneBotEventArgs e)
+    {
+        Console.WriteLine($"[Event][{e.Time}][{e.PostType}][{e.SelfId}] {e.Data}");
+    }
 }
