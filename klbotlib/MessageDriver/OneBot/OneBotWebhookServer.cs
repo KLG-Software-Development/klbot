@@ -39,7 +39,6 @@ internal class OneBotWebhookServer(string bindAddr, string token)
             }
             catch (Exception ex)
             {
-Console.WriteLine(ex.ToString());
                 using StreamWriter sw = new(context.Response.OutputStream);
                 await sw.WriteLineAsync(ex.ToString());
                 sw.Close();
@@ -74,10 +73,7 @@ Console.WriteLine(ex.ToString());
 
     private void ProcessEvent(JsonObject jobj)
     {
-        Console.WriteLine("[OneBotWebhook] Event processing begin.");
         (long time, long selfId, string postType) = ExtractEventInfo(jobj);
-        Console.WriteLine("[OneBotWebhook] Event raising begin.");
         _eventMgr.RaiseOneBotEvent(time, selfId, postType, jobj);
-        Console.WriteLine("[OneBotWebhook] Event processed");
     }
 }

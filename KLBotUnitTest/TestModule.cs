@@ -13,10 +13,10 @@ public class TestModule
     public void TestIsAttach()
     {
         MessageDriver_Debug driver = TestConst.GetTestDriver();
-        KLBot test_bot = new(driver, "config/unit_test_config.json");
+        KLBot testBot = new(TestConst.DefaultConfig, driver);
         var tm = new TimeModule();
         Assert.AreEqual(false, tm.IsAttached, "模块初始情况下模块应处于未附加状态（IsAttach=false）");
-        test_bot.AddModule(tm).Wait();
+        testBot.AddModule(tm).Wait();
         Assert.AreEqual(true, tm.IsAttached, "调用AddModule()后模块应处于附加状态（IsAttach=true）");
     }
 }

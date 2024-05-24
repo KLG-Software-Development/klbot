@@ -18,7 +18,7 @@ public class TestStatusAutoSave
     public void StatusAutoSaveForAllModuleWhenCoreModuleProcessed()
     {
         MessageDriver_Debug driver = TestConst.GetTestDriver();
-        KLBot bot = new(driver, "config/unit_test_config.json");
+        KLBot bot = new(TestConst.DefaultConfig, driver);
         FuckModule module = new();
         bot.AddModule(module).Wait();
         bool initState = module.Enabled;

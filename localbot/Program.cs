@@ -2,6 +2,7 @@
 using klbotlib.Exceptions;
 using klbotlib.MessageDriver.DebugLocal;
 using klbotlib.Modules;
+using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using Module = klbotlib.Modules.Module;
 
@@ -36,7 +37,16 @@ start:
             Assembly? asm = Assembly.GetAssembly(typeof(ImageModule));
             if (asm == null)
                 throw new NullReferenceException("无法获取模块集合所在的程序集");
-            _lcb = new KLBot(_localServer, asm, _debugTargetGroupID);
+            IConfigurationRoot config = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?>()
+                {
+                    { "targets", "" },
+                    { "cache_dir", "cache" },
+                    { "save_dir", "save" }
+                })
+            .Build();
+
+            _lcb = new KLBot(config, _localServer, asm, _debugTargetGroupID);
             await _lcb.AddModule(new TimeModule());
 
             Console.WriteLine(_lcb.GetModuleChainString());

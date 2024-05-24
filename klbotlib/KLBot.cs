@@ -133,8 +133,8 @@ namespace klbotlib
             _console.WriteLn("加载配置...", ConsoleMessageType.Info);
             Key = config.ReadValue("key");
             TargetGroupIDList = config.ReadArray("targets").Select(long.Parse).ToHashSet();
-            ModulesCacheDir = config.ReadValue("cache_dir", "paths");
-            ModulesSaveDir = config.ReadValue("save_dir", "paths");
+            ModulesCacheDir = config.ReadValue("cache_dir");
+            ModulesSaveDir = config.ReadValue("save_dir");
         }
         /// <summary>
         /// 加载核心模块

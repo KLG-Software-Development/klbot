@@ -1,4 +1,6 @@
 ﻿using klbotlib.MessageDriver.DebugLocal;
+using Microsoft.Extensions.Configuration;
+using ConfigValues = System.Collections.Generic.Dictionary<string, string?>;
 
 namespace KLBotUnitTest;
 
@@ -12,4 +14,12 @@ static class TestConst
             (a, b, c, d) => { },
             (a, b, c, d) => { },
             (a, b, c) => { });
+    public static readonly IConfigurationRoot DefaultConfig = new ConfigurationBuilder().AddInMemoryCollection(
+        new ConfigValues()
+        {
+            { "targets", "7355608" },
+            { "cache_dir", "cache" },
+            { "save_dir", "save" }
+        })
+    .Build();
 }
