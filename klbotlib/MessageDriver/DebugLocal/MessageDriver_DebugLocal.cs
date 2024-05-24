@@ -81,6 +81,8 @@ public class MessageDriver_Debug : IMessageDriver
     }
 
     // -------- 以下为接口实现 --------
+    /// <inheritdoc/>
+    public string LogUnitName => "Driver/DebugLocal";
 
     /// <inheritdoc/>
     public string DriverInfo => "Local debug message driver";
