@@ -30,7 +30,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
     public override string Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
-        if (text == "抽奖" && msg.ContainsTargetID(HostBot.SelfID))
+        if (text == "抽奖" && msg.ContainsTargetID(HostBot.SelfId))
         {
             if (msg.TargetID.Count() == 1)  //只@了机器人，主动加入
                 return "rollStart";
@@ -51,7 +51,7 @@ public class RollinModule : SingleTypeModule<MessagePlain>
         {
             case "rollFast":
                 List<long> targets = msg.TargetID.ToList();
-                targets.Remove(HostBot.SelfID);
+                targets.Remove(HostBot.SelfId);
                 int index = _ro.Next(targets.Count);
                 return @$"抽奖结果为：{{\tag:{targets[index]}}}";
             case "rollStart":

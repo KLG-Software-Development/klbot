@@ -2,6 +2,7 @@ using Gleee.Consoleee;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Json;
+using klbotlib.Events;
 using klbotlib.MessageDriver.Mirai;
 using klbotlib.Modules;
 using Newtonsoft.Json;
@@ -24,7 +25,6 @@ namespace klbotlib
     /// </summary>
     public class KLBot
     {
-        private bool _newlyStarted = true;          //返回Bot是否刚刚启动且未处理过任何消息。KLBot用这个flag判断是否正在处理遗留消息，如果是，只处理遗留消息的最后一条。  
         private readonly Consoleee _console = new Consoleee();       //扩展控制台对象
         private readonly StringBuilder _sb = new();
         private IMessageDriver _msgDriver;
@@ -56,7 +56,7 @@ namespace klbotlib
         /// <summary>
         /// 配置项：此KLBot自身的QQ号
         /// </summary>
-        public long SelfID { get; private set; }
+        public long SelfId { get; private set; }
         /// <summary>
         /// 配置项：此KLBot的监听群组QQ号列表
         /// </summary>
@@ -79,8 +79,8 @@ namespace klbotlib
         {
             _console.WriteLn("初始化KLBot...", ConsoleMessageType.Info);
             _msgDriver = driver;
+            _msgDriver.OnMessageReceived += MessageHandler;
             _console.WriteLn($"Driver info: {_msgDriver.DriverInfo}", ConsoleMessageType.Info);
-            _newlyStarted = true;
             LoadConfig(config);
             //创建模块存档目录（如果不存在）
             CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
@@ -212,8 +212,8 @@ namespace klbotlib
 
         //**** 内部API ****//
         //消息
-        internal Task<Message> GetMessageFromID(long target, long messageId)
-            => _msgDriver.GetMessageFromID(target, messageId);
+        internal Task<Message> GetMessageFromId(long target, long messageId)
+            => _msgDriver.GetMessageFromId(target, messageId);
         /// <summary>
         /// 发送消息
         /// </summary>
@@ -329,128 +329,52 @@ namespace klbotlib
         // 获取模块的ModuleSetup配置文件路径
         internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleID + "_setup.json");
 
-        //消息获取和处理相关
-        /// <summary>
-        /// 从服务器获取新消息并进行初步过滤
-        /// </summary>
-        public async Task<List<Message>> FetchMessages()
+        //消息事件处理
+        private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
         {
-            DiagData.SuccessPackageCount++;
-            //过滤掉非监听群消息
-            var rawMsgs = await _msgDriver.FetchMessages();
-            if (rawMsgs == null)
-                return [];
-            List<Message> msgs = rawMsgs.Where(msg =>
-            (msg.Context != MessageContext.Group && msg.Context != MessageContext.Temp)   //非私聊、非临时会话时无需过滤
-            || TargetGroupIDList.Contains(msg.GroupID)).ToList();   //私聊、临时会话时要求消息来自属于监听群之一
-            DiagData.ReceivedMessageCount += msgs.Count;
-            return msgs;
-        }
-        /// <summary>
-        /// 用默认消息处理函数依次处理消息列表
-        /// </summary>
-        /// <param name="msgs">待处理消息列表</param>
-        /// <returns>已处理的消息数量</returns>
-        public async Task ProcessMessages(List<Message> msgs) => await ProcessMessages(msgs, ModulesProcessMessage);
-        /// <summary>
-        /// 用processor依次处理消息列表。返回非空消息的个数
-        /// </summary>
-        /// <param name="msgs">待处理消息列表</param>
-        /// <param name="mainProcessor">消息处理函数</param>
-        /// <returns>已处理的消息数量</returns>
-        public async Task ProcessMessages(List<Message> msgs, Func<Message, Task> mainProcessor)
-        {
-            if (_newlyStarted && msgs.Count > 1)   //重启时有一条以上遗留消息，则只处理最后一条
+            Message msg = e.Message;
+            // 私聊/临时会话需过滤，范围为目标群组
+            if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIDList.Contains(msg.GroupID))
+                goto processed;
+            //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
+            //另外，帮助消息不计入统计信息
+            if (msg is MessagePlain pmsg && pmsg.Text.Trim().EndsWith("帮助"))
             {
-                msgs = new List<Message> { msgs.Last() };
-                _newlyStarted = false;
-            }
-            foreach (var msg in msgs)
-            {
-                await mainProcessor(msg);
-            }
-        }
-        // 消息循环。轮询获取并处理消息。每次重新获取消息前等待一定时间，等待时间由PollingTimeInterval控制
-        private async Task MsgLoop(ManualResetEvent waitForPauseMsgLoopSignal)
-        {
-#pragma warning disable CS0219 // 从未使用变量
-#pragma warning disable CS0164 // 标签未被引用
-            long successCounterCache = 0, continuousErrorCounter = 0;
-        start:
-#pragma warning restore CS0219 // 从未使用变量
-#pragma warning restore CS0164 // 标签未被引用
-            bool isLoopRestarting = true;
-            IsLoopOn = true;
-            Thread.Sleep(500);     //延迟启动 为命令循环线程预留至少0.5s时间
-            try
-            {
-                while (IsLoopOn)
+                foreach (var module in ModuleChain)
                 {
-                    List<Message> msgs = await FetchMessages();
-                    if (isLoopRestarting)
+                    if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
                     {
-                        if (msgs.Count != 0)
-                            await ProcessMessages(new List<Message> { msgs.Last() });
-                        isLoopRestarting = false;
+                        await ReplyMessage(module, msg, module.HelpInfo);
+                        goto processed;
                     }
+                }
+            }
+            //非帮助信息 遍历尝试处理
+            foreach (var module in ModuleChain)
+            {
+                //模块会直接在一个单独的Task上依次处理并回复
+                //防止因为处理或网络速度较慢阻塞其他消息的处理
+                bool shouldProcess = await module.AddProcessTask(msg);
+                if (shouldProcess)
+                {
+                    DiagData.ProcessedMessageCount++;
+                    DiagData.LastUsedModule = module;
+                    if (module.IsTransparent)
+                        continue;
                     else
-                        await ProcessMessages(msgs);
-                    Thread.Sleep(PollingTimeInterval);
-                    waitForPauseMsgLoopSignal.WaitOne();
+                        goto processed;
                 }
             }
-            catch (Exception ex)
-            {
-#if DEBUG
-                _console.WriteLn(ex.ToString(), ConsoleMessageType.Error);
-                throw;
-#else
-                DiagData.LastException = ex;
-                lock (_console)  //防止和命令循环线程输出混淆
-                {
-                    _console.WriteLn($"消息循环线程错误: {ex.Message}", ConsoleMessageType.Error, "\n");
-                    if (ex is WebException)
-                    {
-                        _console.WriteLn("发生意外网络异常。检查URL是否正确，以及MCL进程是否在服务器上正常运行。六秒后将重试", ConsoleMessageType.Error);
-                        Thread.Sleep(6000);
-                        isLoopRestarting = true;
-                        goto start;
-                    }
-                    else  //未知异常
-                    {
-                        _console.WriteLn($"调用栈：\n{ex.StackTrace}");
-                        if (successCounterCache == DiagData.SuccessPackageCount)   //sucessCounter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
-                            continuousErrorCounter++;
-                        else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
-                            continuousErrorCounter = 0;
-                        if (continuousErrorCounter > 3)
-                        {
-                            _console.WriteLn("连续3次发生致命错误，停止重试", ConsoleColor.DarkYellow);
-                            goto quit;
-                        }
-                        else
-                        {
-                            successCounterCache = DiagData.SuccessPackageCount;    //记录此次错误的位置
-                            _console.WriteLn($"[{DateTime.Now:G}] 正在自动重启消息循环线程...\n", ConsoleMessageType.Warning);
-                            _console.Write("> ", ConsoleColor.DarkYellow);
-                            isLoopRestarting = true;
-                            goto start;
-                        }
-                    }
-                quit:
-                    _console.WriteLn("[Error]消息循环线程已退出。排查问题后可使用\"start\"命令尝试重启", ConsoleColor.Red);
-                    _console.Write("> ", ConsoleColor.DarkYellow);
-                }
-#endif
-            }
+        processed:
+            e.KLBotProcessed = true;
         }
+
         /// <summary>
         /// 总循环。包括消息循环和命令循环
         /// </summary>
         public async Task DefaultLoop()
         {
             object sync = new object();
-            var waitForPauseMsgLoopSignal = new ManualResetEvent(true);
             DiagData.SuccessPackageCount = 0;
             //消息循环线程
             //开始之前向服务器验证身份
@@ -470,7 +394,7 @@ namespace klbotlib
             {
                 try
                 {
-                    SelfID = await _msgDriver.GetSelfID();
+                    SelfId = await _msgDriver.GetSelfId();
                     getSelfIdSuccess = true;
                 }
                 catch (Exception ex)
@@ -479,8 +403,7 @@ namespace klbotlib
                 }
                 Thread.Sleep(1000);
             }
-            _console.WriteLn($"获取成功。自身ID：{SelfID}", ConsoleMessageType.Info);
-            var msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
+            _console.WriteLn($"获取成功。自身ID：{SelfId}", ConsoleMessageType.Info);
             bool exitFlag = false;
             //命令循环线程
             while (!exitFlag)
@@ -491,27 +414,6 @@ namespace klbotlib
                 {
                     if (cmd == "")
                         continue;  //不执行操作
-                    else if (cmd == "start")
-                    {
-                        if (!msgLoop.IsCompleted)
-                            _console.WriteLn("消息循环线程已经在运行中", ConsoleMessageType.Error);
-                        else
-                        {
-                            msgLoop = Task.Run(() => MsgLoop(waitForPauseMsgLoopSignal));
-                            _console.WriteLn("成功启动消息循环线程", ConsoleMessageType.Info);
-                        }
-                    }
-                    else if (cmd == "pause")
-                    {
-                        waitForPauseMsgLoopSignal.Reset();
-                        _console.WriteLn("消息循环线程已暂停", ConsoleMessageType.Info);
-                    }
-                    else if (cmd == "resume")
-                    {
-                        _newlyStarted = true;   //为暂停继续情形引入重启忽略机制
-                        waitForPauseMsgLoopSignal.Set();
-                        _console.WriteLn("消息循环线程已重新开始", ConsoleMessageType.Info);
-                    }
                     else if (cmd == "quit")
                         exitFlag = true;
                     else if (cmd == "status")
@@ -586,41 +488,6 @@ namespace klbotlib
             }
             //从容退出
             OnExit();
-        }
-
-        //默认处理函数。用Modules中的模块依次尝试处理消息
-        //注意 空消息的过滤已经在上一级ProcessMessages()完成，所以此处入参的所有消息均为非空消息
-        private async Task ModulesProcessMessage(Message msg)
-        {
-            //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
-            //另外，帮助消息不计入统计信息
-            if (msg is MessagePlain pmsg && pmsg.Text.Trim().EndsWith("帮助"))
-            {
-                foreach (var module in ModuleChain)
-                {
-                    if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
-                    {
-                        await ReplyMessage(module, msg, module.HelpInfo);
-                        return;
-                    }
-                }
-            }
-            //非帮助信息 遍历尝试处理
-            foreach (var module in ModuleChain)
-            {
-                //模块会直接在一个单独的Task上依次处理并回复
-                //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool shouldProcess = await module.AddProcessTask(msg);
-                if (shouldProcess)
-                {
-                    DiagData.ProcessedMessageCount++;
-                    DiagData.LastUsedModule = module;
-                    if (module.IsTransparent)
-                        continue;
-                    else
-                        return;
-                }
-            }
         }
 
         /// <summary>

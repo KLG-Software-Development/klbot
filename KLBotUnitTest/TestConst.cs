@@ -9,11 +9,11 @@ static class TestConst
     public const long SelfID = 33550336;
     public const int CoreModuleCount = 1;   //核心模块数量
     public static MessageDriver_Debug GetTestDriver()
-        => new(SelfID, a => { },
-            (a, b, c, d, e) => { },
-            (a, b, c, d) => { },
-            (a, b, c, d) => { },
-            (a, b, c) => { });
+        => new(SelfID, _ => { },
+            (_, _, _, _, _) => { },
+            (_, _, _, _) => { },
+            (_, _, _, _) => { },
+            (_, _, _) => { });
     public static readonly IConfigurationRoot DefaultConfig = new ConfigurationBuilder().AddInMemoryCollection(
         new ConfigValues()
         {

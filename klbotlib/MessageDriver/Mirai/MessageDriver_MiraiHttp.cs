@@ -1,11 +1,10 @@
-﻿using klbotlib.Exceptions;
+﻿using klbotlib.Events;
+using klbotlib.Exceptions;
 using klbotlib.MessageDriver.Mirai.JsonPrototypes;
 using klbotlib.Modules;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -34,58 +33,62 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     }
 
     /// <inheritdoc/>
-    public async Task<List<Message>?> FetchMessages()
+    public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => { };
+
+    /// <summary>
+    /// 获取消息并逐个触发消息接送事件
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="JsonDeserializationException"></exception>
+    public async Task FetchMessages()
     {
-        List<Message> msgs = new();
-        JMiraiFetchMessageResponse? obj = null;
-        do
+        JMiraiFetchMessageResponse? obj;
+        string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
+        try
         {
-            string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
+            //构建直接JSON对象
+            obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
+            //验证返回码
+            if (obj.code != 0)
+                throw new MiraiException(obj.code, obj.msg);
+        }
+        catch (Exception ex)
+        {
+            // TODO:优化错误上报
+            Console.WriteLine($"消息列表获取失败：JSON解析失败。{ex.Message}");
+            File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+            Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
+            Console.Write("> ");
+            return;
+        }
+        if (obj == null || obj.data == null)
+            throw new JsonDeserializationException("JSON解析失败。构建的对象为null。服务器响应：", response);
+        foreach (JMiraiMessagePackage jmsg in obj.data)
+        {
             try
             {
-                //构建直接JSON对象
-                obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
-                //验证返回码
-                if (obj.code != 0)
-                    throw new MiraiException(obj.code, obj.msg);
+                var msg = MiraiMessageFactory.BuildMessage(jmsg);
+                OnMessageReceived.Invoke(this, new(DateTime.Now, msg));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"消息列表获取失败：JSON解析失败。{ex.Message}");
+                // TODO:优化错误上报
+                Console.WriteLine($"Message对象构造失败：{ex.Message}");
                 File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
                 Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
                 Console.Write("> ");
                 continue;
             }
-            if (obj == null || obj.data == null)
-                throw new JsonDeserializationException("JSON解析失败。构建的对象为null。服务器响应：", response);
-            List<JMiraiMessagePackage> jmsgs = obj.data.ToList();
-            foreach (JMiraiMessagePackage jmsg in jmsgs)
-            {
-                try
-                {
-                    msgs.Add(MiraiMessageFactory.BuildMessage(jmsg));
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Message对象构造失败：{ex.Message}");
-                    File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-                    Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
-                    Console.Write("> ");
-                    continue;
-                }
-            }
         }
-        while (obj != null && obj.data != null && obj.data.Count != 0);   //无限轮询直到拿下所有消息
-        return msgs.Where(x => !(x is MessageEmpty)).ToList(); //预过滤空消息
     }
     /// <inheritdoc/>
-    public async Task<Message> GetMessageFromID(long target, long messageId)
+    public async Task<Message> GetMessageFromId(long target, long messageId)
     {
         string response = await MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, target, messageId);
         JMiraiGetMessageFromIdResponse? obj = null;
         try
         {
+            // TODO: 切换为Text.Json
             obj = JsonConvert.DeserializeObject<JMiraiGetMessageFromIdResponse>(response);
         }
         catch (Exception ex)
@@ -196,7 +199,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         CheckMiraiResponse(responseJson, response);
     }
     /// <inheritdoc/>
-    public async Task<long> GetSelfID()
+    public async Task<long> GetSelfId()
     {
         string botListJson = await MiraiNetworkHelper.GetBotListJson(ServerURL);
         JMiraiGetBotListResponse? response = JsonConvert.DeserializeObject<JMiraiGetBotListResponse>(botListJson);

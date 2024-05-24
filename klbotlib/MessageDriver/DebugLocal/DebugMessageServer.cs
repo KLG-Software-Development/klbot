@@ -1,4 +1,5 @@
-﻿using klbotlib.Modules;
+﻿using klbotlib.Events;
+using klbotlib.Modules;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -35,7 +36,6 @@ public class MessageDriver_Debug : IMessageDriver
     /// </summary>
     public Action<Module, long, long> UnmuteCallback { get; private set; }
 
-
     /// <summary>
     /// 创建本地模拟消息驱动器
     /// </summary>
@@ -59,8 +59,34 @@ public class MessageDriver_Debug : IMessageDriver
         UnmuteCallback = unmuteCallback;
     }
 
+    /// <summary>
+    /// 向消息驱动中添加未读消息
+    /// </summary>
+    /// <param name="msgs">待加入的消息</param>
+    public void AddReceivedMessage(params Message[] msgs)
+    {
+        foreach (var msg in msgs)
+        {
+            _msgBuffer.Add(msg);
+            OnMessageReceived.Invoke(null, new(DateTime.Now, msg));
+        }
+        foreach (var msg in msgs)
+        {
+            _msgCache.Add(_msgCache.Count, msg);
+        }
+        foreach (var msg in msgs)
+        {
+            AddMessageCallback.Invoke(msg);
+        }
+    }
+
+    // -------- 以下为接口实现 --------
+
     /// <inheritdoc/>
     public string DriverInfo => "Local debug message driver";
+
+    /// <inheritdoc/>
+    public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => { };
 
     /// <inheritdoc/>
     public Task<List<Message>?> FetchMessages()
@@ -81,25 +107,8 @@ public class MessageDriver_Debug : IMessageDriver
         UploadFileCallback.Invoke(module, groupId, uploadPath, filePath);
         return Task.FromResult<Exception?>(null);
     }
-    /// <summary>
-    /// 向消息驱动中添加未读消息
-    /// </summary>
-    /// <param name="msgs">待加入的消息</param>
-    public void AddReceivedMessage(params Message[] msgs)
-    {
-        _msgBuffer.AddRange(msgs);
-        foreach (var msg in msgs)
-        {
-            _msgCache.Add(_msgCache.Count, msg);
-        }
-        foreach (var msg in msgs)
-        {
-            AddMessageCallback.Invoke(msg);
-        }
-    }
-
     /// <inheritdoc/>
-    public Task<Message> GetMessageFromID(long target, long messageId)
+    public Task<Message> GetMessageFromId(long target, long messageId)
     {
         return Task.FromResult(_msgCache[messageId]);
     }
@@ -121,7 +130,7 @@ public class MessageDriver_Debug : IMessageDriver
         return Task.CompletedTask;
     }
     /// <inheritdoc/>
-    public Task<long> GetSelfID()
+    public Task<long> GetSelfId()
     {
         return Task.FromResult(_selfId);
     }

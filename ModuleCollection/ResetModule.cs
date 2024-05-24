@@ -25,7 +25,7 @@ public class ResetModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public override string? Filter(MessagePlain msg)
     {
-        if (msg.ContainsTargetID(HostBot.SelfID))
+        if (msg.ContainsTargetID(HostBot.SelfId))
         {
             string msgText = msg.Text.Trim().ToLower();
             if (msgText == "day?")

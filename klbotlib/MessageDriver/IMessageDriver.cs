@@ -1,5 +1,6 @@
-﻿using klbotlib.Modules;
-using System.Collections.Generic;
+﻿using klbotlib.Events;
+using klbotlib.Modules;
+using System;
 using System.Threading.Tasks;
 
 namespace klbotlib;
@@ -14,23 +15,22 @@ public interface IMessageDriver
     /// </summary>
     string DriverInfo { get; }
     /// <summary>
+    /// 新消息事件
+    /// </summary>
+    event EventHandler<KLBotMessageEventArgs> OnMessageReceived;
+    /// <summary>
     /// 向消息服务器验证身份
     /// </summary>
     /// <param name="key">验证密钥</param>
     /// <returns>验证是否成功</returns>
     Task<bool> Verify(string key);
     /// <summary>
-    /// 获取接收到的消息
-    /// </summary>
-    /// <returns>消息列表</returns>
-    Task<List<Message>?> FetchMessages();
-    /// <summary>
     /// 根据消息ID，从服务器获取给定消息
     /// </summary>
     /// <param name="target">获取消息的对象</param>
     /// <param name="messageId">消息ID</param>
     /// <returns>相应的消息对象</returns>
-    Task<Message> GetMessageFromID(long target, long messageId);
+    Task<Message> GetMessageFromId(long target, long messageId);
     /// <summary>
     /// 发送消息接口
     /// </summary>
@@ -66,5 +66,5 @@ public interface IMessageDriver
     /// <summary>
     /// 获取自身ID接口
     /// </summary>
-    Task<long> GetSelfID();
+    Task<long> GetSelfId();
 }

@@ -266,7 +266,7 @@ namespace klbotlib.Modules
                 File.Delete(path);
         }
         Task<Message> IMessagingAPI.GetMessageFromID(long target, long messageId)
-            => HostBot.GetMessageFromID(target, messageId);
+            => HostBot.GetMessageFromId(target, messageId);
         Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
             => HostBot.SendMessage(this, context, userId, groupId, content);
         async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)

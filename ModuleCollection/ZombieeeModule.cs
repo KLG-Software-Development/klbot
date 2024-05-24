@@ -92,7 +92,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public override string? Filter(MessagePlain msg)
     {
         string text = msg.Text.Trim();
-        if (msg.TargetID.Contains(HostBot.SelfID) && text == "生成僵尸文学")
+        if (msg.TargetID.Contains(HostBot.SelfId) && text == "生成僵尸文学")
             return "generate";
         else
             return null;

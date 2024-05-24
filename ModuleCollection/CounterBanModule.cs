@@ -34,7 +34,7 @@ public class CounterBanModule : SingleTypeModule<MessageMute>
         {
             case "counterBan":
                 ModulePrint("正在自我解除禁言...");
-                await Operating.Unmute(HostBot.SelfID, msg.GroupID);
+                await Operating.Unmute(HostBot.SelfId, msg.GroupID);
                 if (_mode == CounterBanMode.SelfUnmuteRevenge)
                 {
                     ModulePrint("正在反制禁言...");

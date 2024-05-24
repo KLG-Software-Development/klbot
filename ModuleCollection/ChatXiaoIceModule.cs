@@ -69,7 +69,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
     public sealed override string FriendlyName => "微软小冰模块";
     /// <inheritdoc/>
     public sealed override string? Filter(MessagePlain msg) 
-        => msg.TargetID.Count == 1 && msg.TargetID.Contains(HostBot.SelfID) 
+        => msg.TargetID.Count == 1 && msg.TargetID.Contains(HostBot.SelfId) 
         ? "ok" 
         : null;
     /// <inheritdoc/>

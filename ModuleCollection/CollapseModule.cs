@@ -39,7 +39,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     ///<inheritdoc/>
     public override string? Filter(MessagePlain msg)
     {
-        if (!msg.TargetID.Contains(HostBot.SelfID))
+        if (!msg.TargetID.Contains(HostBot.SelfId))
             return null;
         string text = msg.Text.Trim();
         return _collapsePat.IsMatch(text)

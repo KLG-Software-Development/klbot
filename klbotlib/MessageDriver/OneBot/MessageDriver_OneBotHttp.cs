@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using klbotlib.Events;
+using klbotlib.Extensions;
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 using klbotlib.Modules;
 
@@ -25,11 +27,89 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     {
         _caller = new(httpServiceUrl, token);
         _webhookServer = new(webhookBindUrl, token);
+        // 注册webhook事件处理器
+        _webhookServer.OneBotEventReceived += OneBotEventLog;
+        _webhookServer.OneBotEventReceived += OneBotEventDispatch;
         _ = _webhookServer.Start();
     }
 
+    private static void OneBotEventLog(object? obj, OneBotEventArgs e)
+    {
+        Console.WriteLine($"[OneBotEvent][{e.Time}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
+    }
+
+    // 将OneBot事件路由至MessageDriver事件，从而通知KLBot
+    private void OneBotEventDispatch(object? obj, OneBotEventArgs e)
+    {
+        switch (e.PostType)
+        {
+            case "message":
+                OnMessageReceived.Invoke(this, new(e.Time.AsUnixTimestamp(), BuildMessageFromEvent(e)));
+                return;
+            default:
+                Console.WriteLine($"[OneBotEvent] Dispatcher not configured for post type [{e.PostType}]");
+                return;
+        }
+    }
+
+    // 从OneBot事件中构造消息事件
+    private static MessageCommon BuildMessageFromEvent(OneBotEventArgs e)
+    {
+        var data = e.RawEventData;
+        MessageContext context = GetOneBotMessageEventContext(data);
+        if (data.RawMessage == null)
+            throw new Exception($"Failed to build OneBot event: Invalid event data: {data}");
+        return new MessagePlain(context, data.UserId, data.GroupId, data.RawMessage);
+    }
+
+    // 推导message事件的上下文类型
+    private static MessageContext GetOneBotMessageEventContext(JOneBotEvent rawEvent)
+    {
+        switch (rawEvent.MessageType)
+        {
+            case "group":
+                return MessageContext.Group;
+            case "private":
+                switch (rawEvent.SubType)
+                {
+                    case "friend":
+                        return MessageContext.Private;
+                    case "group":
+                        return MessageContext.Temp;
+                    case null:
+                        throw new Exception($"OneBotEvent: Unexpected private message sub_type is null");
+                    default:
+                        throw new Exception($"OneBotEvent: Unknown private message sub_type \"{rawEvent.SubType}\"");
+                }
+            default:
+                throw new Exception($"OneBotEvent: Unknown message_type \"{rawEvent.MessageType}\"");
+        }
+    }
+
+    private async Task CallApiAsync<TResponse>(string uri, string? paramJson)
+    {
+        var response = await _caller.Call<TResponse>(uri, paramJson);
+        if (response.Data == null)
+            throw new Exception($"[OneBotV11-protocol] Invalid response: {response}");
+    }
+
+    private async Task<TOut?> CallApiAsync<TResponse, TOut>(string uri, string? paramJson, Func<TResponse, TOut>? extractor)
+    {
+        var response = await _caller.Call<TResponse>(uri, paramJson);
+        if (response.Data == null)
+            throw new Exception($"[OneBotV11-protocol] Invalid response: {response}");
+        if (extractor == null)
+            return default;
+        return extractor(response.Data);
+    }
+
+    // -------- 以下为接口实现 --------
+
     /// <inheritdoc/>
     public string DriverInfo => $"OneBot message driver [HTTP@{_caller.ServerUrl}] [Webhook@{_webhookServer.BindAddr}]";
+
+    /// <inheritdoc/>
+    public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => {};
 
     /// <inheritdoc/>
     public Task<List<Message>?> FetchMessages()
@@ -41,16 +121,16 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     /// <inheritdoc/>
-    public async Task<Message> GetMessageFromID(long target, long messageId)
+    public async Task<Message> GetMessageFromId(long target, long messageId)
     {
         return await CallApiAsync<JOneBotMessageObj, Message>($"get_msg", $"{{message_id:{messageId}}}", data => data.ToMessage())
             ?? throw new Exception($"Failed to get message by ID {messageId}");
     }
 
     /// <inheritdoc/>
-    public async Task<long> GetSelfID()
+    public async Task<long> GetSelfId()
     {
-        return await CallApiAsync<JOneBotUserInfo, long>("get_login_info", null, data => data.UserId);
+        return await CallApiAsync<JOneBotUser, long>("get_login_info", null, data => data.UserId);
     }
 
     /// <inheritdoc/>
@@ -95,22 +175,5 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     public Task<bool> Verify(string key)
     {
         return Task.FromResult(true);
-    }
-
-    private async Task CallApiAsync<TResponse>(string uri, string? paramJson)
-    {
-        var response = await _caller.Call<TResponse>(uri, paramJson);
-        if (response.Data == null)
-            throw new Exception($"[OneBotV11-protocol] Invalid response: {response}");
-    }
-
-    private async Task<TOut?> CallApiAsync<TResponse, TOut>(string uri, string? paramJson, Func<TResponse, TOut>? extractor)
-    {
-        var response = await _caller.Call<TResponse>(uri, paramJson);
-        if (response.Data == null)
-            throw new Exception($"[OneBotV11-protocol] Invalid response: {response}");
-        if (extractor == null)
-            return default;
-        return extractor(response.Data);
     }
 }

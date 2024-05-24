@@ -222,7 +222,6 @@ start:
                 continue;
             SplitCommand(s, out string cmd, out string arg);
             ProcessCommand(lcb, cmd, arg);
-            lcb.ProcessMessages(lcb.FetchMessages().Result).Wait();
             Thread.Sleep(1000);
         }
     }
@@ -252,7 +251,7 @@ start:
     private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
     {
         if (_tagMe)
-            msg.AddTargetID(lcb.SelfID);
+            msg.AddTargetID(lcb.SelfId);
         _localServer.AddReceivedMessage(msg);
         if (_verbose)
         {
