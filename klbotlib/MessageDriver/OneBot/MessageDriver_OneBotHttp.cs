@@ -36,7 +36,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
 
     private void OneBotEventLog(object? obj, OneBotEventArgs e)
     {
-        this.Log($"[Event][{e.Time.AsUnixTimestamp():yyMMdd/HH:mm:ss:fff}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
+        this.DebugLog($"[Event][{e.Time.AsUnixTimestamp():yyMMdd/HH:mm:ss:fff}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
         foreach (var msg in e.RawEventData.Message)
         {
             this.Log(msg.ToString());
@@ -105,7 +105,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         }
     }
 
-    private async Task<TOut?> CallApiAsync<TResponse, TOut>(string uri, string? paramJson, Func<TResponse, TOut>? extractor)
+    private async Task<TOut?> CallApiAsync<TResponse, TOut>(string uri, string? paramJson, Func<TResponse, TOut>? extractor, bool raise = false)
     {
         try
         {
@@ -121,6 +121,8 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         }
         catch (Exception ex)
         {
+            if (raise)
+                throw;
             this.Log(ex.ToString());
             return default;
         }
@@ -155,7 +157,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task<long> GetSelfId()
     {
-        return await CallApiAsync<JOneBotUser, long>("get_login_info", null, data => data.UserId);
+        return await CallApiAsync<JOneBotUser, long>("get_login_info", null, data => data.UserId, raise: true);
     }
 
     /// <inheritdoc/>

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text.Json;
@@ -67,7 +66,6 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
     {
         if (rawEvent.Time == default || rawEvent.SelfId == default ||rawEvent.PostType == null)
             throw new Exception($"Failed to build OneBot event: Invalid event data: {rawEvent}");
-        Console.WriteLine(OneBotEventReceived.GetInvocationList().Length);
         OneBotEventReceived.Invoke(this, new(rawEvent.Time, rawEvent.SelfId, rawEvent.PostType, rawEvent));
     }
 }

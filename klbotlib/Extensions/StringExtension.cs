@@ -1,4 +1,6 @@
 ﻿#pragma warning disable CS1591
+using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace klbotlib.Extensions
@@ -27,6 +29,18 @@ namespace klbotlib.Extensions
                 _sb.Insert(0, value, count);
                 return _sb.ToString();
             }
+        }
+        private static readonly Dictionary<ConsoleColor, int> _ansiColorCode = new()
+        {
+            { ConsoleColor.Red, 31 },
+            { ConsoleColor.Green, 32 },
+            { ConsoleColor.Yellow, 33 },
+            { ConsoleColor.Magenta, 35 },
+            { ConsoleColor.Cyan, 36 },
+        };
+        public static string ToAnsiColor(this string value, ConsoleColor color)
+        {
+            return $"\x1b[{_ansiColorCode[color]}m{value}\x1b[0m";
         }
     }
 }

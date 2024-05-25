@@ -56,11 +56,9 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         }
         catch (Exception ex)
         {
-            // TODO:优化错误上报
-            Console.WriteLine($"消息列表获取失败：JSON解析失败。{ex.Message}");
-            File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-            Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
-            Console.Write("> ");
+            this.LogError($"消息列表获取失败：JSON解析失败。{ex.Message}");
+            await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+            this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
             return;
         }
         if (obj == null || obj.data == null)
@@ -74,11 +72,9 @@ public class MessageDriver_MiraiHttp : IMessageDriver
             }
             catch (Exception ex)
             {
-                // TODO:优化错误上报
-                Console.WriteLine($"Message对象构造失败：{ex.Message}");
-                File.AppendAllText(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-                Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
-                Console.Write("> ");
+                this.LogError($"Message对象构造失败：{ex.Message}");
+                await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+                this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
                 continue;
             }
         }
@@ -95,9 +91,9 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"消息ID获取失败：JSON解析失败。{ex.Message}");
+            this.LogError($"消息ID获取失败：JSON解析失败。{ex.Message}");
             await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-            Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
+            this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
         }
         try
         {
@@ -107,9 +103,9 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Message对象构造失败：{ex.Message}");
+            this.LogError($"Message对象构造失败：{ex.Message}");
             await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-            Console.WriteLine($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
+            this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
             throw ex;
         }
     }

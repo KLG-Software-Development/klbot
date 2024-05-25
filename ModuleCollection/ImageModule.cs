@@ -103,7 +103,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         int max_index = Convert.ToInt32(Math.Round(listNum * (Fraction / 100f)));
         int pn = _ro.Next(max_index);
         string json = await FetchData(pn, word);
-        ModulePrint($"成功获取json，pn={pn}");
+        ModuleLog($"成功获取json，pn={pn}");
         _sw.Restart();
         JResult? result = JsonConvert.DeserializeObject<JResult>(json);
         //更新字典

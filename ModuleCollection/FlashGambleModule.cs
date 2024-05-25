@@ -86,7 +86,7 @@ public class FlashGambleModule : Module
         }
         else
         {
-            ModulePrint("未命中，忽略此条撤回或闪照");
+            ModuleLog("未命中，忽略此条撤回或闪照");
             return string.Empty;
         }
     }

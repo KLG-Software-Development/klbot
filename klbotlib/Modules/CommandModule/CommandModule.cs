@@ -1,5 +1,4 @@
-﻿using Gleee.Consoleee;
-using klbotlib.Extensions;
+﻿using klbotlib.Extensions;
 using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;
@@ -29,7 +28,7 @@ namespace klbotlib.Modules
 
         public CommandModule(KLBot hostBot, params Command[] cmds)
         {
-            hostBot.ObjectPrint(hostBot, "正在加载命令...", ConsoleMessageType.Task);
+            ModuleLog("正在加载命令...", LogType.Task);
             //自动实例化并添加所有已经定义的、带有[DefaultCommand]标记的Command类
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
@@ -45,7 +44,7 @@ namespace klbotlib.Modules
             }
             int defaultCmdCount = _cmds.Count;
             _cmds.AddRange(cmds);
-            hostBot.ObjectPrint(hostBot, $"成功加载{_cmds.Count}条命令（{defaultCmdCount}条默认命令, {_cmds.Count - defaultCmdCount}条自定义命令).");
+            ModuleLog($"成功加载{_cmds.Count}条命令（{defaultCmdCount}条默认命令, {_cmds.Count - defaultCmdCount}条自定义命令).");
         }
 
         public sealed override bool IsTransparent => false;

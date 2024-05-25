@@ -143,7 +143,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public async Task<(bool, string, string)> TryGenerate()
     {
         string seed = GenerateSentences(_ro.Next(1, 7));
-        ModulePrint($"反射种子：{seed}");
+        ModuleLog($"反射种子：{seed}");
         return await TryReflect(_reflectNum, seed);
     }
     /// <summary>
@@ -154,7 +154,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public async Task<(bool, string, string)> TryFastGenerate()
     {
         string seed = GenerateSingleSentence();
-        ModulePrint($"反射种子：{seed}");
+        ModuleLog($"反射种子：{seed}");
         return await TryReflect(2, seed);
     }
 
@@ -218,7 +218,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
         string result = string.Empty;
         for (int n = 0; n < reflectNum; n++)
         {
-            ModulePrint($"正在进行反射#{n}...");
+            ModuleLog($"正在进行反射#{n}...");
             (bool suceess, string message, result) = await TryReflect(query);
             if (!suceess)
                 return (false, message, result);

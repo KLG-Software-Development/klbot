@@ -1,5 +1,4 @@
-﻿using Gleee.Consoleee;
-using klbotlib.Exceptions;
+﻿using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Json;
 using klbotlib.Reflection;
@@ -18,7 +17,7 @@ namespace klbotlib.Modules
     /// 消息处理模块基类.
     /// 这是KLBot功能实现的基本单位
     /// </summary>
-    public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAccessAPI
+    public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAccessAPI, IKLBotLogUnit
     {
         //后台变量
         private KLBot? _hostBot;
@@ -29,6 +28,8 @@ namespace klbotlib.Modules
         /// 模块名. 是模块种类的唯一标识. 直接等于模块在源码中的类名。
         /// </summary>
         public string ModuleName { get; }
+        /// <inheritdoc/>
+        public string LogUnitName => ModuleName;
         /// <summary>
         /// 模块ID. 是模块对象的唯一标识. 
         /// 当模块未附加到KLBot上时，等于模块名；
@@ -135,9 +136,8 @@ namespace klbotlib.Modules
         /// </summary>
         /// <param name="message">模块要打印消息的内容</param>
         /// <param name="msgType">消息类型。提示=Info；警告=Warning；错误=Error；任务执行中=Task；</param>
-        /// <param name="prefix">要在消息类型标识前附上的内容</param>
-        public void ModulePrint(string message, ConsoleMessageType msgType = ConsoleMessageType.Info, string prefix = "") 
-            => HostBot.ObjectPrint(this, message, msgType, prefix);
+        public void ModuleLog(string message, LogType msgType = LogType.Info)
+            => this.Log(message, msgType);
         T IModuleAccessAPI.GetModule<T>(int index) => HostBot.GetModule<T>(index);
         bool IModuleAccessAPI.TryGetFieldAndProperty<T>(string name, out T value) where T : struct
         {
@@ -210,26 +210,26 @@ namespace klbotlib.Modules
         void IFileAPI.SaveFileAsString(string relativePath, string text)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            ModuleLog($"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", LogType.Task);
             if (File.Exists(path))
-                HostBot.ObjectPrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
+                ModuleLog($"文件\"{path}\"已经存在，将直接覆盖", LogType.Warning);
             File.WriteAllText(path, text);
         }
         void IFileAPI.SaveFileAsBinary(string relativePath, byte[] bin)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", ConsoleMessageType.Task);
+            ModuleLog($"正在保存文件\"{Path.GetFileName(path)}\"到\"{Path.GetDirectoryName(path)}\"...", LogType.Task);
             if (File.Exists(path))
-                HostBot.ObjectPrint(this, $"文件\"{path}\"已经存在，将直接覆盖", ConsoleMessageType.Warning);
+                ModuleLog($"文件\"{path}\"已经存在，将直接覆盖", LogType.Warning);
             File.WriteAllBytes(path, bin);
         }
         string IFileAPI.ReadFileAsString(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
+            ModuleLog($"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", LogType.Task);
             if (!File.Exists(path))
             {
-                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                ModuleLog($"文件\"{path}\"不存在，无法读取", LogType.Error);
                 throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
             }
             return File.ReadAllText(path);
@@ -237,10 +237,10 @@ namespace klbotlib.Modules
         string[] IFileAPI.ReadFileAsStringArrayByLines(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
+            ModuleLog($"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", LogType.Task);
             if (!File.Exists(path))
             {
-                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                ModuleLog($"文件\"{path}\"不存在，无法读取", LogType.Error);
                 throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
             }
             return File.ReadAllLines(path);
@@ -248,10 +248,10 @@ namespace klbotlib.Modules
         byte[] IFileAPI.ReadFileAsBinary(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
+            ModuleLog($"正在从\"{Path.GetDirectoryName(path)}\"读取文件\"{Path.GetFileName(path)}\"...", LogType.Task);
             if (!File.Exists(path))
             {
-                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，无法读取", ConsoleMessageType.Error);
+                ModuleLog($"文件\"{path}\"不存在，无法读取", LogType.Error);
                 throw new ModuleException(this, $"文件\"{path}\"不存在，无法读取");
             }
             return File.ReadAllBytes(path);
@@ -259,9 +259,9 @@ namespace klbotlib.Modules
         void IFileAPI.DeleteFile(string relativePath)
         {
             string path = Path.Combine(HostBot.GetModuleCacheDir(this), relativePath);
-            HostBot.ObjectPrint(this, $"正在删除文件\"{Path.GetFileName(path)}\"...", ConsoleMessageType.Task);
+            ModuleLog($"正在删除文件\"{Path.GetFileName(path)}\"...", LogType.Task);
             if (!File.Exists(path))
-                HostBot.ObjectPrint(this, $"文件\"{path}\"不存在，未删除", ConsoleMessageType.Error);
+                ModuleLog($"文件\"{path}\"不存在，未删除", LogType.Error);
             else
                 File.Delete(path);
         }
@@ -332,7 +332,7 @@ namespace klbotlib.Modules
             }
             catch (Exception ex)    //过滤器存在问题
             {
-                ModulePrint($"模块过滤器产生异常：{ex.Message}\n已跳过该模块。", ConsoleMessageType.Error);
+                ModuleLog($"模块过滤器产生异常：{ex.Message}\n已跳过该模块。", LogType.Error);
                 return false;
             }
             if (string.IsNullOrEmpty(filterOut))    //过滤器输出空，表示不处理
@@ -361,14 +361,14 @@ namespace klbotlib.Modules
                 {
                     if (!property.CanWrite)
                     {
-                        ModulePrint($"配置文件或状态存档中包含模块{ModuleID}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", ConsoleMessageType.Warning);
+                        ModuleLog($"配置文件或状态存档中包含模块{ModuleID}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", LogType.Warning);
                         continue;
                     }
                     else if (kvp.Value == null)
                     {
                         if (ignoreNull)
                             continue;
-                        ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
+                        ModuleLog($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", LogType.Error);
                         throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                     }
                     property.SetValue(this, ReflectionHelper.RestoreType(property.PropertyType, kvp.Value));
@@ -385,14 +385,14 @@ namespace klbotlib.Modules
                         {
                             if (ignoreNull)
                                 continue;
-                            ModulePrint($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", ConsoleMessageType.Error);
+                            ModuleLog($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", LogType.Error);
                             throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                         }
                         field.SetValue(this, ReflectionHelper.RestoreType(field.FieldType, kvp.Value));
                         continue;
                     }
                     else
-                        ModulePrint($"键值对导入失败: 模块中不存在字段\"{kvp.Key}\"", ConsoleMessageType.Warning);
+                        ModuleLog($"键值对导入失败: 模块中不存在字段\"{kvp.Key}\"", LogType.Warning);
                 }
             }
         }
@@ -408,7 +408,7 @@ namespace klbotlib.Modules
             string json = JsonConvert.SerializeObject(ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
             string filePath = HostBot.GetModuleStatusPath(this);
             if (printInfo)
-                ModulePrint($"正在保存状态至\"{filePath}\"...", ConsoleMessageType.Task);
+                ModuleLog($"正在保存状态至\"{filePath}\"...", LogType.Task);
             File.WriteAllText(filePath, json);
         }
 
@@ -453,7 +453,7 @@ namespace klbotlib.Modules
             bool hasError = false;
             try   //对处理器的异常控制
             {
-                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]等待处理器完成...");
+                ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
                 output = await Processor(msg, filterOut);
                 DiagData.StopMeasurement();
@@ -484,10 +484,10 @@ namespace klbotlib.Modules
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
                 await _hostBot.ReplyMessage(this, msg, signature + output);
-                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
+                ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else
-                ModulePrint($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 无回复内容.");
+                ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 无回复内容.");
             //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
             if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
                 _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
@@ -539,7 +539,7 @@ namespace klbotlib.Modules
                 return await Processor(tmsg, filterOut);
             else
             {
-                ModulePrint("意外遇到无法处理的消息类型", ConsoleMessageType.Error);
+                ModuleLog("意外遇到无法处理的消息类型", LogType.Error);
                 throw new Exception("意外遇到无法处理的消息类型");
             }
         }
