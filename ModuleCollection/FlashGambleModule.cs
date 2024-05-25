@@ -39,7 +39,7 @@ public class FlashGambleModule : Module
             {
                 case "recall":
                     MessageRecall recall = (MessageRecall)msg;
-                    long target = recall.Context == MessageContext.Group ? recall.GroupID :HostBot.SelfID;
+                    long target = recall.Context == MessageContext.Group ? recall.GroupID :HostBot.SelfId;
                     long msgId = recall.MessageID;
                     long operatorId = recall.OperatorID;
                     MessageCommon origin = (MessageCommon)await Messaging.GetMessageFromID(target, msgId);
@@ -86,7 +86,7 @@ public class FlashGambleModule : Module
         }
         else
         {
-            ModulePrint("未命中，忽略此条撤回或闪照");
+            ModuleLog("未命中，忽略此条撤回或闪照");
             return string.Empty;
         }
     }

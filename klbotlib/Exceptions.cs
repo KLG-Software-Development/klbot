@@ -8,7 +8,8 @@ namespace klbotlib.Exceptions
     /// </summary>
     public class KLBotInitializationException : Exception
     {
-        internal KLBotInitializationException(string msg) : base($"KLBot初始化失败：{msg}") { }
+        /// <inheritdoc/>
+        public KLBotInitializationException(string msg) : base($"KLBot初始化失败：{msg}") { }
     }
     /// <summary>
     /// 模块配置异常
@@ -56,9 +57,5 @@ namespace klbotlib.Exceptions
     internal class MsgMarkerException : Exception
     {
         public MsgMarkerException(string msg) : base($"MsgMarker文本解析异常：{msg}") { }
-    }
-    internal class MiraiException : Exception
-    {
-        public MiraiException(int code, string? msg) : base($"Mirai服务器错误[{code}]：{msg}") { }
     }
 }

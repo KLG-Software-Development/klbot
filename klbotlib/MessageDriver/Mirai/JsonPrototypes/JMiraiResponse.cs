@@ -1,7 +1,6 @@
-﻿using klbotlib.Exceptions;
-using System;
+﻿using System;
 
-namespace klbotlib.MessageClient.Mirai.JsonPrototypes
+namespace klbotlib.MessageDriver.Mirai.JsonPrototypes
 {
     internal class JMiraiResponse
     {

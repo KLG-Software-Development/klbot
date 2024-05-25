@@ -14,7 +14,7 @@ namespace klbotlib.Modules.ModuleUtils
     /// <summary>
     /// 为模块准备的Http帮助类
     /// </summary>
-    public class HttpHelper
+    public class HttpHelper : IKLBotLogUnit
     {
         private CancellationToken _cancellationToken = new CancellationToken();
         private static HttpClientHandler _noProxyHandler = new() { UseProxy = false };
@@ -42,9 +42,11 @@ namespace klbotlib.Modules.ModuleUtils
             {
                 InnerClient.DefaultRequestHeaders.AcceptEncoding.Clear();
                 if (!InnerClient.DefaultRequestHeaders.AcceptEncoding.TryParseAdd(value))
-                    Console.WriteLine($"警告: 设置编码为\"{value}\"失败。编码未改变");
+                    this.LogError($"警告: 设置编码为\"{value}\"失败。编码未改变");
             }
         }
+        /// <inhericdoc/>
+        public string LogUnitName => "General/HttpHelper";
 
         /// <summary>
         /// 创建新的HttpHelper对象
@@ -159,7 +161,6 @@ namespace klbotlib.Modules.ModuleUtils
             using (var ms = new MemoryStream(bin))
             {
                 Bitmap bmp = new Bitmap(Image.FromStream(ms));
-                Console.WriteLine($"完成");
                 return (bmp, size);
             }
         }

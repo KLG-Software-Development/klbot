@@ -1,8 +1,8 @@
-﻿using klbotlib.MessageClient.Mirai.JsonPrototypes;
+﻿using klbotlib.MessageDriver.Mirai.JsonPrototypes;
 using System;
 using System.Collections.Generic;
 
-namespace klbotlib.MessageClient.Mirai
+namespace klbotlib.MessageDriver.Mirai
 {
     //消息工厂类。用来从JMessagePackage对象中生成相应的Message类型
     internal static class MiraiMessageFactory

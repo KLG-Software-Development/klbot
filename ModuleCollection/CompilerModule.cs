@@ -61,7 +61,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
                 if (fileExt == null)
                     return $"不支持语言\"{language}\"";
                 string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
-                ModulePrint($"Response: {response}");
+                ModuleLog($"Response: {response}");
                 JReply? jreply = JsonConvert.DeserializeObject<JReply>(response);
                 if (jreply == null)
                     throw new JsonException("返回结果解析失败：产生了null结果");

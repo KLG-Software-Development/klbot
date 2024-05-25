@@ -26,11 +26,7 @@ namespace klbotlib
             internal set
             {
                 _targetList = (List<long>)value;
-                _targetHashSet = new();
-                foreach (long id in _targetList)
-                {
-                    _targetHashSet.Add(id);
-                }
+                _targetHashSet = [.. _targetList];
             }
         }
         /// <summary>

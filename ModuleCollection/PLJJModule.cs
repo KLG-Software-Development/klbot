@@ -93,10 +93,10 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
         {
             if (ex is TimeoutException)
             {
-                ModulePrint($"URL<{url}>超时，已踢出");
+                ModuleLog($"URL<{url}>超时，已踢出");
                 return UrlStatus.Timeout;
             }
-            ModulePrint($"URL<{url}>不可用：{ex.Message}");
+            ModuleLog($"URL<{url}>不可用：{ex.Message}");
             return UrlStatus.Error;
         }
     }

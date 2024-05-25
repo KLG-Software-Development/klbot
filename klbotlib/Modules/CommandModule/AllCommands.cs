@@ -354,16 +354,6 @@ internal class StatusAllCmd : InfoCommand
         return Task.FromResult(_sb.ToString());
     }
 }
-internal class PtiCmd : AssignmentCommand<int>
-{
-    public override AuthorType AuthorityRequirment => AuthorType.开发者;
-    public override string PropertyName => "轮询时间间隔";
-    public override string CommandString => "pti";
-    public override string ParameterDescription => "间隔时间(ms)";
-    public override int GetBotProperty(KLBot bot) => bot.PollingTimeInterval;
-    public override void SetBotProperty(KLBot bot, int value) => bot.PollingTimeInterval = value;
-    public override bool TryParseCmdStringValue(string valueString, out int value) => int.TryParse(valueString, out value);
-}
 [DefaultCommand]
 internal class ModuleSwitchCmd : Command
 {

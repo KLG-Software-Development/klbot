@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace klbotlib.MessageClient.Mirai.JsonPrototypes
+namespace klbotlib.MessageDriver.Mirai.JsonPrototypes
 {
     internal class JMiraiFetchMessageResponse : JMiraiResponse
     {

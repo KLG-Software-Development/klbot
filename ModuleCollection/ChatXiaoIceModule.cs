@@ -69,7 +69,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
     public sealed override string FriendlyName => "微软小冰模块";
     /// <inheritdoc/>
     public sealed override string? Filter(MessagePlain msg) 
-        => msg.TargetID.Count == 1 && msg.TargetID.Contains(HostBot.SelfID) 
+        => msg.TargetID.Count == 1 && msg.TargetID.Contains(HostBot.SelfId) 
         ? "ok" 
         : null;
     /// <inheritdoc/>
@@ -103,12 +103,12 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
             JChatterBotReply? jreply = JsonConvert.DeserializeObject<JChatterBotReply>(reply);
             if (jreply == null)
             {
-                ModulePrint($"请求成功，但无法从服务器返回内容中构建回复对象，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");
+                ModuleLog($"请求成功，但无法从服务器返回内容中构建回复对象，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");
                 return string.Empty;
             }
             else if (jreply.content == null)
             {
-                ModulePrint($"请求成功且已从服务器返回内容中构建回复对象，但内容字段为null，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");
+                ModuleLog($"请求成功且已从服务器返回内容中构建回复对象，但内容字段为null，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");
                 return string.Empty;
             }
             return jreply.content;

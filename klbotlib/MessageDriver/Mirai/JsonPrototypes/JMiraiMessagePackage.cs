@@ -1,4 +1,4 @@
-﻿namespace klbotlib.MessageClient.Mirai.JsonPrototypes
+﻿namespace klbotlib.MessageDriver.Mirai.JsonPrototypes
 {
     /// <summary>
     /// 直接从JSON解析出的消息包对象
