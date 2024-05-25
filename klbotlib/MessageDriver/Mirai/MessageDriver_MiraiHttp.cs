@@ -32,54 +32,12 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     public MessageDriver_MiraiHttp(string serverUrl)
     {
         ServerURL = serverUrl;
-        // 开启轮询
+        _ = FetchMessagesDaemon(); // 开启轮询
     }
 
     /// <inheritdoc/>
     public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => { };
 
-    /// <summary>
-    /// 获取消息并逐个触发消息接送事件
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="JsonDeserializationException"></exception>
-    public async Task FetchMessages()
-    {
-        JMiraiFetchMessageResponse? obj;
-        string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
-        try
-        {
-            //构建直接JSON对象
-            obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
-            //验证返回码
-            if (obj.code != 0)
-                throw new MiraiException(obj.code, obj.msg);
-        }
-        catch (Exception ex)
-        {
-            this.LogError($"消息列表获取失败：JSON解析失败。{ex.Message}");
-            await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-            this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
-            return;
-        }
-        if (obj == null || obj.data == null)
-            throw new JsonDeserializationException("JSON解析失败。构建的对象为null。服务器响应：", response);
-        foreach (JMiraiMessagePackage jmsg in obj.data)
-        {
-            try
-            {
-                var msg = MiraiMessageFactory.BuildMessage(jmsg);
-                OnMessageReceived.Invoke(this, new(DateTime.Now, msg));
-            }
-            catch (Exception ex)
-            {
-                this.LogError($"Message对象构造失败：{ex.Message}");
-                await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
-                this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
-                continue;
-            }
-        }
-    }
     /// <inheritdoc/>
     public async Task<Message> GetMessageFromId(long target, long messageId)
     {
@@ -214,8 +172,53 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     }
 
     //**** Helper函数 ****
-    // 发送给定消息.
-    // 发送给定消息.
+    // 无限获取消息并触发事件
+    private async Task FetchMessagesDaemon()
+    {
+        this.LogInfo("Fetch messages daemon started.");
+        while (true)
+        {
+            await FetchMessages();
+        }
+    }
+    // 获取消息并逐个触发消息接送事件
+    private async Task FetchMessages()
+    {
+        JMiraiFetchMessageResponse? obj;
+        string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
+        try
+        {
+            //构建直接JSON对象
+            obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
+            //验证返回码
+            if (obj.code != 0)
+                throw new MiraiException(obj.code, obj.msg);
+        }
+        catch (Exception ex)
+        {
+            this.LogError($"消息列表获取失败：JSON解析失败。{ex.Message}");
+            await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+            this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
+            return;
+        }
+        if (obj == null || obj.data == null)
+            throw new JsonDeserializationException("JSON解析失败。构建的对象为null。服务器响应：", response);
+        foreach (JMiraiMessagePackage jmsg in obj.data)
+        {
+            try
+            {
+                var msg = MiraiMessageFactory.BuildMessage(jmsg);
+                OnMessageReceived.Invoke(this, new(DateTime.Now, msg));
+            }
+            catch (Exception ex)
+            {
+                this.LogError($"Message对象构造失败：{ex.Message}");
+                await File.AppendAllTextAsync(_errorMsgLogPath, $"[{DateTime.Now:G}]\n{response}");
+                this.LogError($"错误源JSON字符串已记录至“{_errorMsgLogPath}”");
+                continue;
+            }
+        }
+    }
     // 检查上一个发送任务是否正确完成，若失败则根据异常决定是否尝试使机器人发送错误消息
     private async Task CheckNetworkTaskResult(Exception? exception, Module module, long userId, long groupId, MessageContext context)
     {
