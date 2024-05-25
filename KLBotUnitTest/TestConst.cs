@@ -17,6 +17,7 @@ static class TestConst
     public static readonly IConfigurationRoot DefaultConfig = new ConfigurationBuilder().AddInMemoryCollection(
         new ConfigValues()
         {
+            { "key", "7355608" },
             { "targets", "7355608" },
             { "cache_dir", "cache" },
             { "save_dir", "save" }
