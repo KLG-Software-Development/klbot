@@ -139,15 +139,6 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => {};
 
     /// <inheritdoc/>
-    public Task<List<Message>?> FetchMessages()
-    {
-        if (_msgBuffer.Count == 0)
-            return Task.FromResult<List<Message>?>(null);
-        List<Message> msgs = [.. _msgBuffer];
-        return Task.FromResult<List<Message>?>(msgs);
-    }
-
-    /// <inheritdoc/>
     public async Task<Message> GetMessageFromId(long target, long messageId)
     {
         return await CallApiAsync<JOneBotMessageObj, Message>($"get_msg", $"{{message_id:{messageId}}}", data => data.ToMessage())

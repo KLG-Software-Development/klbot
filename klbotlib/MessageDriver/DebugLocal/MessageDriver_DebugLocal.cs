@@ -91,13 +91,6 @@ public class MessageDriver_Debug : IMessageDriver
     public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => { };
 
     /// <inheritdoc/>
-    public Task<List<Message>?> FetchMessages()
-    {
-        List<Message> msgs = new(_msgBuffer);
-        _msgBuffer.Clear();  //清理缓冲区
-        return Task.FromResult<List<Message>?>(msgs);
-    }
-    /// <inheritdoc/>
     public Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
     {
         SendMessageCallback.Invoke(module, context, userId, groupId, content);

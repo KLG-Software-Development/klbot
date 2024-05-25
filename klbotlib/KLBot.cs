@@ -38,14 +38,6 @@ namespace klbotlib
         /// </summary>
         public KLBotDiagnosticData DiagData { get; } = new KLBotDiagnosticData();
         /// <summary>
-        /// 此KLBot的轮询时间间隔（ms）。默认为250ms。过高的值会造成KLBot反应迟钝；过低的值可能会给mirai服务器造成压力。
-        /// </summary>
-        public int PollingTimeInterval { get; set; } = 250;
-        /// <summary>
-        /// 此KLBot的消息循环Flag。设为false时会停止消息循环。
-        /// </summary>
-        public bool IsLoopOn { get; set; } = false;
-        /// <summary>
         /// 是否开启安静模式。开启时ObjectPrint()不打印任何内容
         /// </summary>
         public bool IsSilent { get; } = false;

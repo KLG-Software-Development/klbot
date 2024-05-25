@@ -32,6 +32,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     public MessageDriver_MiraiHttp(string serverUrl)
     {
         ServerURL = serverUrl;
+        // 开启轮询
     }
 
     /// <inheritdoc/>
