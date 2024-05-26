@@ -267,29 +267,31 @@ namespace klbotlib.Modules
         }
         Task<Message> IMessagingAPI.GetMessageFromID(long target, long messageId)
             => HostBot.GetMessageFromId(target, messageId);
-        Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, string content)
-            => HostBot.SendMessage(this, context, userId, groupId, content);
-        async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, string content)
+        Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, Message msg)
+            => HostBot.SendMessage(this, context, userId, groupId, msg);
+        async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, Message msg)
         {
             //统一Assert
             AssertAttachedStatus(true);
             switch (originMsg.Context)
             {
                 case MessageContext.Group:
-                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
+                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderID, originMsg.GroupID, msg);
                     break;
                 case MessageContext.Temp:
                 case MessageContext.Private:
-                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderID, originMsg.GroupID, content);
+                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderID, originMsg.GroupID, msg);
                     break;
             }
         }
-        Task IMessagingAPI.SendGroupMessage(long groupId, string content)
-            => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, content);
-        Task IMessagingAPI.SendTempMessage(long userId, long groupId, string content)
-            => HostBot.SendMessage(this, MessageContext.Group, userId, groupId, content);
-        Task IMessagingAPI.SendPrivateMessage(long userId, string content)
-            => HostBot.SendMessage(this, MessageContext.Private, userId, -1, content);
+        async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, string plainMsg)
+            => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(HostBot.SelfId, originMsg.GroupID, plainMsg));
+        Task IMessagingAPI.SendGroupMessage(long groupId, Message msg)
+            => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, msg);
+        Task IMessagingAPI.SendTempMessage(long userId, long groupId, Message msg)
+            => HostBot.SendMessage(this, MessageContext.Group, userId, groupId, msg);
+        Task IMessagingAPI.SendPrivateMessage(long userId, Message msg)
+            => HostBot.SendMessage(this, MessageContext.Private, userId, -1, msg);
         [Obsolete]
         Task IMessagingAPI.UploadFile(MessageContext context, long groupID, string uploadPath, string filePath)
         {

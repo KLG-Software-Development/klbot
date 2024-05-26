@@ -57,33 +57,39 @@ namespace klbotlib
         /// <param name="context">发送的消息上下文类型</param>
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        Task SendMessage(MessageContext context, long userId, long groupId, string content);
+        /// <param name="msg">待发送的消息</param>
+        Task SendMessage(MessageContext context, long userId, long groupId, Message msg);
         /// <summary>
         /// 回复消息接口
         /// </summary>
         /// <param name="originMsg">待回复的原始消息</param>
-        /// <param name="content">回复内容</param>
-        Task ReplyMessage(MessageCommon originMsg, string content);
+        /// <param name="msg">回复内容</param>
+        Task ReplyMessage(MessageCommon originMsg, Message msg);
+        /// <summary>
+        /// 回复消息接口
+        /// </summary>
+        /// <param name="originMsg">待回复的原始消息</param>
+        /// <param name="plainMsg">纯文本回复内容</param>
+        Task ReplyMessage(MessageCommon originMsg, string plainMsg);
         /// <summary>
         /// 发送群消息接口
         /// </summary>
         /// <param name="groupId">目标群组ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        Task SendGroupMessage(long groupId, string content);
+        /// <param name="msg">待发送的消息</param>
+        Task SendGroupMessage(long groupId, Message msg);
         /// <summary>
         /// 发送临时消息接口
         /// </summary>
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        Task SendTempMessage(long userId, long groupId, string content);
+        /// <param name="msg">待发送的消息</param>
+        Task SendTempMessage(long userId, long groupId, Message msg);
         /// <summary>
         /// 发送私聊消息接口
         /// </summary>
         /// <param name="userId">目标用户ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        Task SendPrivateMessage(long userId, string content);
+        /// <param name="msg">待发送的消息</param>
+        Task SendPrivateMessage(long userId, Message msg);
         /// <summary>
         /// 上传文件接口
         /// </summary>

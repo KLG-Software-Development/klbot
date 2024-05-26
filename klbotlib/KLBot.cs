@@ -213,34 +213,34 @@ namespace klbotlib
         /// <param name="context">发送的消息上下文类型</param>
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
-        /// <param name="content">待编译MsgMarker文本</param>
-        internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
-            => await _msgDriver.SendMessage(module, context, userId, groupId, content);
+        /// <param name="msg">待编译MsgMarker文本</param>
+        internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
+            => await _msgDriver.SendMessage(module, context, userId, groupId, msg);
         /// <summary>
         /// 发送群消息
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="groupId">目标群组ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        internal Task SendGroupMessage(Module module, long groupId, string content)
-            => SendMessage(module, MessageContext.Group, -1, groupId, content);
+        /// <param name="msg">MsgMarker文本</param>
+        internal Task SendGroupMessage(Module module, long groupId, Message msg)
+            => SendMessage(module, MessageContext.Group, -1, groupId, msg);
         /// <summary>
         /// 发送临时消息
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        internal Task SendTempMessage(Module module, long userId, long groupId, string content)
-            => SendMessage(module, MessageContext.Group, userId, groupId, content);
+        /// <param name="msg">MsgMarker文本</param>
+        internal Task SendTempMessage(Module module, long userId, long groupId, Message msg)
+            => SendMessage(module, MessageContext.Group, userId, groupId, msg);
         /// <summary>
         /// 发送私聊消息
         /// </summary>
         /// <param name="module">编译MsgMarker时使用的模块</param>
         /// <param name="userId">目标用户ID</param>
-        /// <param name="content">MsgMarker文本</param>
-        internal Task SendPrivateMessage(Module module, long userId, string content)
-            => SendMessage(module, MessageContext.Group, userId, -1, content);
+        /// <param name="msg">MsgMarker文本</param>
+        internal Task SendPrivateMessage(Module module, long userId, Message msg)
+            => SendMessage(module, MessageContext.Group, userId, -1, msg);
         /// <summary>
         /// 上传群文件
         /// </summary>
@@ -257,17 +257,40 @@ namespace klbotlib
         /// </summary>
         /// <param name="module">调用模块</param>
         /// <param name="originMsg">待回复的原始消息</param>
-        /// <param name="content">回复内容</param>
-        internal async Task ReplyMessage(Module module, Message originMsg, string content)
+        /// <param name="msg">回复内容</param>
+        internal async Task ReplyMessage(Module module, Message originMsg, Message msg)
         {
             if (originMsg is MessageCommon originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, content);
+                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, msg);
             else
             {
                 switch (originMsg.Context)
                 {
                     case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, content);
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, msg);
+                        return;
+                    default:
+                        module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
+                        return;
+                }
+            }
+        }
+        /// <summary>
+        /// 以纯文本回复消息
+        /// </summary>
+        /// <param name="module">调用模块</param>
+        /// <param name="originMsg">待回复的原始消息</param>
+        /// <param name="plain">回复的纯文本内容</param>
+        internal async Task ReplyMessage(Module module, Message originMsg, string plain)
+        {
+            if (originMsg is MessageCommon originMsgCommon)
+                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, new MessagePlain(SelfId, originMsg.GroupID, plain));
+            else
+            {
+                switch (originMsg.Context)
+                {
+                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, new MessagePlain(SelfId, originMsg.GroupID, plain));
                         return;
                     default:
                         module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");

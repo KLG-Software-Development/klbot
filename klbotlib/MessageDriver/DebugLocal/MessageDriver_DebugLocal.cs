@@ -22,7 +22,7 @@ public class MessageDriver_Debug : IMessageDriver
     /// <summary>
     /// 机器人发送消息时触发的回调。参数分别为发送消息的来源模块、消息上下文、目标用户ID、目标群聊ID、MsgMarker内容
     /// </summary>
-    public Action<Module, MessageContext, long, long, string> SendMessageCallback { get; private set; }
+    public Action<Module, MessageContext, long, long, Message> SendMessageCallback { get; private set; }
     /// <summary>
     /// 机器人上传文件时触发的回调。参数为上传文件操作的来源模块、群聊ID、MsgMarker内容
     /// </summary>
@@ -46,7 +46,7 @@ public class MessageDriver_Debug : IMessageDriver
     /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
     /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
     public MessageDriver_Debug(long selfId, Action<Message> addMsgCallback, 
-        Action<Module, MessageContext, long, long, string> sendMsgCallback, 
+        Action<Module, MessageContext, long, long, Message> sendMsgCallback, 
         Action<Module, long, string, string> uploadFileCallback,
         Action<Module, long, long, uint> muteCallback,
         Action<Module, long, long> unmuteCallback)
@@ -91,9 +91,9 @@ public class MessageDriver_Debug : IMessageDriver
     public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => { };
 
     /// <inheritdoc/>
-    public Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
     {
-        SendMessageCallback.Invoke(module, context, userId, groupId, content);
+        SendMessageCallback.Invoke(module, context, userId, groupId, msg);
         return Task.CompletedTask;
     }
     /// <inheritdoc/>

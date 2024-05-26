@@ -109,8 +109,8 @@ start:
         PrintVerboseInfoIfRequired(msg);
     }
     //发送消息
-    private static void SendMsgCallback_PrintInfo(Module module, MessageContext context, long userId, long groupId, string content)
-        => Console.WriteLine(GetMessageDebugInfo(module, context, userId, groupId, content));
+    private static void SendMsgCallback_PrintInfo(Module module, MessageContext context, long userId, long groupId, Message msg)
+        => Console.WriteLine(GetMessageDebugInfo(module, context, userId, groupId, msg.ToString()));
     //上传文件
     private static void UploadCallback_PrintInfo(Module module, long groupId, string uploadPath, string filePath)
         => Console.WriteLine(GetUploadDebugInfo(module, groupId, uploadPath, filePath));
