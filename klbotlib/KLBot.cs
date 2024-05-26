@@ -413,7 +413,7 @@ namespace klbotlib
                 string? cmd = Console.ReadLine();
                 try
                 {
-                    if (cmd == "")
+                    if (cmd == "" || cmd == null)
                         continue;  //不执行操作
                     else if (cmd == "quit")
                         exitFlag = true;
@@ -485,6 +485,7 @@ namespace klbotlib
                 catch (Exception ex)
                 {
                     this.LogError($"命令执行意外终止：{ex.Message}");
+                    this.DebugLog(ex.ToString());
                 }
             }
             //从容退出
