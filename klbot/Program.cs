@@ -75,8 +75,8 @@ class Program
         string? configPath = args.Length == 0 ? null : args[0];
         Init(configPath);
 start:
-        long queryCounterCache = 0;
-        int fatalFailureCounter = 0;
+        DateTime lastErrorTime = DateTime.MinValue;
+        int serialErrorCounter = 0;
         KLBot? klg = null;
         try
         {
@@ -139,11 +139,8 @@ start:
             Console.WriteLine(ex.Message);
             Console.WriteLine($"意外异常：[{ex.GetType()}] {ex.Message}\n调用栈：\n{ex.StackTrace}\n");
             Console.ResetColor();
-            if (queryCounterCache == klg.DiagData.SuccessPackageCount)   //sucess_counter距离上次出错之后没有发生变化，意味着本次出错紧接着上一次
-                fatalFailureCounter++;
-            else                                         //否则意味着并非基本错误，此时优先保持服务运作，基本错误计数器归零
-                fatalFailureCounter = 0;
-            if (fatalFailureCounter > 10)
+            serialErrorCounter = DateTime.Now - lastErrorTime < TimeSpan.FromSeconds(6) ? serialErrorCounter + 1 : 0;
+            if (serialErrorCounter > 10)
             {
                 Console.WriteLine("连续10次发生致命错误。将停止重试并有序退出");
                 if (klg != null)
@@ -152,7 +149,6 @@ start:
             }
             else
             {
-                queryCounterCache = klg.DiagData.SuccessPackageCount;
                 if (klg != null)
                     klg.OnExit();
                 Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");

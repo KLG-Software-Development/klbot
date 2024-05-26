@@ -68,14 +68,8 @@ public class MessageDriver_Debug : IMessageDriver
         foreach (var msg in msgs)
         {
             _msgBuffer.Add(msg);
-            OnMessageReceived.Invoke(null, new(DateTime.Now, msg));
-        }
-        foreach (var msg in msgs)
-        {
             _msgCache.Add(_msgCache.Count, msg);
-        }
-        foreach (var msg in msgs)
-        {
+            OnMessageReceived.Invoke(this, new(DateTime.Now, msg));
             AddMessageCallback.Invoke(msg);
         }
     }

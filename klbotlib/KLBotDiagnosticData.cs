@@ -13,10 +13,6 @@ namespace klbotlib
         /// </summary>
         public Module? LastUsedModule { get; internal set; }
         /// <summary>
-        /// KLBot初始化后，成功进行查询的总次数
-        /// </summary>
-        public long SuccessPackageCount { get; internal set; }
-        /// <summary>
         /// KLBot初始化后，接收到的消息总数
         /// </summary>
         public long ReceivedMessageCount { get; internal set; }
@@ -33,7 +29,7 @@ namespace klbotlib
         /// </summary>
         public string GetSummaryString()
         {
-            string re = $"已发起{SuccessPackageCount}次查询；共收到{ReceivedMessageCount}条消息；经过各模块处理{ProcessedMessageCount}次";
+            string re = $"共收到{ReceivedMessageCount}条消息；经过各模块处理{ProcessedMessageCount}次";
             if (LastUsedModule != null)
             {
                 re += $"；最后一个参与处理的模块为{ LastUsedModule}";
