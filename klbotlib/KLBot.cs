@@ -339,6 +339,7 @@ namespace klbotlib
         //消息事件处理
         private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
         {
+            DiagData.ReceivedMessageCount++;
             Message msg = e.Message;
             // 私聊/临时会话需过滤，范围为目标群组
             if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msg.GroupId))
@@ -382,7 +383,6 @@ namespace klbotlib
         public async Task DefaultLoop()
         {
             object sync = new object();
-            DiagData.SuccessPackageCount = 0;
             //开始之前向服务器验证身份
             this.LogTask("正在向服务器验证身份...");
             bool verifyResult = await _msgDriver.Verify(Key);

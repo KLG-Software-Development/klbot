@@ -6,10 +6,11 @@ namespace KLBotUnitTest;
 
 static class TestConst
 {
-    public const long SelfID = 33550336;
+    public const long SelfId = 33550336;
+    public const long TargetGroupId = 7355608;
     public const int CoreModuleCount = 1;   //核心模块数量
     public static MessageDriver_Debug GetTestDriver()
-        => new(SelfID, _ => { },
+        => new(SelfId, _ => { },
             (_, _, _, _, _) => { },
             (_, _, _, _) => { },
             (_, _, _, _) => { },
@@ -18,7 +19,7 @@ static class TestConst
         new ConfigValues()
         {
             { "key", "7355608" },
-            { "targets", "7355608" },
+            { "targets", $"{TargetGroupId}" },
             { "cache_dir", "cache" },
             { "save_dir", "save" }
         })
