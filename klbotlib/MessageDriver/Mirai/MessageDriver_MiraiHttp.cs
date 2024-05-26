@@ -75,24 +75,13 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// <param name="context">上下文</param>
     /// <param name="userId">目标用户ID</param>
     /// <param name="groupId">目标群组ID</param>
-    /// <param name="content">MsgMarker内容</param>
+    /// <param name="msg">MsgMarker内容</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
-    public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
     {
         Exception? exception = null;
-        //编译MsgMarker文本到json消息链
-        string chainJson;
-        try
-        {
-            chainJson = MiraiMsgMarkerTranslater.CompileMessageChainJson(content);
-        }
-        catch (Exception ex)
-        {
-            exception = ex;
-            chainJson = MiraiJsonHelper.MiraiMessageElementBuilder.BuildPlainElement($"{module.ModuleID}返回的MsgMarker文本不符合语法。异常信息：\n{ex.GetType().Name}：{ex.Message}\n\n调用栈：\n{ex.StackTrace}");
-        }
         //创建完整JSON字符串
-        string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
+        string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, msg);
         await MiraiNetworkHelper.TrySendMessage(ServerURL, context, fullJson);
         await CheckNetworkTaskResult(exception, module, userId, groupId, context);
     }
@@ -226,8 +215,9 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         {
             if (exception is MiraiException) //极可能是消息本身的问题，可以尝试发送错误信息
             {
-                string chainJson = MiraiJsonHelper.MiraiMessageElementBuilder.BuildPlainElement($"{module.ModuleID}返回的消息不受mirai服务器认可。\n异常信息：\n{exception.Message}");
-                string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, chainJson);
+                string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(
+                    userId, groupId, context,
+                    new MessagePlain(userId, groupId, $"{module.ModuleID}返回的消息不受mirai服务器认可。\n异常信息：\n{exception.Message}"));
                 await MiraiNetworkHelper.TrySendMessage(ServerURL, context, fullJson);
             }
         }

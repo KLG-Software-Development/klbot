@@ -38,8 +38,8 @@ public interface IMessageDriver : IKLBotLogUnit
     /// <param name="context">发送的消息上下文类型</param>
     /// <param name="userId">用户ID</param>
     /// <param name="groupId">群组ID</param>
-    /// <param name="content">待编译MsgMarker文本</param>
-    Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content);
+    /// <param name="msg">待发送消息</param>
+    Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg);
     /// <summary>
     /// 上传群文件接口
     /// </summary>

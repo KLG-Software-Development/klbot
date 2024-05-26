@@ -8,20 +8,23 @@ namespace klbotlib.MessageDriver.Mirai
         //构建完整消息
         internal static class MiraiMessageJsonBuilder
         {
-            internal static string BuildPrivateMessageJson(long user_id, string chain)
-                => $"{{\"target\":\"{user_id}\",\"messageChain\":[{chain}]}}";
-            internal static string BuildGroupMessageJson(long group_id, string chain)
-                => $"{{\"target\":\"{group_id}\",\"messageChain\":[{chain}]}}";
-            internal static string BuildTempMessageJson(long user_id, long group_id, string chain)
-                => $"{{\"qq\":\"{user_id}\",\"group\":\"{group_id}\",\"messageChain\":[{chain}]}}";
-            internal static string BuildMessageJson(long user_id, long group_id, MessageContext context, string chain)
+            internal static string BuildPrivateMessageJson(long userId, string chain)
+                => $"{{\"target\":\"{userId}\",\"messageChain\":[{chain}]}}";
+            internal static string BuildGroupMessageJson(long groupId, string chain)
+                => $"{{\"target\":\"{groupId}\",\"messageChain\":[{chain}]}}";
+            internal static string BuildTempMessageJson(long userId, long groupId, string chain)
+                => $"{{\"qq\":\"{userId}\",\"group\":\"{groupId}\",\"messageChain\":[{chain}]}}";
+            private static string BuildMessageJsonChain(Message msg)
+                => throw new NotImplementedException();
+            internal static string BuildMessageJson(long userId, long groupId, MessageContext context, Message msg)
             {
+                string chain = BuildMessageJsonChain(msg);
                 if (context == MessageContext.Group)
-                    return MiraiJsonHelper.MiraiMessageJsonBuilder.BuildGroupMessageJson(group_id, chain);
+                    return BuildGroupMessageJson(groupId, chain);
                 else if (context == MessageContext.Private)
-                    return MiraiJsonHelper.MiraiMessageJsonBuilder.BuildPrivateMessageJson(user_id, chain);
+                    return BuildPrivateMessageJson(userId, chain);
                 else if (context == MessageContext.Temp)
-                    return MiraiJsonHelper.MiraiMessageJsonBuilder.BuildTempMessageJson(user_id, group_id, chain);
+                    return BuildTempMessageJson(userId, groupId, chain);
                 else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
             }
         }
@@ -35,10 +38,10 @@ namespace klbotlib.MessageDriver.Mirai
                 else
                     return "{\"type\":\"Plain\",\"text\":\"" + HttpUtility.JavaScriptStringEncode(text) + "\"}";
             }
-            internal static string BuildFaceElement(string face_name)
-                => "{\"type\":\"Face\",\"name\":\"" + face_name + "\"}";
-            internal static string BuildTagElement(long target_id)
-                => "{\"type\":\"At\",\"target\":\"" + target_id + "\"}";
+            internal static string BuildFaceElement(string faceName)
+                => "{\"type\":\"Face\",\"name\":\"" + faceName + "\"}";
+            internal static string BuildTagElement(long targetId)
+                => "{\"type\":\"At\",\"target\":\"" + targetId + "\"}";
             internal static string BuildImageElement(string key, string value)
                 => "{\"type\":\"Image\",\"" + key + "\":\"" + HttpUtility.JavaScriptStringEncode(value) + "\"}";
             internal static string BuildVoiceElement(string key, string value)

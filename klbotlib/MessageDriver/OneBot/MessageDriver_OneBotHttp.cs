@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using klbotlib.Events;
 using klbotlib.Extensions;
@@ -37,10 +39,6 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     private void OneBotEventLog(object? obj, OneBotEventArgs e)
     {
         this.DebugLog($"[Event][{e.Time.AsUnixTimestamp():yyMMdd/HH:mm:ss:fff}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
-        foreach (var msg in e.RawEventData.Message)
-        {
-            this.Log(msg.ToString());
-        }
     }
 
     // 将OneBot事件路由至MessageDriver事件，从而通知KLBot
@@ -158,20 +156,25 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     /// <inheritdoc/>
-    public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, string content)
+    public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
     {
-        var encoded = JsonEncodedText.Encode(content);
+        string? msgJson = OneBotJsonBuilder.CompileMessageJson(msg);
+        if (msgJson == null)
+        {
+            this.LogWarning($"Failed to compile message of type \"{msg.GetType()}\" to JSON");
+            return;
+        }
         switch (context)
         {
             case MessageContext.Private:
-                await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{\"user_id\":{userId},\"message\":\"{encoded.Value}\"}}", null);
+                await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{\"user_id\":{userId},\"message\":{msgJson}}}", null);
                 return;
             case MessageContext.Group:
-                await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{\"group_id\":{groupId},\"message\":\"{encoded.Value}\"}}", null);
+                await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{\"group_id\":{groupId},\"message\":{msgJson}}}", null);
                 return;
             case MessageContext.Temp:
-                await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{\"user_id\":{userId},\"group_id\":{groupId},\"message\":\"{encoded.Value}\"}}", null);
-                return;            
+                await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{\"user_id\":{userId},\"group_id\":{groupId},\"message\":{msgJson}}}", null);
+                return;
             default:
                 throw new Exception($"Unsupported message context: {context}");
         }

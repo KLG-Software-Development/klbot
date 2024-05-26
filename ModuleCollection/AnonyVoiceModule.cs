@@ -106,7 +106,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                 string mpeg_b64 = reply.data[_prefix.Length..];
                 //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                 //string b64_amr = ConvertToAmr();
-                Messaging.SendGroupMessage(_targetGroups[msg.SenderID], @"\voice:\base64:" + mpeg_b64);
+                Messaging.SendGroupMessage(_targetGroups[msg.SenderID], new MessageVoice(0, 0, mpeg_b64)); // 当前MessageVoice不支持直接包含语音数据
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
                 return Task.FromResult("已发送");
