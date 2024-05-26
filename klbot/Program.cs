@@ -41,7 +41,7 @@ class Program
         Version? exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
         Version? libVersion = klbotlib.Info.CoreLibInfo.GetLibVersion();
         Version? mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion();
-        Console.WriteLine($"KLBot via mirai");
+        Console.WriteLine($"KLBot");
         Console.WriteLine($"exe version: {exeVersion.Major}.{exeVersion.Minor} Build {exeVersion.ToKLGBuildString()}");
         Console.WriteLine($"corelib version: {libVersion.Major}.{libVersion.Minor} Build {libVersion.ToKLGBuildString()}");
         Console.WriteLine($"MC version: {mcVersion.Major}.{mcVersion.Minor} Build {mcVersion.ToKLGBuildString()}\n");

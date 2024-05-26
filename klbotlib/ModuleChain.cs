@@ -27,7 +27,7 @@ namespace klbotlib
                 return $"{module_name}#{moduleIndex}";
         }
         //计算模块ID
-        internal string CalcModuleID(Module module)
+        internal string CalcModuleId(Module module)
         {
             string name = module.ModuleName;
             if (!_moduleCountByName.TryGetValue(name, out int count))
@@ -43,7 +43,7 @@ namespace klbotlib
         {
             foreach (var m in modules)
             {
-                _indexById.Add(m.ModuleID, this._modules.Count);      //添加ID到ID-索引字典
+                _indexById.Add(m.ModuleId, this._modules.Count);      //添加ID到ID-索引字典
                 if (!_moduleCountByName.ContainsKey(m.ModuleName))    //递增模块类型-数量字典
                     _moduleCountByName.Add(m.ModuleName, 1);
                 else

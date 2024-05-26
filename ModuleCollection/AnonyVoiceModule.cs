@@ -66,7 +66,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         if (msg.Context is MessageContext.Temp or MessageContext.Private)
         {
             //初始请求
-            if (IsNewOrIdleUser(msg.SenderID))
+            if (IsNewOrIdleUser(msg.SenderId))
             {
                 if (msg.Context == MessageContext.Temp && text == "说骚话")
                     return "request";
@@ -74,7 +74,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                     return "private request";
             }
             //转语音请求
-            else if (_userStat.TryGetValue(msg.SenderID, out UserStatus value) && value == UserStatus.ReadyToSendVoice)
+            else if (_userStat.TryGetValue(msg.SenderId, out UserStatus value) && value == UserStatus.ReadyToSendVoice)
                 return "content";
         }
         else if (text.StartsWith("设置音色 "))
@@ -87,14 +87,14 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         switch (filterOut)
         {
             case "request":     //临时会话 发起请求
-                ToWaitForTextState(msg.SenderID, msg.GroupID);
+                ToWaitForTextState(msg.SenderId, msg.GroupId);
                 return Task.FromResult("准备好了，你说");
             case "private request":     //私聊会话 发起请求。这种情况需要额外解析一个群号
                 if (long.TryParse(_priReqPat.Match(msg.Text).Groups[1].Value, out long group_id))
-                    ToWaitForTextState(msg.SenderID, group_id);
+                    ToWaitForTextState(msg.SenderId, group_id);
                 return Task.FromResult("准备好了，你说");
             case "content":
-                _userStat[msg.SenderID] = UserStatus.Idle;
+                _userStat[msg.SenderId] = UserStatus.Idle;
                 Messaging.ReplyMessage(msg, "正在薅羊毛...");
                 string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={msg.Text.Trim()}";
                 string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
@@ -106,7 +106,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                 string mpeg_b64 = reply.data[_prefix.Length..];
                 //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                 //string b64_amr = ConvertToAmr();
-                Messaging.SendGroupMessage(_targetGroups[msg.SenderID], new MessageVoice(0, 0, mpeg_b64)); // 当前MessageVoice不支持直接包含语音数据
+                Messaging.SendGroupMessage(_targetGroups[msg.SenderId], new MessageVoice(0, 0, mpeg_b64)); // 当前MessageVoice不支持直接包含语音数据
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
                 return Task.FromResult("已发送");

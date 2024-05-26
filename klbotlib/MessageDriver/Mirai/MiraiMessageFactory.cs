@@ -61,7 +61,7 @@ namespace klbotlib.MessageDriver.Mirai
             {
                 foreach (var id in targets)
                 {
-                    retCommon.AddTargetID(id);
+                    retCommon.AddTargetId(id);
                 }
                 ret = retCommon;
             }
@@ -133,15 +133,15 @@ namespace klbotlib.MessageDriver.Mirai
                 case "FriendMessage":
                     msg.Context = MessageContext.Private;
                     if (msg is MessageCommon msgc)
-                        msgc.SenderID = msgPackage.sender.id;
+                        msgc.SenderId = msgPackage.sender.id;
                     break;
                 case "TempMessage":
                     msg.Context = MessageContext.Temp;
-                    msg.GroupID = msgPackage.sender.group.id;
+                    msg.GroupId = msgPackage.sender.group.id;
                     break;
                 case "GroupMessage":
                     msg.Context = MessageContext.Group;
-                    msg.GroupID = msgPackage.sender.group.id;
+                    msg.GroupId = msgPackage.sender.group.id;
                     break;
                 case "GroupRecallEvent":
                 case "BotMuteEvent":
@@ -149,7 +149,7 @@ namespace klbotlib.MessageDriver.Mirai
                 case "BotUnmuteEvent":
                 case "MemberUnmuteEvent":
                     msg.Context = MessageContext.Group;
-                    msg.GroupID = msgPackage.@operator.group.id;
+                    msg.GroupId = msgPackage.@operator.group.id;
                     break;
             }
         }

@@ -27,10 +27,10 @@ public class TestMessage
             string s = m.ToString();
             Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nFrom: {senderId}\nText: {text}", s, "检查MessagePlain.ToString()");
             var p = m as MessagePlain;
-            p.AddTargetID(targetId);
+            p.AddTargetId(targetId);
             s = m.ToString();
             Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nFrom: {senderId}\nTarget[0]: {targetId}\nText: {text}", s, "检查MessagePlain.ToString()");
-            p.AddTargetID(msgId);
+            p.AddTargetId(msgId);
             s = m.ToString();
             Assert.AreEqual($"Type: MessagePlain\nContext: {context}\nFrom: {senderId}\nTarget[0]: {targetId}\nTarget[1]: {msgId}\nText: {text}", s, "检查MessagePlain.ToString()");
             // MessageImage
@@ -100,7 +100,7 @@ public class TestMessage
         long[] ids = new long[] { 1, 2, 3};
         MessagePlain plain = new(MessageContext.Group, 2, 3, ro.Next().ToString());
         Assert.AreEqual(0, plain.TargetID.Count, "默认情况下@目标数量应为0");
-        plain.AddTargetID(id);
+        plain.AddTargetId(id);
         length++;
         Assert.AreEqual(length, plain.TargetID.Count, "AddTargetID(long)每次应只添加一个目标ID");
         Assert.AreEqual(id, plain.TargetID[0], "AddTargetID(long)应正确添加目标ID");
@@ -112,7 +112,7 @@ public class TestMessage
         {
             Assert.AreEqual(ids[i], plain.TargetID[i + 1], "AddTargetID(long[])应按顺序添加所有元素");
         }
-        plain.AddTargetID(id);
+        plain.AddTargetId(id);
         length++;
         Assert.AreEqual(length, plain.TargetID.Count, "应允许重复添加同一ID");
         Assert.AreEqual(id, plain.TargetID[length - 1], "应允许重复添加同一ID");
@@ -130,11 +130,11 @@ public class TestMessage
         //MessageCommon & MessagePlain
         {
             MessagePlain plain = new(ro.Next(1000), ro.Next(1000));
-            plain.AddTargetID(targetId);
+            plain.AddTargetId(targetId);
             MessagePlain copyPlain = (MessagePlain)plain.DeepCopy();
             //TargetID
             CollectionAssert.AreEquivalent((ICollection)plain.TargetID, (ICollection)copyPlain.TargetID, "拷贝结果内容应与原始内容相等 (MessageCommon.TargetID)");
-            copyPlain.AddTargetID(ro.NextInt64());
+            copyPlain.AddTargetId(ro.NextInt64());
             CollectionAssert.AreNotEquivalent((ICollection)plain.TargetID, (ICollection)copyPlain.TargetID, "修改拷贝结果不应影响原始内容 (MessageCommon.TargetID)");
             //Message.GroupID和Message.Context字段无需测试：外部只读
             //MessageCommon.SenderID 字段无需测试：外部只读

@@ -10,7 +10,7 @@ namespace localbot;
 
 public class Program
 {
-    private static readonly HashSet<long> _debugTargetGroupID = new() { 7355608 };  //调试时监听的群组列表
+    private static readonly HashSet<long> _debugTargetGroupId = new() { 7355608 };  //调试时监听的群组列表
     private static readonly MessageDriver_Debug _localServer = new(
         33550336,   //自身ID
         AddMsgCallback_PrintInfo, 
@@ -46,7 +46,7 @@ start:
                 })
             .Build();
 
-            _lcb = new KLBot(config, _localServer, asm, _debugTargetGroupID);
+            _lcb = new KLBot(config, _localServer, asm, _debugTargetGroupId);
             await _lcb.AddModule(new TimeModule());
 
             Console.WriteLine(_lcb.GetModuleChainString());
@@ -146,32 +146,32 @@ start:
                 content = $"[未知类型消息：{msgCommon}]";
             return msgCommon.Context switch
             {
-                MessageContext.Group => $"* 用户[{msgCommon.SenderID}]向群组[{msgCommon.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-                MessageContext.Temp => $"* 用户[{msgCommon.SenderID}]通过群组[{msgCommon.GroupID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-                MessageContext.Private => $"* 用户[{msgCommon.SenderID}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-                _ => $"* 用户[{msgCommon.SenderID}]向群组[{msgCommon.GroupID}]或机器人发送了未知类型[{msgCommon.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+                MessageContext.Group => $"* 用户[{msgCommon.SenderId}]向群组[{msgCommon.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+                MessageContext.Temp => $"* 用户[{msgCommon.SenderId}]通过群组[{msgCommon.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+                MessageContext.Private => $"* 用户[{msgCommon.SenderId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+                _ => $"* 用户[{msgCommon.SenderId}]向群组[{msgCommon.GroupId}]或机器人发送了未知类型[{msgCommon.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
             };
         }
         else if (msg is MessageRecall msgRecall)
         {
-            string person = msgRecall.AuthorID == msgRecall.OperatorID ? "自己" : $"用户[{msgRecall.AuthorID}]";
+            string person = msgRecall.AuthorId == msgRecall.OperatorId ? "自己" : $"用户[{msgRecall.AuthorId}]";
             return msgRecall.Context switch
             {
-                MessageContext.Group => $"用户[{msgRecall.OperatorID}]在群聊[{msgRecall.GroupID}]中撤回了{person}发送的消息[{msgRecall.MessageID}]",
-                MessageContext.Temp => $"* 用户[{msgRecall.OperatorID}]在通过群组[{msgRecall.GroupID}]的临时会话中撤回了{person}发送的消息[{msgRecall.MessageID}]",
-                MessageContext.Private => $"* 用户[{msgRecall.OperatorID}]撤回了{person}发送的消息[{msgRecall.MessageID}]",
-                _ => $"* 用户[{msgRecall.OperatorID}]在机器人可感知的范围内撤回了{person}发送的消息[{msgRecall.MessageID}]"
+                MessageContext.Group => $"用户[{msgRecall.OperatorId}]在群聊[{msgRecall.GroupId}]中撤回了{person}发送的消息[{msgRecall.MessageId}]",
+                MessageContext.Temp => $"* 用户[{msgRecall.OperatorId}]在通过群组[{msgRecall.GroupId}]的临时会话中撤回了{person}发送的消息[{msgRecall.MessageId}]",
+                MessageContext.Private => $"* 用户[{msgRecall.OperatorId}]撤回了{person}发送的消息[{msgRecall.MessageId}]",
+                _ => $"* 用户[{msgRecall.OperatorId}]在机器人可感知的范围内撤回了{person}发送的消息[{msgRecall.MessageId}]"
             };
         }
         else if (msg is MessageMute msgMute)
         {
             if (msgMute.IsUnmute)
             {
-                string person = msgMute.MemberID == msgMute.OperatorID ? "自己" : $"用户[{msgMute.MemberID}]";
-                return $"用户[{msgMute.OperatorID}]在群聊[{msgMute.GroupID}]中解除了{person}的禁言";
+                string person = msgMute.MemberId == msgMute.OperatorId ? "自己" : $"用户[{msgMute.MemberId}]";
+                return $"用户[{msgMute.OperatorId}]在群聊[{msgMute.GroupId}]中解除了{person}的禁言";
             }
             else
-                return $"用户[{msgMute.OperatorID}]在群聊[{msgMute.GroupID}]中禁言了用户[{msgMute.MemberID}]";
+                return $"用户[{msgMute.OperatorId}]在群聊[{msgMute.GroupId}]中禁言了用户[{msgMute.MemberId}]";
         }
         else
             return $"[未知类型消息：{msg}]";
@@ -183,7 +183,7 @@ start:
     /// <param name="context">消息上下文</param>
     /// <param name="userId">目标用户ID</param>
     /// <param name="groupId">目标群组ID</param>
-    /// <param name="content">MsgMarker内容</param>
+    /// <param name="content">待发送消息</param>
     /// <returns>消息的调试信息</returns>
     private static string GetMessageDebugInfo(Module module, MessageContext context, long userId, long groupId, string content)
     {
@@ -251,7 +251,7 @@ start:
     private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
     {
         if (_tagMe)
-            msg.AddTargetID(lcb.SelfId);
+            msg.AddTargetId(lcb.SelfId);
         _localServer.AddReceivedMessage(msg);
         if (_verbose)
         {

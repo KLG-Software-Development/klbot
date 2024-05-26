@@ -20,11 +20,11 @@ public class MessageDriver_Debug : IMessageDriver
     /// </summary>
     public Action<Message> AddMessageCallback { get; private set; }
     /// <summary>
-    /// 机器人发送消息时触发的回调。参数分别为发送消息的来源模块、消息上下文、目标用户ID、目标群聊ID、MsgMarker内容
+    /// 机器人发送消息时触发的回调。参数分别为发送消息的来源模块、消息上下文、目标用户ID、目标群聊ID、待发送消息
     /// </summary>
     public Action<Module, MessageContext, long, long, Message> SendMessageCallback { get; private set; }
     /// <summary>
-    /// 机器人上传文件时触发的回调。参数为上传文件操作的来源模块、群聊ID、MsgMarker内容
+    /// 机器人上传文件时触发的回调。参数为上传文件操作的来源模块、群聊ID、待发送消息
     /// </summary>
     public Action<Module, long, string, string> UploadFileCallback { get; private set; }
     /// <summary>

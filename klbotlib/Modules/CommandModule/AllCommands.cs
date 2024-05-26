@@ -101,12 +101,12 @@ internal abstract class SwitchCommand : Command
 /// </summary>
 internal abstract class ExternalSwitchCommand : SwitchCommand
 {
-    public abstract string TargetModuleID { get; }
+    public abstract string TargetModuleId { get; }
     public abstract string MemberName { get; }           //此命令要修改的属性或者字段名
 
     public sealed override bool GetBotProperty(KLBot bot)
     {
-        if (!bot[TargetModuleID].ModuleAccess.TryGetFieldAndProperty<bool>(MemberName, out bool value))
+        if (!bot[TargetModuleId].ModuleAccess.TryGetFieldAndProperty<bool>(MemberName, out bool value))
             throw new Exception($"找不到字段\"{MemberName}\"");
         return value;
     }
@@ -114,7 +114,7 @@ internal abstract class ExternalSwitchCommand : SwitchCommand
     {
         return Task.Run(() => 
         {
-            if (!bot[TargetModuleID].TrySetFieldAndProperty(MemberName, value))
+            if (!bot[TargetModuleId].TrySetFieldAndProperty(MemberName, value))
                 throw new Exception($"找不到可设置的布尔字段\"{MemberName}\"");
         });
     }
@@ -176,18 +176,18 @@ internal abstract class ExternalAssignmentCommand<T> : AssignmentCommand<T> wher
 {
     private readonly string _typeName = typeof(T).Name;
 
-    public abstract string TargetModuleID { get; }
+    public abstract string TargetModuleId { get; }
     public abstract string MemberName { get; }           //此命令要修改的属性或者字段名
 
     public sealed override T GetBotProperty(KLBot bot)
     {
-        if (!bot[TargetModuleID].ModuleAccess.TryGetFieldAndProperty(MemberName, out T value))
+        if (!bot[TargetModuleId].ModuleAccess.TryGetFieldAndProperty(MemberName, out T value))
             throw new Exception($"找不到{_typeName}字段\"{MemberName}\"");
         return value;
     }
     public sealed override void SetBotProperty(KLBot bot, T value)
     {
-        if (!bot[TargetModuleID].TrySetFieldAndProperty(MemberName, value))
+        if (!bot[TargetModuleId].TrySetFieldAndProperty(MemberName, value))
             throw new Exception($"找不到可设置的{_typeName}字段\"{MemberName}\"");
     }
 }
@@ -295,13 +295,14 @@ internal class InfoCmd : InfoCommand
         Version? libVersion = Info.CoreLibInfo.GetLibVersion();
         Version? mcVersion = Info.ModuleCollectionInfo.GetMCVersion();
         _sb.Clear();
-        _sb.AppendLine($"KLBot via mirai");
+        _sb.AppendLine($"KLBot");
         _sb.AppendLine($"主函数版本: v{exeVersion.Major}.{exeVersion.Minor}-{exeVersion.ToKLGBuildString()}");
         _sb.AppendLine($"核心库版本: v{libVersion.Major}.{libVersion.Minor}-{libVersion.ToKLGBuildString()}");
         if (mcVersion != null)
             _sb.AppendLine($"模块合集版本: v{mcVersion.Major}.{mcVersion.Minor}-{mcVersion.ToKLGBuildString()}");
         else
             _sb.AppendLine($"模块合集版本: 未注册任何模块合集");
+        _sb.AppendLine($"消息驱动器信息：{bot.MessageDriverType}");
         _sb.AppendLine($"\n[平台信息]\nOS描述：{RuntimeInformation.OSDescription}");
         _sb.AppendLine($"运行时: {RuntimeInformation.FrameworkDescription}");
         _sb.AppendLine($"逻辑核心数量：{Environment.ProcessorCount}");
@@ -383,7 +384,7 @@ internal class FuckModCascadeCmd : ExternalSwitchCommand
     public override AuthorType AuthorityRequirment => AuthorType.野人;
     public override string SwitchName => "嘴臭模块-串联模式";
     public override string Format => "fuckmod cascade";
-    public override string TargetModuleID => "FuckModule";
+    public override string TargetModuleId => "FuckModule";
     public override string MemberName => "IsCascade";
 }
 [DefaultCommand]
@@ -393,7 +394,7 @@ internal class FuckModMaxLengthCmd : ExternalAssignmentCommand<int>
     public override string PropertyName => "嘴臭模块-最大长度";
     public override string CommandString => "fuckmod max-length";
     public override string ParameterDescription => "长度(整数)";
-    public override string TargetModuleID => "FuckModule";
+    public override string TargetModuleId => "FuckModule";
     public override string MemberName => "MaxLength";
     public override bool TryParseCmdStringValue(string valueString, out int val) => int.TryParse(valueString, out val);
 }
@@ -403,7 +404,7 @@ internal class TagMeCmd : ExternalSwitchCommand
     public override AuthorType AuthorityRequirment => AuthorType.野人;
     public override string SwitchName => "TagMe模式";
     public override string Format => "tag-me";
-    public override string TargetModuleID => "FuckModule";
+    public override string TargetModuleId => "FuckModule";
     public override string MemberName => "IsTagMe";
 }
 //图像模块命令
@@ -414,7 +415,7 @@ internal class ImgModFracCmd : ExternalAssignmentCommand<int>
     public override string PropertyName => "图像模块-选取比例";
     public override string CommandString => "imgmod frac";
     public override string ParameterDescription => "整数百分率(%)";
-    public override string TargetModuleID => "ImageModule";
+    public override string TargetModuleId => "ImageModule";
     public override string MemberName => "Fraction";
     public override bool TryParseCmdStringValue(string valueString, out int val)
     {

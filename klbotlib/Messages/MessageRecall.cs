@@ -8,15 +8,15 @@ public class MessageRecall : Message
     /// <summary>
     /// 被撤回的消息的ID
     /// </summary>
-    public long MessageID { get; }
+    public long MessageId { get; }
     /// <summary>
     /// 被撤回消息的发送者ID
     /// </summary>
-    public long AuthorID { get; }
+    public long AuthorId { get; }
     /// <summary>
     /// 撤回者的ID
     /// </summary>
-    public long OperatorID { get; }
+    public long OperatorId { get; }
     
     /// <summary>
     /// 构造一条撤回消息
@@ -27,10 +27,10 @@ public class MessageRecall : Message
     /// <param name="msgId">被撤回的消息ID</param>
     public MessageRecall(long authorId, long operatorId, long groupId, long msgId)
     {
-        AuthorID = authorId;
-        OperatorID = operatorId;
-        GroupID = groupId;
-        MessageID = msgId;
+        AuthorId = authorId;
+        OperatorId = operatorId;
+        GroupId = groupId;
+        MessageId = msgId;
     }
     /// <summary>
     /// 构造一条撤回消息
@@ -43,15 +43,15 @@ public class MessageRecall : Message
     public MessageRecall(MessageContext context, long authorId, long operatorId, long groupId, long msgId)
     {
         Context = context;
-        AuthorID = authorId;
-        OperatorID = operatorId;
-        GroupID = groupId;
-        MessageID = msgId;
+        AuthorId = authorId;
+        OperatorId = operatorId;
+        GroupId = groupId;
+        MessageId = msgId;
     }
     /// <inheritdoc/>
     public override string ToString()
     {
-        return $"{base.ToString()}\nOperator: {OperatorID}\nMessageID: {MessageID}\nAuthor: {AuthorID}";
+        return $"{base.ToString()}\nOperator: {OperatorId}\nMessageID: {MessageId}\nAuthor: {AuthorId}";
     }
     
     internal override void CopyReferenceTypeMember(Message dstMsg) { }

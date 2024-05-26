@@ -58,20 +58,20 @@ public class RollinModule : SingleTypeModule<MessagePlain>
                 if (_hasRollStarted)
                     return $@"当前已经有尚未结束的抽奖。发起人：{{\tag:{_owner}}}";
                 _hasRollStarted = true;
-                _owner = msg.SenderID;
+                _owner = msg.SenderId;
                 return @$"用户 {{\tag:{_owner}}} 发起了一次抽奖。@机器人并发送“加入”参与抽奖";
             case "join":
                 if (!_hasRollStarted)
                     return "当前没有进行中的抽奖";
-                if (_hash.Add(msg.SenderID))
+                if (_hash.Add(msg.SenderId))
                 {
-                    _list.Add(msg.SenderID);
-                    return $"用户 {{\\tag:{msg.SenderID}}} 加入了抽奖。\n当前参与人数：{_hash.Count}";
+                    _list.Add(msg.SenderId);
+                    return $"用户 {{\\tag:{msg.SenderId}}} 加入了抽奖。\n当前参与人数：{_hash.Count}";
                 }
                 else
                     return $"你已经加入过了，{ModuleAccess.GetModule<FuckModule>().SingleSentence()}";
             case "begin":
-                if (msg.SenderID != _owner)
+                if (msg.SenderId != _owner)
                     return @$"只有抽奖发起人可以控制抽奖进程";
                 if (_list.Count == 0)
                 {
