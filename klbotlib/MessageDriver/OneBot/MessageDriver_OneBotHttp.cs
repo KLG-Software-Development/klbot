@@ -38,7 +38,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
 
     private void OneBotEventLog(object? obj, OneBotEventArgs e)
     {
-        this.DebugLog($"[Event][{e.Time.AsUnixTimestamp():yyMMdd/HH:mm:ss:fff}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
+        this.DebugLog($"[Event][{e.Time.AsUnixTimestamp().ToKLBotTimestampString()}][{e.PostType}][{e.SelfId}] {e.RawEventData}");
     }
 
     // 将OneBot事件路由至MessageDriver事件，从而通知KLBot

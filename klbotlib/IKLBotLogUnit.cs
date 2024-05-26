@@ -34,12 +34,12 @@ internal static class IKLBotLogUnitExtension
     public static void DebugLog(this IKLBotLogUnit unit, string s)
     {
         lock(_globalLogLock)
-            Trace.WriteLine($"[{DateTime.Now:yyMMdd/HH:mm:ss.fff}][{unit.LogUnitName}] {s}");
+            Trace.WriteLine($"[{DateTime.Now.ToKLBotTimestampString()}][{unit.LogUnitName}][DEBUG] {s}");
     }
     public static void Log(this IKLBotLogUnit unit, string s)
     {
         lock(_globalLogLock)
-            Trace.WriteLine($"[{DateTime.Now:yyMMdd/HH:mm:ss.fff}][{unit.LogUnitName}] {s}");
+            Trace.WriteLine($"[{DateTime.Now.ToKLBotTimestampString()}][{unit.LogUnitName}] {s}");
     }
     public static void Log(this IKLBotLogUnit unit, string s, LogType logType)
     {
