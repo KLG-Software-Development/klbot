@@ -54,8 +54,4 @@ namespace klbotlib.Exceptions
     {
         public ModuleException(Module source, string msg) : base($"模块{source}出现异常：{msg}") { }
     }
-    internal class MsgMarkerException : Exception
-    {
-        public MsgMarkerException(string msg) : base($"MsgMarker文本解析异常：{msg}") { }
-    }
 }

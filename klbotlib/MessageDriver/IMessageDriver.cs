@@ -34,7 +34,7 @@ public interface IMessageDriver : IKLBotLogUnit
     /// <summary>
     /// 发送消息接口
     /// </summary>
-    /// <param name="module">编译MsgMarker时使用的模块</param>
+    /// <param name="module">模块</param>
     /// <param name="context">发送的消息上下文类型</param>
     /// <param name="userId">用户ID</param>
     /// <param name="groupId">群组ID</param>

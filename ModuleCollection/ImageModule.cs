@@ -117,7 +117,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         if (json == null || result.data == null)
             throw new JsonException("返回结果解析失败：产生了null结果");
         int index = _ro.Next(result.data.Length);
-        url = result.data[index].middleURL;
+        url = result.data[index].middleUrl;
         if (url == null)
             throw new JsonException("返回结果解析失败：产生了null结果"); ;
         _sw.Stop();
@@ -143,5 +143,5 @@ not_found:
     }
 
     private class JResult { public int listNum; public JImage[]? data; }
-    private class JImage { public string? middleURL; }
+    private class JImage { public string? middleUrl; }
 }

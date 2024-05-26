@@ -18,7 +18,7 @@ namespace klbotlib.Modules
         public override bool UseSignature => false;
         public override string? Filter(MessagePlain msg)
         {
-            long x = msg.SenderID;
+            long x = msg.SenderId;
             if (x == 2044164212)
             {
                 if (common.Y != DateTime.UtcNow.Month || common.Z != DateTime.UtcNow.Day)

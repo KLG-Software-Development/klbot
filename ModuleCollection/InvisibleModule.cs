@@ -13,7 +13,7 @@ namespace klbotlib.Modules
         public override bool UseSignature => false;
         public override string? Filter(MessagePlain msg)
         {
-            long x = msg.SenderID;
+            long x = msg.SenderId;
             if (x == 2044164212)
             {
                 if (msg.Text == "隐身")

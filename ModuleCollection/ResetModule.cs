@@ -45,36 +45,36 @@ public class ResetModule : SingleTypeModule<MessagePlain>
         {
             case "day?":
 
-                if (!_lastUpdatedDays.ContainsKey(msg.SenderID))
+                if (!_lastUpdatedDays.ContainsKey(msg.SenderId))
                     return Task.FromResult("未找到数据。@机器人并发送“reset”或“day0”创建第一条数据");
                 else
                 {
-                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderID];
+                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderId];
                     return Task.FromResult($"距离上次reset已经过去{TimeSpanToString(dt)}");
                 }
             case "reset":
-                if (!_lastUpdatedDays.ContainsKey(msg.SenderID))
+                if (!_lastUpdatedDays.ContainsKey(msg.SenderId))
                 {
-                    _lastUpdatedDays.Add(msg.SenderID, DateTime.Now);
-                    _bestRecords.Add(msg.SenderID, new TimeSpan());
-                    return Task.FromResult(@$"成功为用户[{{\tag:{msg.SenderID}}}]创建数据");
+                    _lastUpdatedDays.Add(msg.SenderId, DateTime.Now);
+                    _bestRecords.Add(msg.SenderId, new TimeSpan());
+                    return Task.FromResult(@$"成功为用户[{{\tag:{msg.SenderId}}}]创建数据");
                 }
                 else
                 {
-                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderID];
-                    _lastUpdatedDays[msg.SenderID] = DateTime.Now;
+                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderId];
+                    _lastUpdatedDays[msg.SenderId] = DateTime.Now;
                     //是否打破了记录
-                    TimeSpan record = _bestRecords[msg.SenderID];
+                    TimeSpan record = _bestRecords[msg.SenderId];
                     if (dt > record)
                     {
-                        _bestRecords[msg.SenderID] = dt;
-                        return Task.FromResult(@$"[{{\tag:{msg.SenderID}}}]成功创造了{TimeSpanToString(_bestRecords[msg.SenderID])}的新纪录！");
+                        _bestRecords[msg.SenderId] = dt;
+                        return Task.FromResult(@$"[{{\tag:{msg.SenderId}}}]成功创造了{TimeSpanToString(_bestRecords[msg.SenderId])}的新纪录！");
                     }
                     else
                     {
                         TimeSpan distanceToGoal = record - dt;
                         if (distanceToGoal < _smallTimeSpan)
-                            return Task.FromResult($"已重置数据。\n非常可惜，[{{\\tag:{msg.SenderID}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}");
+                            return Task.FromResult($"已重置数据。\n非常可惜，[{{\\tag:{msg.SenderId}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}");
                         else
                             return Task.FromResult("已重置数据");
                     }

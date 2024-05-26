@@ -25,6 +25,6 @@ public class TestModuleChain
         KLBot bot = new(TestConst.DefaultConfig, driver);
         var tm1 = new TimeModule();
         bot.AddModule(tm1).Wait();
-        Assert.AreEqual(tm1, bot.ModuleChain[tm1.ModuleID]);
+        Assert.AreEqual(tm1, bot.ModuleChain[tm1.ModuleId]);
     }
 }

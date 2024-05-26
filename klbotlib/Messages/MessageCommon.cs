@@ -16,7 +16,7 @@ namespace klbotlib
         /// <summary>
         /// 发送者的ID（QQ号）。如果没有则为-1
         /// </summary>
-        public long SenderID { get; internal set; } = -1;
+        public long SenderId { get; internal set; } = -1;
         /// <summary>
         /// 此消息@的目标的ID列表（QQ号）。如果没有则长度为0。
         /// </summary>
@@ -38,7 +38,7 @@ namespace klbotlib
         /// 添加目标@ID
         /// </summary>
         /// <param name="id">目标ID</param>
-        public void AddTargetID(long id)
+        public void AddTargetId(long id)
         {
             _targetHashSet.Add(id);
             _targetList.Add(id);
@@ -68,7 +68,7 @@ namespace klbotlib
         {
             StringBuilder sb = new();
             sb.Append(base.ToString());
-            sb.AppendFormat("\nFrom: {0}\n", SenderID);
+            sb.AppendFormat("\nFrom: {0}\n", SenderId);
             int targetIndex = 0;
             foreach (var targetID in TargetID)
             {
@@ -81,18 +81,18 @@ namespace klbotlib
 
         internal MessageCommon(long senderId, long groupId)
         {
-            SenderID = senderId;
-            GroupID = groupId;
+            SenderId = senderId;
+            GroupId = groupId;
         }
         internal string BuildReplyMessageJson(string chain)
         {
             var context = Context;
             if (context == MessageContext.Group)
-                return JsonHelper.MessageJsonBuilder.BuildGroupMessageJson(GroupID, chain);
+                return JsonHelper.MessageJsonBuilder.BuildGroupMessageJson(GroupId, chain);
             else if (context == MessageContext.Private)
-                return JsonHelper.MessageJsonBuilder.BuildPrivateMessageJson(SenderID, chain);
+                return JsonHelper.MessageJsonBuilder.BuildPrivateMessageJson(SenderId, chain);
             else if (context == MessageContext.Temp)
-                return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(SenderID, GroupID, chain);
+                return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(SenderId, GroupId, chain);
             else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
         }
         internal override void CopyReferenceTypeMember(Message dstMsg)
@@ -101,7 +101,7 @@ namespace klbotlib
             dst.TargetID = new List<long>();
             foreach (var id in TargetID)
             {
-                dst.AddTargetID(id);
+                dst.AddTargetId(id);
             }
         }
     }

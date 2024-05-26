@@ -27,7 +27,7 @@ public class TestStatusAutoSave
         driver.AddReceivedMessage(msg);
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         //Test save file
-        string savePath = Path.Combine(bot.ModulesSaveDir, module.ModuleID + "_status.json");
+        string savePath = Path.Combine(bot.ModulesSaveDir, module.ModuleId + "_status.json");
         JObject? status = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(savePath));
         if (status == null)
             throw new JsonException();

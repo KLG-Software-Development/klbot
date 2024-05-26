@@ -14,11 +14,11 @@ public class MessageMute : Message
     /// <summary>
     /// 禁言操作者的ID
     /// </summary>
-    public long OperatorID { get; }
+    public long OperatorId { get; }
     /// <summary>
     /// 被禁言者的ID
     /// </summary>
-    public long MemberID { get; }
+    public long MemberId { get; }
     /// <summary>
     /// 禁言时长。单位：秒。
     /// 若该消息为解除禁言消息，则此字段值为0。
@@ -35,15 +35,15 @@ public class MessageMute : Message
     public MessageMute(bool isUnmute, long groupId, long operatorId, long memberId, uint durationSeconds = 0)
     {
         IsUnmute= isUnmute;
-        OperatorID = operatorId;
-        MemberID = memberId;
-        GroupID = groupId;
+        OperatorId = operatorId;
+        MemberId = memberId;
+        GroupId = groupId;
         _durationSeconds = durationSeconds;
     }
     /// <inheritdoc/>
     public override string ToString()
     {
-        return $"{base.ToString()}\nOperator: {OperatorID}\nDuration: {DurationSeconds}s";
+        return $"{base.ToString()}\nOperator: {OperatorId}\nDuration: {DurationSeconds}s";
     }
 
     internal override void CopyReferenceTypeMember(Message dstMsg)

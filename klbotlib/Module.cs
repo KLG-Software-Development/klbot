@@ -35,7 +35,7 @@ namespace klbotlib.Modules
         /// 当模块未附加到KLBot上时，等于模块名；
         /// 当模块附加到KLBot上时，等于“模块类名#在同类模块中的排位”
         /// </summary>
-        public string ModuleID { get; private set; }
+        public string ModuleId { get; private set; }
         /// <summary>
         /// 返回此模块是否已经被附加到宿主KLBot上
         /// </summary>
@@ -48,7 +48,6 @@ namespace klbotlib.Modules
         public virtual bool IsTransparent { get; } = false;
         /// <summary>
         /// 决定是否在输出前自动加上模块签名"[模块ID]"（默认开启）。
-        /// 开启模块签名时，输出会被MsgMarker解析器默认当作文本消息（显然）
         /// </summary>
         public virtual bool UseSignature { get; } = true;
         /// <summary>
@@ -124,7 +123,7 @@ namespace klbotlib.Modules
         public Module()
         {
             ModuleName = GetType().Name;
-            ModuleID = ModuleName;
+            ModuleId = ModuleName;
             _processWorker = Task.Run(() => { });
             //绑定Enable通知
 
@@ -276,16 +275,16 @@ namespace klbotlib.Modules
             switch (originMsg.Context)
             {
                 case MessageContext.Group:
-                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderID, originMsg.GroupID, msg);
+                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderId, originMsg.GroupId, msg);
                     break;
                 case MessageContext.Temp:
                 case MessageContext.Private:
-                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderID, originMsg.GroupID, msg);
+                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderId, originMsg.GroupId, msg);
                     break;
             }
         }
         async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, string plainMsg)
-            => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(HostBot.SelfId, originMsg.GroupID, plainMsg));
+            => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(HostBot.SelfId, originMsg.GroupId, plainMsg));
         Task IMessagingAPI.SendGroupMessage(long groupId, Message msg)
             => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, msg);
         Task IMessagingAPI.SendTempMessage(long userId, long groupId, Message msg)
@@ -293,9 +292,9 @@ namespace klbotlib.Modules
         Task IMessagingAPI.SendPrivateMessage(long userId, Message msg)
             => HostBot.SendMessage(this, MessageContext.Private, userId, -1, msg);
         [Obsolete]
-        Task IMessagingAPI.UploadFile(MessageContext context, long groupID, string uploadPath, string filePath)
+        Task IMessagingAPI.UploadFile(MessageContext context, long groupId, string uploadPath, string filePath)
         {
-            return HostBot.UploadFile(this, groupID, uploadPath, filePath);
+            return HostBot.UploadFile(this, groupId, uploadPath, filePath);
         }
         Task IOperationAPI.Mute(long userId, long groupId, uint durationSeconds)
             => HostBot.Mute(this, userId, groupId, durationSeconds);
@@ -313,13 +312,13 @@ namespace klbotlib.Modules
         {
             HostBot = host ?? throw new ArgumentNullException("附加的目标宿主KLBot为null，因此无法初始化模块");
             IsAttached = true;
-            ModuleID = moduleId;
+            ModuleId = moduleId;
         }
         // 将模块从当前宿主KLBot上分离
         internal void Erase()
         {
             HostBot = null;
-            ModuleID = GetType().Name;
+            ModuleId = GetType().Name;
             IsAttached = false;
         }
         // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
@@ -363,7 +362,7 @@ namespace klbotlib.Modules
                 {
                     if (!property.CanWrite)
                     {
-                        ModuleLog($"配置文件或状态存档中包含模块{ModuleID}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", LogType.Warning);
+                        ModuleLog($"配置文件或状态存档中包含模块{ModuleId}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", LogType.Warning);
                         continue;
                     }
                     else if (kvp.Value == null)
@@ -467,10 +466,10 @@ namespace klbotlib.Modules
                 DiagData.LastException = ex;
                 //网络错误统一处理
                 if (ex is WebException)
-                    output = $"{ModuleID}模块表示自己不幸遭遇了网络错误：{ex.Message}";
+                    output = $"{ModuleId}模块表示自己不幸遭遇了网络错误：{ex.Message}";
                 else
                 {
-                    output = $"{ModuleID}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}";
+                    output = $"{ModuleId}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}";
                     if (ex.StackTrace != null)
                         output += $"\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
                 }
@@ -501,7 +500,7 @@ namespace klbotlib.Modules
         /// <summary>
         /// ToString()函数：未附加时返回模块名；已附加时返回模块ID
         /// </summary>
-        public sealed override string ToString() => IsAttached ? ModuleID : ModuleName;
+        public sealed override string ToString() => IsAttached ? ModuleId : ModuleName;
     }
 
     /// <summary>

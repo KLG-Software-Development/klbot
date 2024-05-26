@@ -19,10 +19,10 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// <summary>
     /// Mirai消息服务器URL
     /// </summary>
-    public string ServerURL { get; }
+    public string ServerUrl { get; }
 
     /// <inheritdoc/>
-    public string DriverInfo => $"Mirai message driver @{ServerURL}";
+    public string DriverInfo => $"Mirai message driver @{ServerUrl}";
     /// <inheritdoc/>
     public string LogUnitName => "Driver/MiraiHttp";
 
@@ -31,7 +31,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// </summary>
     public MessageDriver_MiraiHttp(string serverUrl)
     {
-        ServerURL = serverUrl;
+        ServerUrl = serverUrl;
         _ = FetchMessagesDaemon(); // 开启轮询
     }
 
@@ -41,7 +41,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task<Message> GetMessageFromId(long target, long messageId)
     {
-        string response = await MiraiNetworkHelper.GetMessageByIdJSON(ServerURL, target, messageId);
+        string response = await MiraiNetworkHelper.GetMessageByIdJSON(ServerUrl, target, messageId);
         JMiraiGetMessageFromIdResponse? obj = null;
         try
         {
@@ -75,14 +75,14 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// <param name="context">上下文</param>
     /// <param name="userId">目标用户ID</param>
     /// <param name="groupId">目标群组ID</param>
-    /// <param name="msg">MsgMarker内容</param>
+    /// <param name="msg">待发送消息</param>
     /// <returns>发送消息过程中的异常。如果一切正常返回值为null</returns>
     public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
     {
         Exception? exception = null;
         //创建完整JSON字符串
         string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(userId, groupId, context, msg);
-        await MiraiNetworkHelper.TrySendMessage(ServerURL, context, fullJson);
+        await MiraiNetworkHelper.TrySendMessage(ServerUrl, context, fullJson);
         await CheckNetworkTaskResult(exception, module, userId, groupId, context);
     }
     /// <summary>
@@ -106,7 +106,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
             multipart.Add(new StringContent(uploadPath), "path");
             FileStream fs = new FileStream(filePath, FileMode.Open);
             multipart.Add(new StreamContent(fs), "file");
-            Exception? ex = await MiraiNetworkHelper.TryUploadFile(ServerURL, MessageContext.Group, fs, multipart);
+            Exception? ex = await MiraiNetworkHelper.TryUploadFile(ServerUrl, MessageContext.Group, fs, multipart);
             await CheckNetworkTaskResult(ex, module, groupId, groupId, MessageContext.Group);
         }
         catch
@@ -120,7 +120,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     {
         try
         {
-            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(await MiraiNetworkHelper.Verify(ServerURL, key));
+            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(await MiraiNetworkHelper.Verify(ServerUrl, key));
             response.CheckStatusCode();
             return true;
         }
@@ -133,21 +133,21 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task Mute(Module module, long userId, long groupId, uint durationSeconds)
     {
-        string responseJson = await MiraiNetworkHelper.Mute(ServerURL, userId, groupId, durationSeconds);
+        string responseJson = await MiraiNetworkHelper.Mute(ServerUrl, userId, groupId, durationSeconds);
         JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
         CheckMiraiResponse(responseJson, response);
     }
     /// <inheritdoc/>
     public async Task Unmute(Module module, long userId, long groupId)
     {
-        string responseJson = await MiraiNetworkHelper.Unmute(ServerURL, userId, groupId);
+        string responseJson = await MiraiNetworkHelper.Unmute(ServerUrl, userId, groupId);
         JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
         CheckMiraiResponse(responseJson, response);
     }
     /// <inheritdoc/>
     public async Task<long> GetSelfId()
     {
-        string botListJson = await MiraiNetworkHelper.GetBotListJson(ServerURL);
+        string botListJson = await MiraiNetworkHelper.GetBotListJson(ServerUrl);
         JMiraiGetBotListResponse? response = JsonConvert.DeserializeObject<JMiraiGetBotListResponse>(botListJson);
         response.CheckStatusCode();
         if (response.data == null)
@@ -174,7 +174,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     private async Task FetchMessages()
     {
         JMiraiFetchMessageResponse? obj;
-        string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerURL);
+        string response = await MiraiNetworkHelper.FetchMessageListJSON(ServerUrl);
         try
         {
             //构建直接JSON对象
@@ -217,8 +217,8 @@ public class MessageDriver_MiraiHttp : IMessageDriver
             {
                 string fullJson = MiraiJsonHelper.MiraiMessageJsonBuilder.BuildMessageJson(
                     userId, groupId, context,
-                    new MessagePlain(userId, groupId, $"{module.ModuleID}返回的消息不受mirai服务器认可。\n异常信息：\n{exception.Message}"));
-                await MiraiNetworkHelper.TrySendMessage(ServerURL, context, fullJson);
+                    new MessagePlain(userId, groupId, $"{module.ModuleId}返回的消息不受mirai服务器认可。\n异常信息：\n{exception.Message}"));
+                await MiraiNetworkHelper.TrySendMessage(ServerUrl, context, fullJson);
             }
         }
     }

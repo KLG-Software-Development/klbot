@@ -48,7 +48,7 @@ namespace klbotlib
         /// <summary>
         /// 配置项：此KLBot的监听群组QQ号列表
         /// </summary>
-        public HashSet<long> TargetGroupIDList { get; private set; } = new();
+        public HashSet<long> TargetGroupIdList { get; private set; } = new();
         /// <summary>
         /// 配置项：模块私有目录。用来存取模块自己的自定义文件
         /// </summary>
@@ -71,6 +71,8 @@ namespace klbotlib
         {
             this.LogInfo("初始化KLBot...");
             _msgDriver = driver;
+            var msgDriverType = _msgDriver.GetType();
+            MessageDriverType = $"[{msgDriverType.Namespace}] {msgDriverType.Name}";
             _msgDriver.OnMessageReceived += MessageHandler;
             this.LogInfo($"Driver info: {_msgDriver.DriverInfo}");
             LoadConfig(config);
@@ -82,7 +84,7 @@ namespace klbotlib
         {
             foreach (var group in targetGroups)
             {
-                TargetGroupIDList.Add(group);
+                TargetGroupIdList.Add(group);
             }
         }
         /// <summary>
@@ -124,7 +126,7 @@ namespace klbotlib
         {
             this.LogInfo("加载配置...");
             Key = config.ReadValue("key");
-            TargetGroupIDList = config.ReadArray("targets").Select(long.Parse).ToHashSet();
+            TargetGroupIdList = config.ReadArray("targets").Select(long.Parse).ToHashSet();
             ModulesCacheDir = config.ReadValue("cache_dir");
             ModulesSaveDir = config.ReadValue("save_dir");
         }
@@ -153,7 +155,7 @@ namespace klbotlib
         public void AddTarget(params long[] targets)
         {
             foreach (var target in targets)
-                TargetGroupIDList.Add(target);
+                TargetGroupIdList.Add(target);
         }
         /// <summary>
         /// 把一组群号批量添加到监听列表
@@ -162,8 +164,13 @@ namespace klbotlib
         public void AddTarget(IEnumerable<long> targets)
         {
             foreach (var target in targets)
-                TargetGroupIDList.Add(target);
+                TargetGroupIdList.Add(target);
         }
+
+        /// <summary>
+        /// 获取此KLBot的消息驱动器信息
+        /// </summary>
+        public string MessageDriverType { get; private set; }
 
         // 模块的增加/删除/查询
         /// <summary>
@@ -191,7 +198,7 @@ namespace klbotlib
             {
                 if (m.IsAttached)
                     m.Erase();
-                m.Register(this, ModuleChain.CalcModuleID(m));
+                m.Register(this, ModuleChain.CalcModuleId(m));
                 ModuleChain.AddModule(m);
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
                 CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
@@ -209,36 +216,36 @@ namespace klbotlib
         /// <summary>
         /// 发送消息
         /// </summary>
-        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="module">模块实例</param>
         /// <param name="context">发送的消息上下文类型</param>
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
-        /// <param name="msg">待编译MsgMarker文本</param>
+        /// <param name="msg">待发送消息</param>
         internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
             => await _msgDriver.SendMessage(module, context, userId, groupId, msg);
         /// <summary>
         /// 发送群消息
         /// </summary>
-        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="module">模块实例</param>
         /// <param name="groupId">目标群组ID</param>
-        /// <param name="msg">MsgMarker文本</param>
+        /// <param name="msg">待发送消息</param>
         internal Task SendGroupMessage(Module module, long groupId, Message msg)
             => SendMessage(module, MessageContext.Group, -1, groupId, msg);
         /// <summary>
         /// 发送临时消息
         /// </summary>
-        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="module">模块实例</param>
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
-        /// <param name="msg">MsgMarker文本</param>
+        /// <param name="msg">待发送消息</param>
         internal Task SendTempMessage(Module module, long userId, long groupId, Message msg)
             => SendMessage(module, MessageContext.Group, userId, groupId, msg);
         /// <summary>
         /// 发送私聊消息
         /// </summary>
-        /// <param name="module">编译MsgMarker时使用的模块</param>
+        /// <param name="module">模块实例</param>
         /// <param name="userId">目标用户ID</param>
-        /// <param name="msg">MsgMarker文本</param>
+        /// <param name="msg">待发送消息</param>
         internal Task SendPrivateMessage(Module module, long userId, Message msg)
             => SendMessage(module, MessageContext.Group, userId, -1, msg);
         /// <summary>
@@ -261,13 +268,13 @@ namespace klbotlib
         internal async Task ReplyMessage(Module module, Message originMsg, Message msg)
         {
             if (originMsg is MessageCommon originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, msg);
+                await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, msg);
             else
             {
                 switch (originMsg.Context)
                 {
                     case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, msg);
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, msg);
                         return;
                     default:
                         module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
@@ -284,13 +291,13 @@ namespace klbotlib
         internal async Task ReplyMessage(Module module, Message originMsg, string plain)
         {
             if (originMsg is MessageCommon originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderID, originMsg.GroupID, new MessagePlain(SelfId, originMsg.GroupID, plain));
+                await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
             else
             {
                 switch (originMsg.Context)
                 {
                     case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupID, new MessagePlain(SelfId, originMsg.GroupID, plain));
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
                         return;
                     default:
                         module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
@@ -323,18 +330,18 @@ namespace klbotlib
 
         //暴露给Module类的一些成员
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
-        internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleID);
+        internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleId);
         // 获取模块的ModuleStatus存档文件路径
-        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleID + "_status.json");
+        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + "_status.json");
         // 获取模块的ModuleSetup配置文件路径
-        internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleID + "_setup.json");
+        internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + "_setup.json");
 
         //消息事件处理
         private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
         {
             Message msg = e.Message;
             // 私聊/临时会话需过滤，范围为目标群组
-            if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIDList.Contains(msg.GroupID))
+            if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msg.GroupId))
                 goto processed;
             //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
             //另外，帮助消息不计入统计信息
@@ -550,14 +557,14 @@ namespace klbotlib
                 if (File.Exists(filePath))
                 {
                     if (printInfo)
-                        this.LogTask($"正在从\"{filePath}\"加载模块{module.ModuleID}的配置...");
+                        this.LogTask($"正在从\"{filePath}\"加载模块{module.ModuleId}的配置...");
                     Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
                     if (result == null)
                         throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
                     module.ImportDict(result);
                 }
                 else
-                    this.LogWarning($"找不到{module.ModuleID}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题");
+                    this.LogWarning($"找不到{module.ModuleId}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题");
             }
             catch (Exception ex)
             {
@@ -606,7 +613,7 @@ namespace klbotlib
             {
                 _sb.AppendLine("监听群组列表：");
                 int index = 0;
-                foreach (var target in TargetGroupIDList)
+                foreach (var target in TargetGroupIdList)
                 {
                     _sb.AppendLine($"  [{index}]  {target}");
                     index++;
@@ -625,7 +632,7 @@ namespace klbotlib
                 _sb.AppendLine("模块状态：");
                 foreach (var module in ModuleChain)
                 {
-                    _sb.AppendLine($"<{module.ModuleID}>");
+                    _sb.AppendLine($"<{module.ModuleId}>");
                     Type type = module.GetType();
                     List<MemberInfo> members = new List<MemberInfo>();
                     members.AddRange(type.GetProperties_All().Reverse());
