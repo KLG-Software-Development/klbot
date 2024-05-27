@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace klbotlib;
@@ -5,7 +8,7 @@ namespace klbotlib;
 /// <summary>
 /// 消息数组类
 /// </summary>
-public class MessageArray : Message
+public class MessageArray : MessageCommon
 {
     /// <summary>
     /// 消息数组
@@ -15,10 +18,19 @@ public class MessageArray : Message
     /// <summary>
     /// 构造一条消息数组消息
     /// </summary>
-    public MessageArray(params Message[] msgs)
+    public MessageArray(long senderId, long groupId, params Message[] msgs) : base(senderId, groupId)
     {
         Data = msgs;
     }
+
+    /// <summary>
+    /// 构造一条消息数组消息
+    /// </summary>
+    public MessageArray(long senderId, long groupId, IEnumerable<Message> msgs) : base(senderId, groupId)
+    {
+        Data = msgs.ToArray();
+    }
+
     /// <inheritdoc/>
     public override string ToString()
     {

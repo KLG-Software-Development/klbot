@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using klbotlib.Events;
 using klbotlib.Extensions;
@@ -56,9 +57,9 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     {
         var data = e.RawEventData;
         MessageContext context = GetOneBotMessageEventContext(data);
-        if (data.RawMessage == null)
-            throw new Exception($"Failed to build OneBot event: Invalid event data: {data}");
-        return new MessagePlain(context, data.UserId, data.GroupId, data.RawMessage);
+        if (data.RawMessage == null || data.Message == null)
+            throw new Exception($"Failed to build Message: Invalid deserialized data: {data}");
+        return new MessageArray(0, 0, data.Message.Select(msg => msg.BuildMessage()));
     }
 
     // 推导message事件的上下文类型
