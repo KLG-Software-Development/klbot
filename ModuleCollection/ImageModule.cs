@@ -1,10 +1,10 @@
 ﻿using klbotlib.Extensions;
 using klbotlib.Modules.ModuleUtils;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -105,7 +105,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         string json = await FetchData(pn, word);
         ModuleLog($"成功获取json，pn={pn}");
         _sw.Restart();
-        JResult? result = JsonConvert.DeserializeObject<JResult>(json);
+        JResult? result = JsonSerializer.Deserialize<JResult>(json);
         //更新字典
         if (!isCached)
         {
