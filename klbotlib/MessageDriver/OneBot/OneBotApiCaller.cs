@@ -30,7 +30,7 @@ internal class OneBotHttpApiCaller(string serverUrl, string token) : IKLBotLogUn
         var response = await _client.SendAsync(request);
         string responseJson = await response.Content.ReadAsStringAsync();
         this.DebugLog(responseJson);
-        var ret = JsonSerializer.Deserialize<JOneBotResponse<TOut>>(responseJson, options: OneBotJsonSerializerOptions.Options);
+        var ret = OneBotJsonHelper.Deserialize<JOneBotResponse<TOut>>(responseJson);
         if (ret == null)
             throw new JsonException("Failed to deserialize JSON");
         if (ret.Retcode != 0)

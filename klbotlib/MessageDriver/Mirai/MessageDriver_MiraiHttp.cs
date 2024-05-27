@@ -2,7 +2,6 @@
 using klbotlib.Exceptions;
 using klbotlib.MessageDriver.Mirai.JsonPrototypes;
 using klbotlib.Modules;
-using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -45,8 +44,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         JMiraiGetMessageFromIdResponse? obj = null;
         try
         {
-            // TODO: 切换为Text.Json
-            obj = JsonConvert.DeserializeObject<JMiraiGetMessageFromIdResponse>(response);
+            obj = MiraiJsonHelper.Deserialize<JMiraiGetMessageFromIdResponse>(response);
         }
         catch (Exception ex)
         {
@@ -120,7 +118,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     {
         try
         {
-            JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(await MiraiNetworkHelper.Verify(ServerUrl, key));
+            JMiraiResponse? response = MiraiJsonHelper.Deserialize<JMiraiResponse>(await MiraiNetworkHelper.Verify(ServerUrl, key));
             response.CheckStatusCode();
             return true;
         }
@@ -134,21 +132,21 @@ public class MessageDriver_MiraiHttp : IMessageDriver
     public async Task Mute(Module module, long userId, long groupId, uint durationSeconds)
     {
         string responseJson = await MiraiNetworkHelper.Mute(ServerUrl, userId, groupId, durationSeconds);
-        JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
+        JMiraiResponse? response = MiraiJsonHelper.Deserialize<JMiraiResponse>(responseJson);
         CheckMiraiResponse(responseJson, response);
     }
     /// <inheritdoc/>
     public async Task Unmute(Module module, long userId, long groupId)
     {
         string responseJson = await MiraiNetworkHelper.Unmute(ServerUrl, userId, groupId);
-        JMiraiResponse? response = JsonConvert.DeserializeObject<JMiraiResponse>(responseJson);
+        JMiraiResponse? response = MiraiJsonHelper.Deserialize<JMiraiResponse>(responseJson);
         CheckMiraiResponse(responseJson, response);
     }
     /// <inheritdoc/>
     public async Task<long> GetSelfId()
     {
         string botListJson = await MiraiNetworkHelper.GetBotListJson(ServerUrl);
-        JMiraiGetBotListResponse? response = JsonConvert.DeserializeObject<JMiraiGetBotListResponse>(botListJson);
+        JMiraiGetBotListResponse? response = MiraiJsonHelper.Deserialize<JMiraiGetBotListResponse>(botListJson);
         response.CheckStatusCode();
         if (response.data == null)
             throw new JsonDeserializationException("自身ID获取失败：无法从JSON中解析机器人列表", botListJson);
@@ -178,7 +176,7 @@ public class MessageDriver_MiraiHttp : IMessageDriver
         try
         {
             //构建直接JSON对象
-            obj = JsonConvert.DeserializeObject<JMiraiFetchMessageResponse>(response);
+            obj = MiraiJsonHelper.Deserialize<JMiraiFetchMessageResponse>(response);
             //验证返回码
             if (obj.code != 0)
                 throw new MiraiException(obj.code, obj.msg);

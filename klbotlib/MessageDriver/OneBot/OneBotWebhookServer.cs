@@ -33,7 +33,7 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
             }
             try
             {
-                var jEvent = await JsonSerializer.DeserializeAsync<JOneBotEvent>(context.Request.InputStream, OneBotJsonSerializerOptions.Options).ConfigureAwait(false);
+                var jEvent = await OneBotJsonHelper.DeserializeAsync<JOneBotEvent>(context.Request.InputStream).ConfigureAwait(false);
                 this.DebugLog(jEvent.ToString());
                 if (jEvent == null)
                 {

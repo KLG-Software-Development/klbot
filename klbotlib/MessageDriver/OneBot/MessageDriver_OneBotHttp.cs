@@ -158,7 +158,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
     {
-        string? msgJson = OneBotJsonBuilder.CompileMessageJson(msg);
+        string? msgJson = OneBotJsonHelper.CompileMessageJson(msg);
         if (msgJson == null)
         {
             this.LogWarning($"Failed to compile message of type \"{msg.GetType()}\" to JSON");
