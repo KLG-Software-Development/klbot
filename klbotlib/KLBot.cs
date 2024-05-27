@@ -60,6 +60,10 @@ namespace klbotlib
         /// </summary>
         public string Key { get; set; } = string.Empty;
         /// <summary>
+        /// 处理的时间窗。超出该时间窗的消息将被强制忽略
+        /// </summary>
+        public TimeSpan ProcessWindow { get; } = TimeSpan.FromSeconds(6);
+        /// <summary>
         /// Log unit name
         /// </summary>
         public string LogUnitName => "KLBot";
@@ -337,6 +341,13 @@ namespace klbotlib
         //消息事件处理
         private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
         {
+            // 时间窗强制过滤：早于一定时段的消息将彻底丢弃并且不进入统计信息
+            if (DateTime.Now - e.Timestamp > ProcessWindow)
+            {
+                this.LogInfo($"[KLBotEvent/Message] Dropped: now - [{e.Timestamp:g}] = {(DateTime.Now - e.Timestamp).TotalSeconds}s > {ProcessWindow.TotalSeconds}s");
+                goto processed;
+            }
+            this.LogInfo($"[KLBotEvent/Message] {e.Description.Replace('\n', ';')}");
             DiagData.ReceivedMessageCount++;
             Message msg = e.Message;
             // 私聊/临时会话需过滤，范围为目标群组
