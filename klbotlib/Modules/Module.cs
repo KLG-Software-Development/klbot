@@ -467,9 +467,19 @@ namespace klbotlib.Modules
                     output = $"{ModuleId}模块表示自己不幸遭遇了网络错误：{ex.Message}";
                 else
                 {
-                    output = $"{ModuleId}在处理消息时崩溃。异常信息：\n{ex.GetType().Name}：{ex.Message.Shorten(256)}";
-                    if (ex.StackTrace != null)
-                        output += $"\n\n调用栈：\n{ex.StackTrace.Shorten(1024)}\n\n可向模块开发者反馈这些信息帮助调试";
+                    output = $"{ModuleId}未正确处理消息";
+                    var debugNotice = new MessagePlain(HostBot.SelfId, -1, output + $"\n\n{ex}");
+                    foreach (var adminId in HostBot.AdminIds)
+                    {
+                        try
+                        {
+                            await Messaging.SendPrivateMessage(adminId, debugNotice);
+                        }
+                        catch (Exception noticeEx)
+                        {
+                            this.LogError($"模块崩溃信息上报至ID{adminId}时失败：{noticeEx}");
+                        }
+                    }
                 }
             }
             if (!string.IsNullOrEmpty(output))  //处理器输出不为空时

@@ -64,6 +64,10 @@ namespace klbotlib
         /// </summary>
         public TimeSpan ProcessWindow { get; } = TimeSpan.FromSeconds(6);
         /// <summary>
+        /// 管理员ID
+        /// </summary>
+        public List<long> AdminIds { get; private set; } = [];
+        /// <summary>
         /// Log unit name
         /// </summary>
         public string LogUnitName => "KLBot";
@@ -131,6 +135,8 @@ namespace klbotlib
             TargetGroupIdList = config.ReadArray("targets").Select(long.Parse).ToHashSet();
             ModulesCacheDir = config.ReadValue("cache_dir");
             ModulesSaveDir = config.ReadValue("save_dir");
+            AdminIds.Clear();
+            AdminIds.AddRange(config.ReadArray("admins").Select(long.Parse));
         }
         /// <summary>
         /// 加载核心模块
