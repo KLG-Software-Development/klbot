@@ -1,9 +1,9 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -100,7 +100,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
             HttpResponseMessage response = await _helper.InnerClient.PostAsync(_url, jsonAsPlainText);
             response.EnsureSuccessStatusCode();
             string reply = response.Content.ReadAsStringAsync().Result;
-            JChatterBotReply? jreply = JsonConvert.DeserializeObject<JChatterBotReply>(reply);
+            JChatterBotReply? jreply = JsonSerializer.Deserialize<JChatterBotReply>(reply);
             if (jreply == null)
             {
                 ModuleLog($"请求成功，但无法从服务器返回内容中构建回复对象，已忽略。\n*****服务器返回内容*****\n{reply}\n*****以上是返回内容*****");

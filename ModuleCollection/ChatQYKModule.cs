@@ -1,7 +1,7 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using Newtonsoft.Json;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -27,7 +27,7 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     public sealed override async Task<string> Processor(MessagePlain msg, string? _)
     {
         string jreply = await _helper.GetStringAsync(_url + msg.Text);
-        return JsonConvert.DeserializeObject<ChatterBotReply>(jreply).FormattedContent();
+        return JsonSerializer.Deserialize<ChatterBotReply>(jreply).FormattedContent();
     }
 
     private class ChatterBotReply

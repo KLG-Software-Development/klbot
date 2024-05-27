@@ -21,7 +21,8 @@ static class TestConst
             { "key", "7355608" },
             { "targets", $"{TargetGroupId}" },
             { "cache_dir", "cache" },
-            { "save_dir", "save" }
+            { "save_dir", "save" },
+            { "admins", "7355608" }
         })
     .Build();
 }

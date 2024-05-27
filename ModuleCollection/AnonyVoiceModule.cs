@@ -1,6 +1,6 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -98,7 +98,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
                 Messaging.ReplyMessage(msg, "正在薅羊毛...");
                 string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={msg.Text.Trim()}";
                 string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
-                JReply? reply = JsonConvert.DeserializeObject<JReply>(json);
+                JReply? reply = JsonSerializer.Deserialize<JReply>(json);
                 if (reply == null)
                     throw new JsonException("返回结果解析失败：产生了null结果");
                 if (reply.errno != 0)
@@ -130,7 +130,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     {
         string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={text.Trim()}";
         string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
-        JReply? reply = JsonConvert.DeserializeObject<JReply>(json);
+        JReply? reply = JsonSerializer.Deserialize<JReply>(json);
         if (reply == null)
             throw new JsonException("返回结果解析失败：产生了null结果");
         if (reply.errno != 0)

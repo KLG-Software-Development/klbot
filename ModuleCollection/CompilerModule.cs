@@ -1,8 +1,8 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -62,7 +62,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
                     return $"不支持语言\"{language}\"";
                 string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
                 ModuleLog($"Response: {response}");
-                JReply? jreply = JsonConvert.DeserializeObject<JReply>(response);
+                JReply? jreply = JsonSerializer.Deserialize<JReply>(response);
                 if (jreply == null)
                     throw new JsonException("返回结果解析失败：产生了null结果");
                 _sb.Clear();

@@ -1,12 +1,12 @@
 ﻿using klbotlib.Extensions;
 using klbotlib.Modules.ModuleUtils;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -30,13 +30,13 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         {
             _sb.Clear();
             //纯文本消息
-            _sb.AppendLine(("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有："));
+            _sb.AppendLine("输入\"[处理类型]\"的同时发送图片，可以对图片进行处理，例如\"上色\"。目前支持的处理类型有：");
             foreach (var key in _typeByWordProc.Keys)
             {
                 _sb.Append(" " + key);
             }
             _sb.AppendLine("；\n");
-            _sb.AppendLine(("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有："));
+            _sb.AppendLine("输入\"什么[关键词]\"，识别附带图片中的内容。例如，\"什么地方\"。目前支持的关键词有：");
             foreach (var key in _typeByWordRecg.Keys)
             {
                 _sb.Append(" " + key);
@@ -91,7 +91,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
         string queryString = "?type=merge&apiType=face";
         JMergeRequest request = new(new JImage(b642, "BASE64"), new JImage(b641, "BASE64"), "2.0");
         string json = await _httpHelper.PostJsonAsync(_postUrl + queryString, request);
-        JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+        JReplySingle? reply = JsonSerializer.Deserialize<JReplySingle>(json);
         //错误检查
         if (reply == null || reply.errno != 0)
             return (false, string.Empty);
@@ -103,11 +103,11 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
     private bool TryMergeWithUrl(MessageImagePlain msg, out string result)
     {
         string queryString = "?type=merge&apiType=face";
-        string url0 = JsonConvert.ToString(msg.UrlList[0]);
-        string url1 = JsonConvert.ToString(msg.UrlList[1]);
+        string url0 = JsonEncodedText.Encode(msg.UrlList[0]).ToString();
+        string url1 = JsonEncodedText.Encode(msg.UrlList[1]).ToString();
         string body = "{\"image_template\":{\"image\":" + url0 + ",\"image_type\":\"URL\"},\"image_target\":{\"image\":" + url1 + ",\"image_type\":\"URL\"},\"version\":\"2.0\"}";
         string json = _httpHelper.PostStringAsync(_postUrl + queryString, body).Result;
-        JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(json);
+        JReplySingle? reply = JsonSerializer.Deserialize<JReplySingle>(json);
         //错误检查
         if (reply == null || reply.errno != 0)
         {
@@ -183,7 +183,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 if (type == "landmark")
                 {
                     //只有一个result对象，用JReplySingle
-                    JReplySingle? reply = JsonConvert.DeserializeObject<JReplySingle>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
+                    JReplySingle? reply = JsonSerializer.Deserialize<JReplySingle>(_httpHelper.PostFormUrlEncodedAsync(_postUrl, body).Result);
                     //错误检查
                     if (reply == null || reply.data == null || reply.data.result == null || reply.data.result.landmark == null || reply.msg.Trim().ToLower() != "success")
                         return ErrorString(reply.errno, reply.msg);
@@ -195,7 +195,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 else
                 {
                     string json = await _httpHelper.PostFormUrlEncodedAsync(_postUrl, body);
-                    JReplyMulti? reply = JsonConvert.DeserializeObject<JReplyMulti>(json);
+                    JReplyMulti? reply = JsonSerializer.Deserialize<JReplyMulti>(json);
                     if (reply.errno != 0 || reply.msg.Trim().ToLower() != "success")
                         return ErrorString(reply.errno, reply.msg);
                     if (type == "advanced_general")
@@ -208,7 +208,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 return _sb.ToString();
             case "face": //人脸评分
                 body = $"image&image_url={escUrl}&type=face&show=true&max_face_num=2&face_field=age%2Cbeauty&image_type=BASE64";
-                JFaceReply? replyFace = JsonConvert.DeserializeObject<JFaceReply>(await _httpHelper.PostFormUrlEncodedAsync(_postUrl, body));
+                JFaceReply? replyFace = JsonSerializer.Deserialize<JFaceReply>(await _httpHelper.PostFormUrlEncodedAsync(_postUrl, body));
                 if (replyFace.errno != 0 || replyFace.msg.Trim().ToLower() != "success")
                     return ErrorString(replyFace.errno, replyFace.msg);
                 if (replyFace.data.result.face_num == 0)
@@ -232,8 +232,7 @@ public class IMGPModule : SingleTypeModule<MessageImagePlain>
                 word = msg.Text.Trim();
                 type = _typeByWordProc[word];
                 body = $"image&image_url={escUrl}&type={type}&show=true";
-                //HostBot.ReplyPlainMessage(this, msg, "处理中...");
-                JProcReply? replyProc = JsonConvert.DeserializeObject<JProcReply>(await _httpHelper.PostFormUrlEncodedAsync(_postUrl, body));
+                JProcReply? replyProc = JsonSerializer.Deserialize<JProcReply>(await _httpHelper.PostFormUrlEncodedAsync(_postUrl, body));
                 //错误检查
                 if (replyProc == null || replyProc.data == null|| replyProc.data.image == null || replyProc.errno != 0 || replyProc.msg.Trim().ToLower() != "success")
                     return ErrorString(replyProc.errno, replyProc.msg);
