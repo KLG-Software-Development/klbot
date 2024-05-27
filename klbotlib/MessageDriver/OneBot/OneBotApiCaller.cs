@@ -1,7 +1,6 @@
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 using System;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text.Json;
 using System.Net.Http.Headers;

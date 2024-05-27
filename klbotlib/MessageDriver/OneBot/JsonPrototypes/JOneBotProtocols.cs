@@ -7,9 +7,9 @@ internal record JOneBotResponse<T>(JOneBotSelf? Self, string? Status, long Retco
 internal record JOneBotEvent(long Time, long SelfId, string? PostType,
     // PostType=message
     string? MessageType, // private/group
-    string? SubType,     // private=(frined/group/other); group=(normal/anonymous/notice)
+    string? SubType,     // private=(friend/group/other); group=(normal/anonymous/notice)
     int MessageId, long GroupId, long UserId, JOneBotMessageObj[]? Message, string? RawMessage // sender字段信息未必准确或齐全且用处不大，省略. 获取发送者信息使用UserId
-    // PostType=notice 暂不支持。未来可能会支持的类型：notice_type=group_recall/freined_recall
+    // PostType=notice 暂不支持。未来可能会支持的类型：notice_type=group_recall/friend_recall
     // PostType=request 没有任何支持计划
     // PostType=meta_event 没有任何支持计划
 );

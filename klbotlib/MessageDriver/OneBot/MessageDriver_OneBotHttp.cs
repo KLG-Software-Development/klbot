@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using klbotlib.Events;
 using klbotlib.Extensions;
@@ -17,7 +14,6 @@ namespace klbotlib.MessageDriver.OneBot;
 public class MessageDriver_OneBotHttp : IMessageDriver
 {
     private readonly OneBotHttpApiCaller _caller;
-    private readonly List<Message> _msgBuffer = new();
     private readonly OneBotWebhookServer _webhookServer;
 
     /// <summary>
@@ -55,7 +51,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         }
     }
 
-    // 从OneBot事件中构造消息事件
+    // 从OneBot事件中构造消息
     private static MessageCommon BuildMessageFromEvent(OneBotEventArgs e)
     {
         var data = e.RawEventData;
