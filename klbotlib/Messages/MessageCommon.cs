@@ -84,17 +84,6 @@ namespace klbotlib
             SenderId = senderId;
             GroupId = groupId;
         }
-        internal string BuildReplyMessageJson(string chain)
-        {
-            var context = Context;
-            if (context == MessageContext.Group)
-                return JsonHelper.MessageJsonBuilder.BuildGroupMessageJson(GroupId, chain);
-            else if (context == MessageContext.Private)
-                return JsonHelper.MessageJsonBuilder.BuildPrivateMessageJson(SenderId, chain);
-            else if (context == MessageContext.Temp)
-                return JsonHelper.MessageJsonBuilder.BuildTempMessageJson(SenderId, GroupId, chain);
-            else throw new Exception($"暂不支持的消息上下文类型 \"{context}\"");
-        }
         internal override void CopyReferenceTypeMember(Message dstMsg)
         {
             var dst = dstMsg as MessageCommon;

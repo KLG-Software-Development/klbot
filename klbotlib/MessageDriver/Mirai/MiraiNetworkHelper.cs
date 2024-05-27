@@ -1,7 +1,5 @@
-﻿using klbotlib.Exceptions;
-using klbotlib.Json;
+﻿using klbotlib.Json;
 using klbotlib.MessageDriver.Mirai.JsonPrototypes;
-using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -52,7 +50,7 @@ internal static class MiraiNetworkHelper
     internal static async Task<string> Verify(string serverUrl, string key)
     {
         if (_verifyRequestBody == null)
-            _verifyRequestBody = JsonHelper.CreateAsJson("{\"verifyKey\":\"" + key + "\"}");
+            _verifyRequestBody = KLBotJsonHelper.CreateAsJson("{\"verifyKey\":\"" + key + "\"}");
         HttpResponseMessage response = await _client.PostAsync(GetVerifyUrl(serverUrl), _verifyRequestBody);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
@@ -60,7 +58,7 @@ internal static class MiraiNetworkHelper
     //禁言
     internal static async Task<string> Mute(string serverUrl, long userId, long groupId, uint durationSeconds)
     {
-        StringContent content = JsonHelper.CreateAsJson($"{{\"target\":{groupId},\"memberId\":{userId},\"time\":{durationSeconds}}}");
+        StringContent content = KLBotJsonHelper.CreateAsJson($"{{\"target\":{groupId},\"memberId\":{userId},\"time\":{durationSeconds}}}");
         HttpResponseMessage response = await _client.PostAsync(GetMuteUrl(serverUrl), content);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
@@ -68,7 +66,7 @@ internal static class MiraiNetworkHelper
     //解除禁言
     internal static async Task<string> Unmute(string serverUrl, long userId, long groupId)
     {
-        StringContent content = JsonHelper.CreateAsJson($"{{\"target\":{groupId},\"memberId\":{userId}}}");
+        StringContent content = KLBotJsonHelper.CreateAsJson($"{{\"target\":{groupId},\"memberId\":{userId}}}");
         HttpResponseMessage response = await _client.PostAsync(GetUnmuteUrl(serverUrl), content);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
@@ -84,21 +82,21 @@ internal static class MiraiNetworkHelper
     internal static async Task TrySendMessage(string serverUrl, MessageContext context, string fullMsgJson)
     {
         string url = GetSendMessageUrl(serverUrl, context);
-        StringContent content = JsonHelper.CreateAsJson(fullMsgJson);
+        StringContent content = KLBotJsonHelper.CreateAsJson(fullMsgJson);
         HttpResponseMessage response = await _client.PostAsync(url, content);
         response.EnsureSuccessStatusCode();
         bool result = response.IsSuccessStatusCode;
         string responseStr = await response.Content.ReadAsStringAsync();
         if (!result)
             throw new Exception($"HTTP返回码非成功：{responseStr}");
-        var miraiResponse = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseStr);
+        var miraiResponse = MiraiJsonHelper.Deserialize<JMiraiSendMessageResponse>(responseStr);
         if (miraiResponse.code != 0)
             throw new MiraiException(miraiResponse.code, miraiResponse.msg);
     }
     //尝试上传文件
     internal static async Task<Exception?> TryUploadFile(string serverUrl, MessageContext context, FileStream fs, MultipartFormDataContent fullContent)
     {
-        string url = MiraiNetworkHelper.GetUploadFileUrl(serverUrl, context);
+        string url = GetUploadFileUrl(serverUrl, context);
         try
         {
             var response = await _client.PostAsync(url, fullContent);
@@ -106,7 +104,7 @@ internal static class MiraiNetworkHelper
             string responseMsg = response.Content.ReadAsStringAsync().Result;
             if (!result)
                 throw new Exception($"非成功返回码：{responseMsg}");
-            var miraiResponse = JsonConvert.DeserializeObject<JMiraiSendMessageResponse>(responseMsg);
+            var miraiResponse = MiraiJsonHelper.Deserialize<JMiraiSendMessageResponse>(responseMsg);
             if (miraiResponse.code != 0 || miraiResponse.msg == null)
                 throw new MiraiException(miraiResponse.code, miraiResponse.msg);
             fs.Close();

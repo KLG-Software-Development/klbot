@@ -3,12 +3,10 @@ using klbotlib.Extensions;
 using klbotlib.Json;
 using klbotlib.Events;
 using klbotlib.Modules;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net; // Debug配置下无用，但Release配置下需要
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -509,7 +507,7 @@ namespace klbotlib
         [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
         public async Task SaveModuleSetup(Module module, bool printInfo = true)
         {
-            string json = JsonConvert.SerializeObject(module.ExportSetupDict(), JsonHelper.JsonSettings.FileSetting);
+            string json = KLBotJsonHelper.SerializeFile(module.ExportSetupDict());
             string filePath = GetModuleSetupPath(module);
             if (printInfo)
                 this.LogTask($"正在保存模块{module}的配置至\"{filePath}\"...");
@@ -520,7 +518,7 @@ namespace klbotlib
         /// </summary>
         public async Task SaveModuleStatus(Module module, bool printInfo = true)
         {
-            string json = JsonConvert.SerializeObject(module.ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
+            string json = KLBotJsonHelper.SerializeFile(module.ExportStatusDict());
             string filePath = GetModuleStatusPath(module);
             if (printInfo)
             {
@@ -539,9 +537,9 @@ namespace klbotlib
                 {
                     if (printInfo)
                         this.LogTask($"正在从\"{filePath}\"加载模块{module}的状态...");
-                    var statusDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
-                    if (statusDict != null)
-                        module.ImportDict(statusDict, true);
+                    var statusDict = KLBotJsonHelper.DeserializeFile<JModuleMemberDict>(await File.ReadAllTextAsync(filePath));
+                    if (statusDict != null && statusDict.Data != null)
+                        module.ImportDict(statusDict.Data, true);
                 }
             }
             catch (Exception ex)
@@ -559,10 +557,10 @@ namespace klbotlib
                 {
                     if (printInfo)
                         this.LogTask($"正在从\"{filePath}\"加载模块{module.ModuleId}的配置...");
-                    Dictionary<string, object>? result = JsonConvert.DeserializeObject<Dictionary<string, object>>(await File.ReadAllTextAsync(filePath), JsonHelper.JsonSettings.FileSetting);
-                    if (result == null)
+                    var result = KLBotJsonHelper.DeserializeFile<JModuleMemberDict>(await File.ReadAllTextAsync(filePath));
+                    if (result == null || result.Data == null)
                         throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
-                    module.ImportDict(result);
+                    module.ImportDict(result.Data);
                 }
                 else
                     this.LogWarning($"找不到{module.ModuleId}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题");

@@ -1,10 +1,21 @@
 ﻿using System;
+using System.Text.Json;
 using System.Web;
 
 namespace klbotlib.MessageDriver.Mirai
 {
-    static class MiraiJsonHelper
+    internal static class MiraiJsonHelper
     {
+        private static readonly JsonSerializerOptions _protocolDeserializeOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            IncludeFields = true
+        };
+
+        internal static T? Deserialize<T>(string json)
+        {
+            return JsonSerializer.Deserialize<T>(json, _protocolDeserializeOptions);
+        }
         //构建完整消息
         internal static class MiraiMessageJsonBuilder
         {

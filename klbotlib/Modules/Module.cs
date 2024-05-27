@@ -1,8 +1,6 @@
 ﻿using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.Json;
-using klbotlib.Reflection;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -352,7 +350,7 @@ namespace klbotlib.Modules
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
-        internal void ImportDict(Dictionary<string, object> dict, bool ignoreNull = false)
+        internal void ImportDict(Dictionary<string, object?> dict, bool ignoreNull = false)
         {
             Type type = GetType();
             foreach (var kvp in dict)
@@ -372,7 +370,7 @@ namespace klbotlib.Modules
                         ModuleLog($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", LogType.Error);
                         throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                     }
-                    property.SetValue(this, ReflectionHelper.RestoreType(property.PropertyType, kvp.Value));
+                    property.SetValue(this, Convert.ChangeType(kvp.Value, property.PropertyType));
                     continue;
                 }
                 else
@@ -389,7 +387,7 @@ namespace klbotlib.Modules
                             ModuleLog($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", LogType.Error);
                             throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
                         }
-                        field.SetValue(this, ReflectionHelper.RestoreType(field.FieldType, kvp.Value));
+                        field.SetValue(this, Convert.ChangeType(kvp.Value, field.FieldType));
                         continue;
                     }
                     else
@@ -406,7 +404,7 @@ namespace klbotlib.Modules
         //保存模块的状态
         internal void SaveModuleStatus(bool printInfo = true)
         {
-            string json = JsonConvert.SerializeObject(ExportStatusDict(), JsonHelper.JsonSettings.FileSetting);
+            string json = KLBotJsonHelper.SerializeFile(ExportStatusDict());
             string filePath = HostBot.GetModuleStatusPath(this);
             if (printInfo)
                 ModuleLog($"正在保存状态至\"{filePath}\"...", LogType.Task);

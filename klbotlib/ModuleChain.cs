@@ -19,7 +19,7 @@ namespace klbotlib
         IEnumerator<Module> IEnumerable<Module>.GetEnumerator() => _modules.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _modules.GetEnumerator();
         //计算模块ID
-        internal string CalcModuleID(string module_name, int moduleIndex)
+        internal string CalcModuleId(string module_name, int moduleIndex)
         {
             if (moduleIndex == 0)
                 return module_name;
@@ -32,7 +32,7 @@ namespace klbotlib
             string name = module.ModuleName;
             if (!_moduleCountByName.TryGetValue(name, out int count))
                 count = 0;
-            return CalcModuleID(name, count);
+            return CalcModuleId(name, count);
         }
         //下面两个方法为internal，阻止任何绕过KLBot直接修改ModuleChain的行为。这是因为需要KLBot帮助Module和ModuleChain沟通传递ModuleID信息。
         /// <summary>
@@ -48,7 +48,7 @@ namespace klbotlib
                     _moduleCountByName.Add(m.ModuleName, 1);
                 else
                     _moduleCountByName[m.ModuleName]++;
-                this._modules.Add(m);
+                _modules.Add(m);
             }
         }
 
@@ -108,7 +108,7 @@ namespace klbotlib
         /// <param name="module">目标模块对象。失败时为null</param>
         public bool TryGetModule<T>(int index, out T? module) where T : Module
         {
-            string moduleId = CalcModuleID(typeof(T).Name, index);
+            string moduleId = CalcModuleId(typeof(T).Name, index);
             if (!_indexById.ContainsKey(moduleId))
             {
                 module = null;
@@ -137,7 +137,7 @@ namespace klbotlib
         /// <param name="moduleIndex">目标模块的索引。默认为0</param>
         public T GetModule<T>(int moduleIndex = 0) where T : Module
         {
-            return (T)this[CalcModuleID(typeof(T).Name, moduleIndex)];
+            return (T)this[CalcModuleId(typeof(T).Name, moduleIndex)];
         }
         ///<inheritdoc/>
         public void ForEach(Action<Module> action) => _modules.ForEach(action);
