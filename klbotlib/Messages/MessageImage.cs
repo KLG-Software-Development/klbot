@@ -9,7 +9,7 @@ namespace klbotlib
     public class MessageImage : MessageCommon
     {
         /// <summary>
-        /// 图像的Url的列表，顺序从先到后
+        /// 图像的Url
         /// </summary>
         public List<string> UrlList { get; internal set; } = new();
 

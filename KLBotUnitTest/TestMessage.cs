@@ -99,26 +99,26 @@ public class TestMessage
         long id = 0;
         long[] ids = new long[] { 1, 2, 3};
         MessagePlain plain = new(MessageContext.Group, 2, 3, ro.Next().ToString());
-        Assert.AreEqual(0, plain.TargetID.Count, "默认情况下@目标数量应为0");
+        Assert.AreEqual(0, plain.TargetId.Count, "默认情况下@目标数量应为0");
         plain.AddTargetId(id);
         length++;
-        Assert.AreEqual(length, plain.TargetID.Count, "AddTargetID(long)每次应只添加一个目标ID");
-        Assert.AreEqual(id, plain.TargetID[0], "AddTargetID(long)应正确添加目标ID");
-        Assert.IsTrue(plain.ContainsTargetID(id), "ContainsTargetID()结果应保持一致");
+        Assert.AreEqual(length, plain.TargetId.Count, "AddTargetID(long)每次应只添加一个目标ID");
+        Assert.AreEqual(id, plain.TargetId[0], "AddTargetID(long)应正确添加目标ID");
+        Assert.IsTrue(plain.ContainsTargetId(id), "ContainsTargetID()结果应保持一致");
         plain.AddTargetID(ids);
         length += ids.Length;
-        Assert.AreEqual(length, plain.TargetID.Count, "AddTargetID(long[])应一次添加所有元素");
+        Assert.AreEqual(length, plain.TargetId.Count, "AddTargetID(long[])应一次添加所有元素");
         for (int i = 0; i < ids.Length; i++)
         {
-            Assert.AreEqual(ids[i], plain.TargetID[i + 1], "AddTargetID(long[])应按顺序添加所有元素");
+            Assert.AreEqual(ids[i], plain.TargetId[i + 1], "AddTargetID(long[])应按顺序添加所有元素");
         }
         plain.AddTargetId(id);
         length++;
-        Assert.AreEqual(length, plain.TargetID.Count, "应允许重复添加同一ID");
-        Assert.AreEqual(id, plain.TargetID[length - 1], "应允许重复添加同一ID");
-        plain.ClearTargetID();
-        Assert.AreEqual(0, plain.TargetID.Count, "ClearTargetID()应清空目标ID列表");
-        Assert.IsFalse(plain.ContainsTargetID(id), "ClearTargetID()应清空目标ID列表");
+        Assert.AreEqual(length, plain.TargetId.Count, "应允许重复添加同一ID");
+        Assert.AreEqual(id, plain.TargetId[length - 1], "应允许重复添加同一ID");
+        plain.ClearTargetId();
+        Assert.AreEqual(0, plain.TargetId.Count, "ClearTargetID()应清空目标ID列表");
+        Assert.IsFalse(plain.ContainsTargetId(id), "ClearTargetID()应清空目标ID列表");
     }
     // 测试深拷贝
     [TestMethod]
@@ -133,9 +133,9 @@ public class TestMessage
             plain.AddTargetId(targetId);
             MessagePlain copyPlain = (MessagePlain)plain.DeepCopy();
             //TargetID
-            CollectionAssert.AreEquivalent((ICollection)plain.TargetID, (ICollection)copyPlain.TargetID, "拷贝结果内容应与原始内容相等 (MessageCommon.TargetID)");
+            CollectionAssert.AreEquivalent((ICollection)plain.TargetId, (ICollection)copyPlain.TargetId, "拷贝结果内容应与原始内容相等 (MessageCommon.TargetID)");
             copyPlain.AddTargetId(ro.NextInt64());
-            CollectionAssert.AreNotEquivalent((ICollection)plain.TargetID, (ICollection)copyPlain.TargetID, "修改拷贝结果不应影响原始内容 (MessageCommon.TargetID)");
+            CollectionAssert.AreNotEquivalent((ICollection)plain.TargetId, (ICollection)copyPlain.TargetId, "修改拷贝结果不应影响原始内容 (MessageCommon.TargetID)");
             //Message.GroupID和Message.Context字段无需测试：外部只读
             //MessageCommon.SenderID 字段无需测试：外部只读
             //MessagePlain.Text 字段无需测试：外部只读

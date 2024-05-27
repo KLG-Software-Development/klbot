@@ -22,7 +22,7 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "聊天模块";
     /// <inheritdoc/>
-    public sealed override string? Filter(MessagePlain msg) => msg.TargetID.Contains(HostBot.SelfId) ? "ok" : null;
+    public sealed override string? Filter(MessagePlain msg) => msg.TargetId.Contains(HostBot.SelfId) ? "ok" : null;
     /// <inheritdoc/>
     public sealed override async Task<string> Processor(MessagePlain msg, string? _)
     {

@@ -55,7 +55,7 @@ public class FuckModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string? Filter(MessagePlain msg)
     {
-        return _pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetID.Contains(HostBot.SelfId))
+        return _pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetId.Contains(HostBot.SelfId))
             ? "ok"
             : null;
     }

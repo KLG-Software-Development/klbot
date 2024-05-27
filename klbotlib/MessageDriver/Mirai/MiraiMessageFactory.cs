@@ -32,8 +32,6 @@ namespace klbotlib.MessageDriver.Mirai
                 retCommon = BuildVoice(msgPackage);
             else if (type == typeof(MessageFlashImage))
                 retCommon = BuildFlashImage(msgPackage);
-            else if (type == typeof(MessageImagePlain))
-                retCommon = BuildImagePlain(msgPackage);
             else if (type == typeof(MessageRecall))
                 ret = new MessageRecall(msgPackage.authorId, msgPackage.@operator.id, -1, msgPackage.messageId);
             else if (type == typeof(MessageMute))
@@ -57,17 +55,17 @@ namespace klbotlib.MessageDriver.Mirai
             }
             else
                 return Message.Empty;
+            List<Message> msgArray = [ ];
             if (retCommon != null)
             {
+                msgArray.Add(retCommon);
                 foreach (var id in targets)
                 {
-                    retCommon.AddTargetId(id);
+                    msgArray.Add(new MessageAt(msgPackage.sender.id, msgPackage.@operator.GroupId, id));
                 }
-                ret = retCommon;
             }
+            ret = new MessageArray(msgPackage.sender.id, msgPackage.@operator.GroupId, msgArray);
             //加工合适的上下文和ID
-            if (ret == null)
-                throw new NullReferenceException("消息对象构造错误：处理结束时意外遭遇null值");
             RefineContext(msgPackage, ret);
             return ret;
         }
