@@ -1,7 +1,6 @@
 ﻿using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.MessageDriver.Mirai;
 using klbotlib.MessageDriver.OneBot;
 using klbotlib.Modules;
 using System;
@@ -22,11 +21,8 @@ class Program
         string driverId = _config.ReadValue("driver_id");
         switch (driverId)
         {
-            case BuiltinMessageDriverId.MiraiHttpId:
-                string serviceUrl = _config.ReadValue("service_url", driverId);
-                return new MessageDriver_MiraiHttp(serviceUrl);
             case BuiltinMessageDriverId.OneBotHttpId:
-                serviceUrl = _config.ReadValue("service_url", driverId);
+                string serviceUrl = _config.ReadValue("service_url", driverId);
                 string webhookBindUrl = _config.ReadValue("webhook_url", driverId);
                 string token = _config.ReadValue("token", driverId);
                 return new MessageDriver_OneBotHttp(serviceUrl, webhookBindUrl, token);
