@@ -64,13 +64,13 @@ namespace klbotlib
         /// </summary>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="msg">回复内容</param>
-        Task ReplyMessage(MessageCommon originMsg, Message msg);
+        Task ReplyMessage(MessagePackage originMsg, Message msg);
         /// <summary>
         /// 回复消息接口
         /// </summary>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="plainMsg">纯文本回复内容</param>
-        Task ReplyMessage(MessageCommon originMsg, string plainMsg);
+        Task ReplyMessage(MessagePackage originMsg, string plainMsg);
         /// <summary>
         /// 发送群消息接口
         /// </summary>

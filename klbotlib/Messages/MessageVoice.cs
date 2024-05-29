@@ -3,7 +3,7 @@ namespace klbotlib
     /// <summary>
     /// 语音消息
     /// </summary>
-    public class MessageVoice : MessageCommon
+    public class MessageVoice : Message
     {
         /// <summary>
         /// 语音的url

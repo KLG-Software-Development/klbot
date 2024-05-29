@@ -273,9 +273,9 @@ namespace klbotlib
         /// <param name="module">调用模块</param>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="msg">回复内容</param>
-        internal async Task ReplyMessage(Module module, Message originMsg, Message msg)
+        internal async Task ReplyMessage(Module module, MessagePackage originMsg, Message msg)
         {
-            if (originMsg is MessageCommon originMsgCommon)
+            if (originMsg is MessagePackage originMsgCommon)
                 await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, msg);
             else
             {
@@ -296,10 +296,10 @@ namespace klbotlib
         /// <param name="module">调用模块</param>
         /// <param name="originMsg">待回复的原始消息</param>
         /// <param name="plain">回复的纯文本内容</param>
-        internal async Task ReplyMessage(Module module, Message originMsg, string plain)
+        internal async Task ReplyMessage(Module module, MessagePackage originMsg, string plain)
         {
-            if (originMsg is MessageCommon originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
+            if (originMsg is MessagePackage originMsgArray)
+                await SendMessage(module, originMsg.Context, originMsgArray.SenderId, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
             else
             {
                 switch (originMsg.Context)
@@ -355,7 +355,7 @@ namespace klbotlib
             }
             this.LogInfo($"[KLBotEvent/Message] {e.Description.Replace('\n', ';')}");
             DiagData.ReceivedMessageCount++;
-            Message msg = e.Message;
+            MessagePackage msg = e.Message;
             // 私聊/临时会话需过滤，范围为目标群组
             if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msg.GroupId))
                 goto processed;

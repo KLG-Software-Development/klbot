@@ -6,7 +6,7 @@ namespace klbotlib;
 /// <summary>
 /// 图像消息类
 /// </summary>
-public class MessageFlashImage : MessageCommon
+public class MessageFlashImage : Message
 {
     /// <summary>
     /// 图像的Url的列表，顺序从先到后

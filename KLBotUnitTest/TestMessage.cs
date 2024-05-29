@@ -41,10 +41,6 @@ public class TestMessage
             m = new MessageFlashImage(context, senderId, groupId, urlList);
             s = m.ToString();
             Assert.AreEqual($"Type: MessageFlashImage\nContext: {context}\nFrom: {senderId}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageFlashImage.ToString()");
-            // MessageImagePlain
-            m = new MessageImagePlain(context, senderId, groupId, text, urlList);
-            s = m.ToString();
-            Assert.AreEqual($"Type: MessageImagePlain\nContext: {context}\nFrom: {senderId}\nText: {text}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImagePlain.ToString()");
             // MessageVoice
             m = new MessageVoice(context, senderId, groupId, urlList[1]);
             s = m.ToString();
@@ -76,10 +72,6 @@ public class TestMessage
             m = new MessageFlashImage(context, senderId, groupId, urlList);
             s = m.ToString();
             Assert.AreEqual($"Type: MessageFlashImage\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageFlashImage.ToString()");
-            // MessageImagePlain
-            m = new MessageImagePlain(context, senderId, groupId, text, urlList);
-            s = m.ToString();
-            Assert.AreEqual($"Type: MessageImagePlain\nContext: {context}\nGroup: {groupId}\nFrom: {senderId}\nText: {text}\nUrl[0]: {urlList[0]}\nUrl[1]: {urlList[1]}", s, "检查MessageImagePlain.ToString()");
             // MessageVoice
             m = new MessageVoice(context, senderId, groupId, urlList[1]);
             s = m.ToString();
@@ -127,17 +119,17 @@ public class TestMessage
         Random ro = new();
         long targetId = ro.Next(1000);
         string[] urlList = new string[] { "url1", "url2", "url3" };
-        //MessageCommon & MessagePlain
+        //Message & MessagePlain
         {
             MessagePlain plain = new(ro.Next(1000), ro.Next(1000));
             plain.AddTargetId(targetId);
             MessagePlain copyPlain = (MessagePlain)plain.DeepCopy();
             //TargetID
-            CollectionAssert.AreEquivalent((ICollection)plain.TargetId, (ICollection)copyPlain.TargetId, "拷贝结果内容应与原始内容相等 (MessageCommon.TargetID)");
+            CollectionAssert.AreEquivalent((ICollection)plain.TargetId, (ICollection)copyPlain.TargetId, "拷贝结果内容应与原始内容相等 (Message.TargetID)");
             copyPlain.AddTargetId(ro.NextInt64());
-            CollectionAssert.AreNotEquivalent((ICollection)plain.TargetId, (ICollection)copyPlain.TargetId, "修改拷贝结果不应影响原始内容 (MessageCommon.TargetID)");
+            CollectionAssert.AreNotEquivalent((ICollection)plain.TargetId, (ICollection)copyPlain.TargetId, "修改拷贝结果不应影响原始内容 (Message.TargetID)");
             //Message.GroupID和Message.Context字段无需测试：外部只读
-            //MessageCommon.SenderID 字段无需测试：外部只读
+            //Message.SenderID 字段无需测试：外部只读
             //MessagePlain.Text 字段无需测试：外部只读
         }
         //MessageImage

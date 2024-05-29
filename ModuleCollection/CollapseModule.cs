@@ -112,7 +112,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         return true;
     }
     //XML解析：答案
-    private string ProcessXML(MessageCommon msg, string xml)
+    private string ProcessXML(Message msg, string xml)
     {
         if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";
@@ -132,7 +132,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         return "没塌！";
     }
     //XML解析：中间过程
-    private string ProcessXMLStepByStep(MessageCommon msg, string xml, string input)
+    private string ProcessXMLStepByStep(Message msg, string xml, string input)
     {
         if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";

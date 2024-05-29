@@ -15,7 +15,7 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 图像处理模块
 /// </summary>
-public class IMGPModule : SingleTypeModule<MessageArray>
+public class IMGPModule : SingleTypeModule<MessagePackage>
 {
     /// <inheritdoc/>
     public sealed override bool UseSignature => false;
@@ -127,13 +127,13 @@ public class IMGPModule : SingleTypeModule<MessageArray>
     }
 
     /// <inheritdoc/>
-    public override string? Filter(MessageArray msg)
+    public override string? Filter(MessagePackage msg)
     {
         // TODO: 重做IMGP模块
         return null;
     }
     /// <inheritdoc/>
-    public override async Task<string> Processor(MessageArray msg, string? filterOut)
+    public override async Task<string> Processor(MessagePackage msg, string? filterOut)
     {
         _sb.Clear();
         // TODO: 重做IMGP模块

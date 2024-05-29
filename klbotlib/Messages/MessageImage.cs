@@ -6,7 +6,7 @@ namespace klbotlib
     /// <summary>
     /// 图像消息类
     /// </summary>
-    public class MessageImage : MessageCommon
+    public class MessageImage : Message
     {
         /// <summary>
         /// 图像的Url

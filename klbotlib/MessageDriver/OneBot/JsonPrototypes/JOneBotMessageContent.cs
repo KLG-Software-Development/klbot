@@ -15,11 +15,11 @@ internal static class JOneBotMessageContentExtension
         switch (content.Type)
         {
             case "text":
-                return new MessagePlain(0, 0, content.Data.GetString("text"));
+                return new MessagePlain(content.Data.GetString("text"));
             case "at":
-                return new MessageAt(0, 0, content.Data.GetLong("text"));
+                return new MessageAt(content.Data.GetLong("text"));
             case "face":
-                return new MessageFace(0, 0, content.Data.GetString("id"));
+                return new MessageFace(content.Data.GetString("id"));
             case "image":
                 string url;
                 if (content.Data.ContainsKey("url"))

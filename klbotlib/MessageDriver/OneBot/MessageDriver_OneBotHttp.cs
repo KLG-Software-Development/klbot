@@ -53,13 +53,13 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     // 从OneBot事件中构造消息
-    private static MessageCommon BuildMessageFromEvent(OneBotEventArgs e)
+    private static Message BuildMessageFromEvent(OneBotEventArgs e)
     {
         var data = e.RawEventData;
         MessageContext context = GetOneBotMessageEventContext(data);
         if (data.Message == null)
             throw new Exception($"Failed to build Message: Invalid deserialized data: {data}");
-        return new MessageArray(data.UserId, data.GroupId, data.Message.Select(msg => msg.BuildMessage()));
+        return new MessagePackage(data.UserId, data.GroupId, data.Message.Select(msg => msg.BuildMessage()));
     }
 
     // 推导message事件的上下文类型

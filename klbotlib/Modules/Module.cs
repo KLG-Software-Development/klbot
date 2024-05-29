@@ -266,7 +266,7 @@ namespace klbotlib.Modules
             => HostBot.GetMessageFromId(target, messageId);
         Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, Message msg)
             => HostBot.SendMessage(this, context, userId, groupId, msg);
-        async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, Message msg)
+        async Task IMessagingAPI.ReplyMessage(Message originMsg, Message msg)
         {
             //统一Assert
             AssertAttachedStatus(true);
@@ -281,7 +281,7 @@ namespace klbotlib.Modules
                     break;
             }
         }
-        async Task IMessagingAPI.ReplyMessage(MessageCommon originMsg, string plainMsg)
+        async Task IMessagingAPI.ReplyMessage(Message originMsg, string plainMsg)
             => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(HostBot.SelfId, originMsg.GroupId, plainMsg));
         Task IMessagingAPI.SendGroupMessage(long groupId, Message msg)
             => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, msg);

@@ -126,7 +126,7 @@ start:
     private static string GetMessageDebugInfo(Message msg)
     {
         string content;
-        if (msg is MessageCommon msgCommon)
+        if (msg is Message msgCommon)
         {
             if (msgCommon is MessagePlain pmsg)
                 content = pmsg.Text;
@@ -244,7 +244,7 @@ start:
         Console.WriteLine("\n调试命令：");
         Console.WriteLine("save all                                      保存所有模块的配置与状态");
     }
-    private static void SendMessageCommonAndPrint(KLBot lcb, MessageCommon msg)
+    private static void SendMessageCommonAndPrint(KLBot lcb, Message msg)
     {
         if (_tagMe)
             msg.AddTargetId(lcb.SelfId);

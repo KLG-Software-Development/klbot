@@ -3,7 +3,7 @@
     /// <summary>
     /// 表情消息
     /// </summary>
-    public class MessageFace(long senderId, long groupId, string id) : MessageCommon(senderId, groupId)
+    public class MessageFace(string id)
     {
         /// <summary>
         /// 表情ID

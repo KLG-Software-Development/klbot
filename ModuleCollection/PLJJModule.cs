@@ -48,7 +48,7 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
     /// 随机返回一条图库内的URL
     /// </summary>
     /// <returns>(是否成功，图片URL)</returns>
-    public async Task<(bool, string)> GetRandomUrl(string enhanceWord, MessageCommon originMsg, bool silent = false)
+    public async Task<(bool, string)> GetRandomUrl(string enhanceWord, Message originMsg, bool silent = false)
     {
         int trials = 0;
         //预检查URL可用性

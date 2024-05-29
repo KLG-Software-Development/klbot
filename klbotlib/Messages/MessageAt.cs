@@ -3,7 +3,7 @@
     /// <summary>
     /// @消息
     /// </summary>
-    public class MessageAt(long senderId, long groupId, long targetId) : MessageCommon(senderId, groupId)
+    public class MessageAt(long targetId) : Message
     {
         /// <summary>
         /// @目标的ID

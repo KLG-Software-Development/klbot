@@ -28,10 +28,10 @@ public class KLBotEventArgs(DateTime time, string desc) : EventArgs
 /// </summary>
 /// <param name="time">事件发生（或最早构建）时间</param>
 /// <param name="msg">对应的消息</param>
-public class KLBotMessageEventArgs(DateTime time, Message msg) : KLBotEventArgs(time, msg.ToString())
+public class KLBotMessageEventArgs(DateTime time, MessagePackage msg) : KLBotEventArgs(time, msg.ToString())
 {
     /// <summary>
     /// 对应的消息
     /// </summary>
-    public Message Message { get; } = msg;
+    public MessagePackage Message { get; } = msg;
 }
