@@ -44,7 +44,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         return msg.Text.StartsWith(_onlineCommand) ? "compile_ol" : msg.Text.StartsWith(_localCommand) ? "compile" : null;
     }
     ///<inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
+    public override async Task<Message> Processor(MessagePlain msg, string? filterOut)
     {
         string text = msg.Text.TrimStart();
         int ptr = 4;

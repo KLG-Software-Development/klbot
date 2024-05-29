@@ -82,7 +82,7 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
         return null;
     }
     /// <inheritdoc/>
-    public override Task<string> Processor(MessagePlain msg, string? filterOut)
+    public override Task<Message> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {

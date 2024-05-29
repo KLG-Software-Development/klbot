@@ -49,7 +49,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     ///<inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
+    public override async Task<Message> Processor(MessagePlain msg, string? filterOut)
     {
         switch (filterOut)
         {

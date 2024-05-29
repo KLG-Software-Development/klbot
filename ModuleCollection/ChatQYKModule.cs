@@ -24,7 +24,7 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string? Filter(MessagePlain msg) => msg.TargetId.Contains(HostBot.SelfId) ? "ok" : null;
     /// <inheritdoc/>
-    public sealed override async Task<string> Processor(MessagePlain msg, string? _)
+    public sealed override async Task<Message> Processor(MessagePlain msg, string? _)
     {
         string jreply = await _helper.GetStringAsync(_url + msg.Text);
         return JsonSerializer.Deserialize<ChatterBotReply>(jreply).FormattedContent();

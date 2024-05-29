@@ -21,28 +21,30 @@ public class FlashGambleModule : Module
     public override bool UseSignature => false;
 
     /// <inheritdoc/>
-    public override string? Filter(Message msg)
+    public override string? Filter(MessagePackage msgPkg)
     {
+        Message msg = msgPkg.Collapse();
         if (msg is MessageRecall)
             return "recall";
-        else if (msg is MessageFlashImage)
+        else if (msg is MessageImage imsg && imsg.IsFlashImage)
             return "flash";
         else
             return null;
     }
     /// <inheritdoc/>
-    public override async Task<string> Processor(Message msg, string? filterOut)
+    public override async Task<string> Processor(MessagePackage msgPkg, string? filterOut)
     {
+        Message msg = msgPkg.Collapse();
         if (_ro.Next(100) < _prob)
         {
             switch (filterOut)
             {
                 case "recall":
                     MessageRecall recall = (MessageRecall)msg;
-                    long target = recall.Context == MessageContext.Group ? recall.GroupId :HostBot.SelfId;
+                    long target = msgPkg.Context == MessageContext.Group ? msgPkg.GroupId :HostBot.SelfId;
                     long msgId = recall.MessageId;
-                    long operatorId = recall.OperatorId;
-                    Message origin = (Message)await Messaging.GetMessageFromID(target, msgId);
+                    long operatorId = msgPkg.SenderId;
+                    MessagePackage origin = await Messaging.GetMessageFromId(target, msgId);
                     if (origin == null)
                         return string.Empty;
                     string info;
@@ -50,29 +52,21 @@ public class FlashGambleModule : Module
                         info = @$"{{\tag:{operatorId}}} 撤回了自己的";
                     else
                         info = @$"{{\tag:{operatorId}}} 撤回了{{\tag:{origin.SenderId}}}的";
-                    if (origin is MessagePlain p)
-                        return info + "消息：\n\n" + p.Text;
-                    else if (origin is MessageImage i)
+                    Message originMsg = origin.Collapse();
+                    if (originMsg is MessagePlain pmsg)
+                        return info + "消息：\n\n" + pmsg.Text;
+                    else if (originMsg is MessageImage imsg)
                     {
-                        await Messaging.ReplyMessage(i, info + "图像");
-                        foreach (var url in i.UrlList)
-                            await Messaging.ReplyMessage(i, @"\image:\url:" + url);
-                        return string.Empty;
+                        string contentDesc = imsg.IsFlashImage ? "闪照" : "图像";
+                        await Messaging.ReplyMessage(msgPkg, info + contentDesc);
+                        await Messaging.ReplyMessage(msgPkg, new MessageImage(imsg.Url, imsg.IsFlashImage));
                     }
-                    else if (origin is MessageFlashImage f)
-                    {
-                        await Messaging.ReplyMessage(f, info + "闪照");
-                        foreach (var url in f.UrlList)
-                            await Messaging.ReplyMessage(f, @"\image:\url:" + url);
-                        return string.Empty;
-                    }
-                    else if (origin is MessageVoice v)
+                    else if (originMsg is MessageVoice v)
                     {
                         await Messaging.ReplyMessage(v, info + "语音");
                         return @"\voice:\url:" + v.Url;
                     }
-                    else
-                        return string.Empty;
+                    return string.Empty;
                 case "flash":
                     var flashMsg = msg as MessageFlashImage;
                     foreach (var url in flashMsg.UrlList)

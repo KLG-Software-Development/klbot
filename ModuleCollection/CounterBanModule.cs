@@ -21,14 +21,14 @@ public class CounterBanModule : SingleTypeModule<MessageMute>
     /// <inheritdoc/>
     public override string? Filter(MessageMute msg)
     {
-        if (msg.IsUnmute)
+        if (msg.Unmute)
             return null;
         else
             return "counterBan";
     }
 
     /// <inheritdoc/>
-    public override async Task<string> Processor(MessageMute msg, string? filterOut)
+    public override async Task<Message> Processor(MessageMute msg, string? filterOut)
     {
         switch (filterOut)
         {

@@ -133,7 +133,7 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
         return null;
     }
     /// <inheritdoc/>
-    public override async Task<string> Processor(MessagePackage msg, string? filterOut)
+    public override async Task<Message> Processor(MessagePackage msg, string? filterOut)
     {
         _sb.Clear();
         // TODO: 重做IMGP模块

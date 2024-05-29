@@ -66,16 +66,16 @@ namespace klbotlib.Modules
         /// 过滤器(Message -> bool)。模块通过这个函数判断是否要处理某一条消息。
         /// 在模块总开关开启的情况下，如果传入一条消息时输出为空或null，这条消息会忽略，否则它将和输出一同被传送给处理器Processor(Message, string -> string)。
         /// </summary>
-        /// <param name="msg">待判断消息</param>
+        /// <param name="msgPkg">待判断消息</param>
         /// <returns>过滤器输出的字符串</returns>
-        public abstract string? Filter(Message msg);
+        public abstract string? Filter(MessagePackage msgPkg);
         /// <summary>
         /// 处理器(Message -> string)。模块通过这个函数处理所有(通过了过滤器的)消息。
         /// </summary>
-        /// <param name="msg">待处理消息</param>
+        /// <param name="msgPkg">待处理消息</param>
         /// <param name="filterOut">过滤器的输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
         /// <returns>用字符串表示的处理结果。如果你的模块不打算输出/回复处理结果，应返回null或空字符串</returns>
-        public abstract Task<string> Processor(Message msg, string? filterOut);
+        public abstract Task<Message> Processor(MessagePackage msgPkg, string? filterOut);
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
@@ -262,7 +262,7 @@ namespace klbotlib.Modules
             else
                 File.Delete(path);
         }
-        Task<Message> IMessagingAPI.GetMessageFromID(long target, long messageId)
+        Task<MessagePackage> IMessagingAPI.GetMessageFromId(long target, long messageId)
             => HostBot.GetMessageFromId(target, messageId);
         Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, Message msg)
             => HostBot.SendMessage(this, context, userId, groupId, msg);
@@ -501,11 +501,51 @@ namespace klbotlib.Modules
     }
 
     /// <summary>
+    /// 方便实现只处理简单消息（即只有单一元素的消息）的模块基类
+    /// </summary>
+    public abstract class SimpleMessageModule : Module
+    {
+        /// <summary>
+        /// 简单消息过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
+        /// </summary>
+        /// <param name="msg">待判断消息</param>
+        public abstract string? Filter(Message msg);
+        /// <summary>
+        /// 简单消息处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
+        /// </summary>
+        /// <param name="msg">待处理消息</param>
+        /// <param name="filterOut">消息经过过滤器时的输出</param>
+        /// <returns>用字符串表示的处理结果</returns>
+        public abstract Task<Message> Processor(Message msg, string? filterOut);
+
+        ///<Inheritdoc/>
+        public sealed override string? Filter(MessagePackage msg)
+        {
+            if (msg.IsComplex)
+                return null;
+            return Filter(msg.Collapse());
+        }
+        ///<Inheritdoc/>
+        public sealed override async Task<Message> Processor(MessagePackage msg, string? filterOut)
+        {
+            if (filterOut == null)
+                throw new Exception("过滤器输出意外为空");
+            if (msg.IsComplex)
+            {
+                ModuleLog("意外遇到复杂消息类型，这在任何情况下不应发生", LogType.Error);
+                throw new Exception("意外遇到无法处理的消息类型");
+            }
+            return await Processor(msg, filterOut);
+        }
+
+    }
+
+    /// <summary>
     /// 方便实现只处理单个种类的Message的模块的基类
     /// 如果你的模块只处理单种消息（例如只处理文本消息），继承这玩意可以少写很多类型匹配的废话
     /// </summary>
     /// <typeparam name="T">模块所处理的特定消息类型</typeparam>
-    public abstract class SingleTypeModule<T> : Module where T : Message
+    public abstract class SingleTypeModule<T> : SimpleMessageModule where T : Message
     {
         /// <summary>
         /// 单类型过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
@@ -518,7 +558,7 @@ namespace klbotlib.Modules
         /// <param name="msg">待处理消息</param>
         /// <param name="filterOut">消息经过过滤器时的输出</param>
         /// <returns>用字符串表示的处理结果</returns>
-        public abstract Task<string> Processor(T msg, string? filterOut);
+        public abstract Task<Message> Processor(T msg, string? filterOut);
 
         ///<Inheritdoc/>
         public sealed override string? Filter(Message msg)
@@ -529,7 +569,7 @@ namespace klbotlib.Modules
                 return null;
         }
         ///<Inheritdoc/>
-        public sealed override async Task<string> Processor(Message msg, string? filterOut)
+        public sealed override async Task<Message> Processor(Message msg, string? filterOut)
         {
             if (filterOut == null)
                 throw new Exception("过滤器输出意外为空");

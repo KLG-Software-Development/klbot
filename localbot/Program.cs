@@ -284,19 +284,16 @@ start:
                 SendMessagePackageAndPrint(lcb, new MessagePackage(_context, _userId, _groupId, arg));
                 return;
             case "send-image":
-                SendMessagePackageAndPrint(lcb, new MessageImage(_context, _userId, _groupId, arg.Split(',')));
+                SendMessagePackageAndPrint(lcb, new MessageImage(arg, false).Pack(_context, _userId, _groupId));
                 return;
             case "send-flashimage":
-                SendMessagePackageAndPrint(lcb, new MessageFlashImage(_context, _userId, _groupId, arg.Split(',')));
+                SendMessagePackageAndPrint(lcb, new MessageImage(arg, true).Pack(_context, _userId, _groupId));
                 return;
             case "send-voice":
-                SendMessagePackageAndPrint(lcb, new MessageVoice(_context, _userId, _groupId, arg));
+                SendMessagePackageAndPrint(lcb, new MessageVoice(arg).Pack(_context, _userId, _groupId));
                 return;
             case "recall":
                 Command_Recall(arg);
-                return;
-            case "send-image-plain":
-                Command_SendImagePlain(arg, lcb);
                 return;
             case "unmute":
                 CommandUnmute(arg);
@@ -357,20 +354,8 @@ start:
             Console.WriteLine("无效消息ID");
             return;
         }
-        MessageRecall recall = new(_context, authorId, _userId, _groupId, msgId);
+        MessagePackage recall = new(_context, _userId, _groupId, new MessageRecall(authorId, msgId));
         _localServer.AddReceivedMessage(recall);
-    }
-    private static void Command_SendImagePlain(string arg, KLBot lcb)
-    {
-        string[] args = arg.Split();
-        if (args.Length != 2)
-        {
-            Console.WriteLine("参数不足。应有2个参数：图片URL(s), 文本内容");
-            return;
-        }
-        string[] urls = args[0].Split(',');
-        string text = args[1];
-        SendMessageCommonAndPrint(lcb, new MessageImagePlain(_context, _userId, _groupId, text, urls));
     }
     private static void CommandMute(string arg)
     {
@@ -390,8 +375,8 @@ start:
             Console.WriteLine("无效禁言时长");
             return;
         }
-        MessageMute mute = new(false, _groupId, _userId, userId, durationSeconds);
-        _localServer.AddReceivedMessage(mute);
+        MessageMute mute = new(true, _userId, durationSeconds);
+        _localServer.AddReceivedMessage(mute.Pack(MessageContext.Group, _userId, _groupId));
     }
     private static void CommandUnmute(string arg)
     {
@@ -407,8 +392,8 @@ start:
             Console.WriteLine("无效成员ID");
             return;
         }
-        MessageMute unmute = new(true, _groupId, _userId, userId);
-        _localServer.AddReceivedMessage(unmute);
+        MessageMute unmute = new(true, userId);
+        _localServer.AddReceivedMessage(unmute.Pack(MessageContext.Group, _groupId, _userId));
     }
     private static void CommandSaveAll(string arg)
     {

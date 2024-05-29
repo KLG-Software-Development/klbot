@@ -73,7 +73,7 @@ public class ImageModule : SingleTypeModule<MessagePlain>
                 : null;
     }
     /// <inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
+    public override async Task<Message> Processor(MessagePlain msg, string? filterOut)
     {
         string? url, text = msg.Text.Trim();
         string word = filterOut switch

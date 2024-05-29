@@ -51,7 +51,7 @@ namespace klbotlib.Modules
         public sealed override string FriendlyName => "命令模块";
         public sealed override string HelpInfo => $"发送“{_prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
         public sealed override string? Filter(MessagePlain msg) => _cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
-        public sealed override async Task<string> Processor(MessagePlain msg, string? _)
+        public sealed override async Task<Message> Processor(MessagePlain msg, string? _)
         {
             if (HostBot == null)
                 throw new NullReferenceException("模块尚未链接到主机机器人上");

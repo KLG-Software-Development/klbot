@@ -73,7 +73,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
         ? "ok" 
         : null;
     /// <inheritdoc/>
-    public sealed override async Task<string> Processor(MessagePlain msg, string? _)
+    public sealed override async Task<Message> Processor(MessagePlain msg, string? _)
     {
         string normalizedQuery = AesEncrypt(msg.Text, _password, _bitLength);
         //JChatterBotRequest requestObj = new(_conversationId, new JQuery(normalizedQuery), _traceId);

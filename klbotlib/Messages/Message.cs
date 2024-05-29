@@ -57,6 +57,11 @@ public abstract record Message
     /// 是否为复杂消息
     /// </summary>
     public bool IsComplex => this is MessagePackage msgPkg ? msgPkg.Data.Count > 0 : false;
+    /// <summary>
+    /// 将消息包装为MessagePackage
+    /// </summary>
+    public MessagePackage Pack(MessageContext context, long senderId, long groupId)
+        => new(context, senderId, groupId, this);
 
     internal static MessageEmpty Empty = new MessageEmpty();
 }
