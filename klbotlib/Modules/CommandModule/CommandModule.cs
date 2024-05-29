@@ -103,7 +103,9 @@ namespace klbotlib.Modules.CommandModuleNamespace
         {
             try
             {
-                AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(msg.SenderId);
+                if (!msg.TryGetSenderId(out long senderId))
+                    return "错误：该消息无明确发送者。请检查消息驱动器的事件机制是否有误";
+                AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(senderId);
                 if (authority < AuthorityRequirment)
                     return $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}";
                 else
@@ -129,7 +131,9 @@ namespace klbotlib.Modules.CommandModuleNamespace
 
         public string Run(KLBot bot, T targetObject, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
-            AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(msg.SenderId);
+            if (!msg.TryGetSenderId(out long senderId))
+                return "错误：该消息无明确发送者。请检查消息驱动器的事件机制是否有误";
+            AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(senderId);
             if (authority < AuthorityRequirment)
                 return $"错误：拒绝访问。\r\n调用者权限级别：{authority}\r\n命令权限级别：{AuthorityRequirment}";
             else

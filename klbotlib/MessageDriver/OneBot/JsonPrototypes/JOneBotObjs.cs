@@ -8,20 +8,20 @@ internal record JOneBotSentMessage(int MessageId);
 
 internal static class JOneBotMessageExtension
 {
-    public static Message ToMessage(this JOneBotMessageObj msg)
+    public static MessagePackage ToMessagePackage(this JOneBotMessageObj jmsg)
     {
-        if (msg.Message == null)
-            return Message.Empty;
-        long senderId = msg.UserId;
-        long groupId = msg.GroupId == 0 ? -1 : msg.GroupId;
+        if (jmsg.Message == null)
+            throw new OneBotException($"Failed to build message package from JOneBotMessageObj {jmsg}");
+        long senderId = jmsg.UserId;
+        long groupId = jmsg.GroupId == 0 ? -1 : jmsg.GroupId;
         
-        switch (msg.Message.Type)
+        switch (jmsg.Message.Type)
         {
             case "text":
-                string? text = (string?)msg.Message.Data["text"].AsValue();
+                string? text = (string?)jmsg.Message.Data["text"].AsValue();
                 if (text == null)
                     return Message.Empty;
-                return new MessagePlain(senderId, groupId, text);
+                return new MessagePlain(text);
             default:
                 return Message.Empty;
         }

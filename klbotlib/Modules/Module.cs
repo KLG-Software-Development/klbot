@@ -266,7 +266,7 @@ namespace klbotlib.Modules
             => HostBot.GetMessageFromId(target, messageId);
         Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, Message msg)
             => HostBot.SendMessage(this, context, userId, groupId, msg);
-        async Task IMessagingAPI.ReplyMessage(Message originMsg, Message msg)
+        async Task IMessagingAPI.ReplyMessage(MessagePackage originMsg, Message msg)
         {
             //统一Assert
             AssertAttachedStatus(true);
@@ -281,8 +281,8 @@ namespace klbotlib.Modules
                     break;
             }
         }
-        async Task IMessagingAPI.ReplyMessage(Message originMsg, string plainMsg)
-            => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(HostBot.SelfId, originMsg.GroupId, plainMsg));
+        async Task IMessagingAPI.ReplyMessage(MessagePackage originMsg, string plainMsg)
+            => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(plainMsg));
         Task IMessagingAPI.SendGroupMessage(long groupId, Message msg)
             => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, msg);
         Task IMessagingAPI.SendTempMessage(long userId, long groupId, Message msg)
@@ -320,14 +320,14 @@ namespace klbotlib.Modules
             IsAttached = false;
         }
         // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
-        internal async Task<bool> AddProcessTask(Message msg)
+        internal async Task<bool> AddProcessTask(MessagePackage msgPkg)
         {
             if (!Enabled)
                 return false;
-            string? filterOut = null;
+            string? filterOut;
             try
             {
-                filterOut = Filter(msg);
+                filterOut = Filter(msgPkg);
             }
             catch (Exception ex)    //过滤器存在问题
             {
@@ -336,17 +336,7 @@ namespace klbotlib.Modules
             }
             if (string.IsNullOrEmpty(filterOut))    //过滤器输出空，表示不处理
                 return false;
-            //这里模块内异步过于简单粗暴。框架需要对每个任务提供跟踪功能
-            if (IsAsync)    //模块启用内部异步 则同一模块每条消息也放在Task内处理
-                await ProcessMessage(msg, filterOut);
-            else
-            {
-                await ProcessMessage(msg, filterOut);
-                //if (!_processWorker.IsCompleted)
-                //    _processWorker.ContinueWith(x => ProcessMessage(msg, filterOut));    //若未完成 则排队
-                //else
-                //    _processWorker = Task.Run(() => ProcessMessage(msg, filterOut));      //已完成 则取而代之直接开始
-            }
+            await ProcessMessage(msgPkg, filterOut);
             return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
@@ -444,9 +434,8 @@ namespace klbotlib.Modules
                 throw new Exception("此模块已经附加到宿主KLBot上，无法完成指定操作");
         }
         //处理并调用KLBot回复
-        private async Task ProcessMessage(Message msg, string? filterOut)
+        private async Task ProcessMessage(MessagePackage msgPkg, string? filterOut)
         {
-            //ModulePrint($"[{DateTime.Now.ToString("T")}][{Thread.CurrentThread.ManagedThreadId}]任务已开始...");
             AssertAttachedStatus(true); //统一Assert附加情况
             string? output;
             bool hasError = false;
@@ -454,7 +443,7 @@ namespace klbotlib.Modules
             {
                 ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
-                output = await Processor(msg, filterOut);
+                output = await Processor(msgPkg, filterOut);
                 DiagData.StopMeasurement();
                 DiagData.ProcessedMessageCount++;
             }
@@ -468,7 +457,7 @@ namespace klbotlib.Modules
                 else
                 {
                     output = $"{ModuleId}未正确处理消息";
-                    var debugNotice = new MessagePlain(HostBot.SelfId, -1, output + $"\n\n{ex}");
+                    var debugNotice = new MessagePlain(output + $"\n\n{ex}");
                     foreach (var adminId in HostBot.AdminIds)
                     {
                         try
@@ -492,7 +481,7 @@ namespace klbotlib.Modules
                 }
                 else
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
-                await _hostBot.ReplyMessage(this, msg, signature + output);
+                await _hostBot.ReplyMessage(this, msgPkg, signature + output);
                 ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
             }
             else

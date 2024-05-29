@@ -6,75 +6,57 @@ namespace klbotlib;
 public abstract record Message
 {
     /// <summary>
-    /// 返回此消息是否@了某个ID
+    /// 包含此消息的消息包。可能为null
     /// </summary>
-    /// <param name="id">待判断ID</param>
-    public bool ContainsTargetId(long id)
+    public MessagePackage? Package { get; set; }
+    /// <summary>
+    /// 尝试获取发送者ID。若无明确发送者（非接收的信息）则返回false
+    /// </summary>
+    /// <param name="senderId">发送者ID出参</param>
+    /// <returns>获取是否成功</returns>
+    public bool TryGetSenderId(out long senderId)
     {
-        if (this is MessageAt msgAt)
-            return msgAt.TargetId == id;
-        else if (this is MessagePackage msgArray)
+        if (Package == null)
         {
-            foreach (var msg in msgArray.Data)
-            {
-                if (msg.ContainsTargetId(id))
-                    return true;
-            }
+            senderId = 0;
+            return false;
         }
-        return false;
+        senderId = Package.SenderId;
+        return true;
     }
     /// <summary>
-    /// 是否为复杂消息
+    /// 添加@目标
     /// </summary>
-    public bool IsComplex => this is MessagePackage msgArray ? msgArray.Data.Count > 0 : false;
-    /// <summary>
-    /// 返回此消息是否@了某个ID
-    /// </summary>
-    /// <param name="id">待判断ID</param>
-    public bool ContainsTargetId(long id)
-    {
-        if (this is MessageAt msgAt)
-            return msgAt.TargetId == id;
-        else if (this is MessageArray msgArray)
-        {
-            foreach (var msg in msgArray.Data)
-            {
-                if (msg.ContainsTargetId(id))
-                    return true;
-            }
-        }
-        return false;
-    }
-    /// <summary>
-    /// 是否为复杂消息
-    /// </summary>
-    public bool IsComplex => this is MessageArray msgArray ? msgArray.Data.Length > 0 : false;
-    /// <summary>
-    /// 返回消息对象的一个深拷贝
-    /// </summary>
-    /// <returns></returns>
-    public Message DeepCopy()
-    {
-        Message copy = (Message)MemberwiseClone();
-        CopyReferenceTypeMember(copy);
-        return copy;
-    }
-    /// <inheritdoc/>
-    public override string ToString()
-    {
-        return GetType().Name;
-    }
-
-    internal static MessageEmpty Empty = new MessageEmpty();
-    /// <summary>
-    /// 将此消息中的引用类型字段拷贝到目标消息中
-    /// </summary>
-    /// <param name="dstMsg">目标消息</param>
-    internal abstract void CopyReferenceTypeMember(Message dstMsg);
-
+    /// <param name="id">@的目标ID</param>
     public void AddTargetId(long id)
     {
-        if (this is MessageArray msgArray)
-            msgArray.Data.Add(new MessageAt(this.UserId));
+        if (this is MessagePackage msgPkg)
+            msgPkg.Data.Add(new MessageAt(id));
     }
+
+    /// <summary>
+    /// 返回此消息是否@了某个ID
+    /// </summary>
+    /// <param name="id">待判断ID</param>
+    public bool ContainsTargetId(long id)
+    {
+        if (this is MessageAt msgAt)
+            return msgAt.TargetId == id;
+        else if (this is MessagePackage msgPkg)
+        {
+            foreach (var msg in msgPkg.Data)
+            {
+                if (msg.ContainsTargetId(id))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 是否为复杂消息
+    /// </summary>
+    public bool IsComplex => this is MessagePackage msgPkg ? msgPkg.Data.Count > 0 : false;
+
+    internal static MessageEmpty Empty = new MessageEmpty();
 }

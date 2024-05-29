@@ -44,7 +44,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         switch (e.PostType)
         {
             case "message":
-                OnMessageReceived.Invoke(this, new(e.Time.AsUnixTimestamp(), BuildMessageFromEvent(e)));
+                OnMessageReceived.Invoke(this, new(e.Time.AsUnixTimestamp(), BuildMessagePackageFromEvent(e)));
                 return;
             default:
                 this.Log($"Dispatcher not configured for post type [{e.PostType}]");
@@ -53,7 +53,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     // 从OneBot事件中构造消息
-    private static Message BuildMessageFromEvent(OneBotEventArgs e)
+    private static MessagePackage BuildMessagePackageFromEvent(OneBotEventArgs e)
     {
         var data = e.RawEventData;
         MessageContext context = GetOneBotMessageEventContext(data);
@@ -136,7 +136,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task<Message> GetMessageFromId(long target, long messageId)
     {
-        return await CallApiAsync<JOneBotMessageObj, Message>($"get_msg", $"{{message_id:{messageId}}}", data => data.ToMessage())
+        return await CallApiAsync<JOneBotMessageObj, Message>($"get_msg", $"{{message_id:{messageId}}}", data => data.ToMessagePackage())
             ?? throw new Exception($"Failed to get message by ID {messageId}");
     }
 

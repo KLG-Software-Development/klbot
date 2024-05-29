@@ -99,10 +99,10 @@ start:
 
     //**** Callback ****
     //添加消息（即收到消息）
-    private static void AddMsgCallback_PrintInfo(Message msg)
+    private static void AddMsgCallback_PrintInfo(MessagePackage msgPkg)
     {
-        Console.WriteLine(GetMessageDebugInfo(msg));
-        PrintVerboseInfoIfRequired(msg);
+        Console.WriteLine(GetMessageDebugInfo(msgPkg));
+        PrintVerboseInfoIfRequired(msgPkg);
     }
     //发送消息
     private static void SendMsgCallback_PrintInfo(Module module, MessageContext context, long userId, long groupId, Message msg)
@@ -123,54 +123,25 @@ start:
     /// 生成消息的调试信息字符串
     /// </summary>
     /// <returns>消息的调试信息</returns>
-    private static string GetMessageDebugInfo(Message msg)
+    private static string GetMessageDebugInfo(MessagePackage msgPkg)
     {
+        Message msg = msgPkg.Collapse();
         string content;
-        if (msg is Message msgCommon)
-        {
-            if (msgCommon is MessagePlain pmsg)
-                content = pmsg.Text;
-            else if (msgCommon is MessageImage imsg)
-                content = $"[图片x{imsg.UrlList.Count}]";
-            else if (msgCommon is MessageFlashImage fmsg)
-                content = $"[闪照x{fmsg.UrlList.Count}]";
-            else if (msgCommon is MessageImagePlain ipmsg)
-                content = $"[图片x{ipmsg.UrlList.Count}] {ipmsg.Text}";
-            else if (msgCommon is MessageVoice vmsg)
-                content = $"[语音消息]";
-            else
-                content = $"[未知类型消息：{msgCommon}]";
-            return msgCommon.Context switch
-            {
-                MessageContext.Group => $"* 用户[{msgCommon.SenderId}]向群组[{msgCommon.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-                MessageContext.Temp => $"* 用户[{msgCommon.SenderId}]通过群组[{msgCommon.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-                MessageContext.Private => $"* 用户[{msgCommon.SenderId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-                _ => $"* 用户[{msgCommon.SenderId}]向群组[{msgCommon.GroupId}]或机器人发送了未知类型[{msgCommon.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
-            };
-        }
-        else if (msg is MessageRecall msgRecall)
-        {
-            string person = msgRecall.AuthorId == msgRecall.OperatorId ? "自己" : $"用户[{msgRecall.AuthorId}]";
-            return msgRecall.Context switch
-            {
-                MessageContext.Group => $"用户[{msgRecall.OperatorId}]在群聊[{msgRecall.GroupId}]中撤回了{person}发送的消息[{msgRecall.MessageId}]",
-                MessageContext.Temp => $"* 用户[{msgRecall.OperatorId}]在通过群组[{msgRecall.GroupId}]的临时会话中撤回了{person}发送的消息[{msgRecall.MessageId}]",
-                MessageContext.Private => $"* 用户[{msgRecall.OperatorId}]撤回了{person}发送的消息[{msgRecall.MessageId}]",
-                _ => $"* 用户[{msgRecall.OperatorId}]在机器人可感知的范围内撤回了{person}发送的消息[{msgRecall.MessageId}]"
-            };
-        }
-        else if (msg is MessageMute msgMute)
-        {
-            if (msgMute.IsUnmute)
-            {
-                string person = msgMute.MemberId == msgMute.OperatorId ? "自己" : $"用户[{msgMute.MemberId}]";
-                return $"用户[{msgMute.OperatorId}]在群聊[{msgMute.GroupId}]中解除了{person}的禁言";
-            }
-            else
-                return $"用户[{msgMute.OperatorId}]在群聊[{msgMute.GroupId}]中禁言了用户[{msgMute.MemberId}]";
-        }
+        if (msg is MessagePlain pmsg)
+            content = pmsg.Text;
+        else if (msg is MessageImage imsg)
+            content = imsg.IsFlashImage ? $"[闪照:{imsg.Url}]" : $"[图片x{imsg.Url}]";
+        else if (msg is MessageVoice vmsg)
+            content = $"[语音消息:<{vmsg.Url.Length} chars>]";
         else
-            return $"[未知类型消息：{msg}]";
+            content = $"[未知类型消息：{msg}]";
+        return msgPkg.Context switch
+        {
+            MessageContext.Group => $"* 用户[{msgPkg.SenderId}]向群组[{msgPkg.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Temp => $"* 用户[{msgPkg.SenderId}]通过群组[{msgPkg.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContext.Private => $"* 用户[{msgPkg.SenderId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 用户[{msgPkg.SenderId}]向群组[{msgPkg.GroupId}]或机器人发送了未知类型[{msgPkg.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+        };
     }
     /// <summary>
     /// 生成消息的调试信息字符串
@@ -244,7 +215,7 @@ start:
         Console.WriteLine("\n调试命令：");
         Console.WriteLine("save all                                      保存所有模块的配置与状态");
     }
-    private static void SendMessageCommonAndPrint(KLBot lcb, Message msg)
+    private static void SendMessagePackageAndPrint(KLBot lcb, MessagePackage msg)
     {
         if (_tagMe)
             msg.AddTargetId(lcb.SelfId);
@@ -310,16 +281,16 @@ start:
                 Command_SetContext(arg);
                 return;
             case "send-plain":
-                SendMessageCommonAndPrint(lcb, new MessagePlain(_context, _userId, _groupId, arg));
+                SendMessagePackageAndPrint(lcb, new MessagePackage(_context, _userId, _groupId, arg));
                 return;
             case "send-image":
-                SendMessageCommonAndPrint(lcb, new MessageImage(_context, _userId, _groupId, arg.Split(',')));
+                SendMessagePackageAndPrint(lcb, new MessageImage(_context, _userId, _groupId, arg.Split(',')));
                 return;
             case "send-flashimage":
-                SendMessageCommonAndPrint(lcb, new MessageFlashImage(_context, _userId, _groupId, arg.Split(',')));
+                SendMessagePackageAndPrint(lcb, new MessageFlashImage(_context, _userId, _groupId, arg.Split(',')));
                 return;
             case "send-voice":
-                SendMessageCommonAndPrint(lcb, new MessageVoice(_context, _userId, _groupId, arg));
+                SendMessagePackageAndPrint(lcb, new MessageVoice(_context, _userId, _groupId, arg));
                 return;
             case "recall":
                 Command_Recall(arg);

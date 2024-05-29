@@ -27,8 +27,8 @@ internal static class JOneBotMessageContentExtension
                 else
                     url = content.Data.GetString("file");
                 if (content.Data.ContainsKey("type"))
-                    return new MessageFlashImage(0, 0, [ url ]);;
-                return new MessageImage(0, 0, [ url ]);
+                    return new MessageImage(url, true);;
+                return new MessageImage(url, false);
             default:
                 return Message.Empty;
         }

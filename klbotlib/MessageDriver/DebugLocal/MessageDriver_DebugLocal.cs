@@ -18,11 +18,11 @@ public class MessageDriver_Debug : IMessageDriver
     /// <summary>
     /// 消息缓冲区加入新消息时触发的回调。参数为消息本身
     /// </summary>
-    public Action<Message> AddMessageCallback { get; private set; }
+    public Action<MessagePackage> AddMessageCallback { get; private set; }
     /// <summary>
     /// 机器人发送消息时触发的回调。参数分别为发送消息的来源模块、消息上下文、目标用户ID、目标群聊ID、待发送消息
     /// </summary>
-    public Action<Module, MessageContext, long, long, Message> SendMessageCallback { get; private set; }
+    public Action<Module, MessageContext, long, long, MessagePackage> SendMessageCallback { get; private set; }
     /// <summary>
     /// 机器人上传文件时触发的回调。参数为上传文件操作的来源模块、群聊ID、待发送消息
     /// </summary>
@@ -45,8 +45,8 @@ public class MessageDriver_Debug : IMessageDriver
     /// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
     /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
     /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
-    public MessageDriver_Debug(long selfId, Action<Message> addMsgCallback, 
-        Action<Module, MessageContext, long, long, Message> sendMsgCallback, 
+    public MessageDriver_Debug(long selfId, Action<MessagePackage> addMsgCallback, 
+        Action<Module, MessageContext, long, long, MessagePackage> sendMsgCallback, 
         Action<Module, long, string, string> uploadFileCallback,
         Action<Module, long, long, uint> muteCallback,
         Action<Module, long, long> unmuteCallback)
@@ -63,7 +63,7 @@ public class MessageDriver_Debug : IMessageDriver
     /// 向消息驱动中添加未读消息
     /// </summary>
     /// <param name="msgs">待加入的消息</param>
-    public void AddReceivedMessage(params Message[] msgs)
+    public void AddReceivedMessage(params MessagePackage[] msgs)
     {
         foreach (var msg in msgs)
         {

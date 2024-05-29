@@ -298,14 +298,14 @@ namespace klbotlib
         /// <param name="plain">回复的纯文本内容</param>
         internal async Task ReplyMessage(Module module, MessagePackage originMsg, string plain)
         {
-            if (originMsg is MessagePackage originMsgArray)
-                await SendMessage(module, originMsg.Context, originMsgArray.SenderId, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
+            if (originMsg is MessagePackage originMsgPkg)
+                await SendMessage(module, originMsg.Context, originMsgPkg.SenderId, originMsg.GroupId, new MessagePlain(plain));
             else
             {
                 switch (originMsg.Context)
                 {
                     case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
+                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, new MessagePlain(plain));
                         return;
                     default:
                         module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
@@ -355,10 +355,11 @@ namespace klbotlib
             }
             this.LogInfo($"[KLBotEvent/Message] {e.Description.Replace('\n', ';')}");
             DiagData.ReceivedMessageCount++;
-            MessagePackage msg = e.Message;
+            MessagePackage msgPkg = e.Message;
             // 私聊/临时会话需过滤，范围为目标群组
-            if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msg.GroupId))
+            if ((msgPkg.Context == MessageContext.Group || msgPkg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msgPkg.GroupId))
                 goto processed;
+            Message msg = msgPkg.Collapse();
             //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
             //另外，帮助消息不计入统计信息
             if (msg is MessagePlain pmsg && pmsg.Text.Trim().EndsWith("帮助"))
@@ -367,7 +368,7 @@ namespace klbotlib
                 {
                     if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
                     {
-                        await ReplyMessage(module, msg, module.HelpInfo);
+                        await ReplyMessage(module, msgPkg, module.HelpInfo);
                         goto processed;
                     }
                 }
@@ -377,7 +378,7 @@ namespace klbotlib
             {
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool shouldProcess = await module.AddProcessTask(msg);
+                bool shouldProcess = await module.AddProcessTask(msgPkg);
                 if (shouldProcess)
                 {
                     DiagData.ProcessedMessageCount++;
