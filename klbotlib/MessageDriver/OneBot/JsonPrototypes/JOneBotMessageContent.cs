@@ -8,7 +8,7 @@ internal record JOneBotMessageContent(string? Type, JsonObject? Data);
 
 internal static class JOneBotMessageContentExtension
 {
-    public static Message BuildMessage(this JOneBotMessageContent content)
+    public static Message ToMessage(this JOneBotMessageContent content)
     {
         if (content.Data == null)
             throw new Exception($"Invalid message content: {content}");

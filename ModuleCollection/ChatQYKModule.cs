@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace klbotlib.Modules;
 
 ///聊天bot模块
-public class ChatQYKModule : SingleTypeModule<MessagePlain>
+public class ChatQYKModule : SingleTypeModule<MessagePackage>
 {
     private const string _url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
     private static readonly HttpHelper _helper = new();
@@ -22,11 +22,11 @@ public class ChatQYKModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "聊天模块";
     /// <inheritdoc/>
-    public sealed override string? Filter(MessagePlain msg) => msg.TargetId.Contains(HostBot.SelfId) ? "ok" : null;
-    /// <inheritdoc/>
-    public sealed override async Task<Message> Processor(MessagePlain msg, string? _)
+    public sealed override async Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
-        string jreply = await _helper.GetStringAsync(_url + msg.Text);
+        if (msg.Count != 2 || !msg.ContainsTargetId(HostBot.SelfId))
+            return null;
+        string jreply = await _helper.GetStringAsync(_url + msg.AsPlain());
         return JsonSerializer.Deserialize<ChatterBotReply>(jreply).FormattedContent();
     }
 

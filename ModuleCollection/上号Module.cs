@@ -32,9 +32,10 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     /// </summary>
     public sealed override string FriendlyName => "上号模块";
     /// <summary>
-    /// 过滤器：处理任何消息
+    /// 处理器：内容包含上号且不长于五个字符，则复读内容；
+    /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
     /// </summary>
-    public sealed override string? Filter(MessagePlain msg)
+    public sealed override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         string msgText = msg.Text.Trim();
         foreach (string keyword in _downgradedMsgKeywords)
@@ -44,38 +45,18 @@ public class 上号Module : SingleTypeModule<MessagePlain>
         }
         string? output = null;
         if (Is上号(msgText) && !Is上号(_lastMsg))
-            output = "上号";
+            output = msgText;
+        else if (!Is上号(_lastMsg) && msgText == _lastMsg && _lastMsg != _last2Msg)
+            output = msgText;
         else if (msgText.Contains("蛤儿") && DateTime.Now - _lastHal > _coolDownTime)
         {
-            output = "蛤儿";
+            (bool success, _, string result) = await ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate();
+            output = success ? result + _halReply : _halReply;
             //刷新冷却时间
             _lastHal = DateTime.Now;
         }
-        else if (!Is上号(_lastMsg) && msgText == _lastMsg && _lastMsg != _last2Msg)
-            output = "跟风";
         _last2Msg = _lastMsg;
         _lastMsg = msgText;
         return output;
-    }
-    /// <summary>
-    /// 处理器：内容包含上号且不长于五个字符，则复读内容；
-    /// 另外，缓存当前消息到LastMsg中，用于下一次判断是否是同一轮上号消息。如果是同一轮则不回复。
-    /// </summary>
-    public sealed override async Task<string> Processor(MessagePlain msg, string? filterOut)
-    {
-        string msgText = msg.Text.Trim();
-        switch (filterOut)
-        {
-            case "上号":
-            case "跟风":
-                return msgText;
-            case "蛤儿":
-                (bool success, _, string result) = await ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate();
-                if (success)
-                    return result + _halReply;
-                return _halReply;
-            default:
-                throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\"");
-        }
     }
 }

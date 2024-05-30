@@ -23,8 +23,7 @@ public class TestStatusAutoSave
         bot.AddModule(module).Wait();
         bool initState = module.Enabled;
         //通过命令模块修改启用状态
-        MessagePackage msgPkg = new(-1, TestConst.TargetGroupId, "##switch FuckModule");
-        driver.AddReceivedMessage(msgPkg);
+        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "##switch FuckModule");
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         //Test save file
         string savePath = Path.Combine(bot.ModulesSaveDir, module.ModuleId + "_status.json");

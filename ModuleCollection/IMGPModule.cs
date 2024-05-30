@@ -84,10 +84,10 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
             return $"错误[{code}]：{msg}";
     }
     private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
-    private async Task<(bool, string)> TryMergeWithBase64Async(MessageImage msg)
+    private async Task<(bool, string)> TryMergeWithBase64Async(MessageImage msgA, MessageImage msgB)
     {
-        string b641 = await _httpHelper.GetAsBase64Async(msg.UrlList[0]);
-        string b642 = await _httpHelper.GetAsBase64Async(msg.UrlList[1]);
+        string b641 = await _httpHelper.GetAsBase64Async(msgA.Url);
+        string b642 = await _httpHelper.GetAsBase64Async(msgB.Url);
         string queryString = "?type=merge&apiType=face";
         JMergeRequest request = new(new JImage(b642, "BASE64"), new JImage(b641, "BASE64"), "2.0");
         string json = await _httpHelper.PostJsonAsync(_postUrl + queryString, request);
@@ -100,11 +100,11 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
         else
             return (true, $@"\image:\base64:{reply.data.result.merge_image}");
     }
-    private bool TryMergeWithUrl(MessageImage msg, out string result)
+    private bool TryMergeWithUrl(MessageImage msgA, MessageImage msgB, out string result)
     {
         string queryString = "?type=merge&apiType=face";
-        string url0 = JsonEncodedText.Encode(msg.UrlList[0]).ToString();
-        string url1 = JsonEncodedText.Encode(msg.UrlList[1]).ToString();
+        string url0 = JsonEncodedText.Encode(msgA.Url).ToString();
+        string url1 = JsonEncodedText.Encode(msgB.Url).ToString();
         string body = "{\"image_template\":{\"image\":" + url0 + ",\"image_type\":\"URL\"},\"image_target\":{\"image\":" + url1 + ",\"image_type\":\"URL\"},\"version\":\"2.0\"}";
         string json = _httpHelper.PostStringAsync(_postUrl + queryString, body).Result;
         JReplySingle? reply = JsonSerializer.Deserialize<JReplySingle>(json);
@@ -127,17 +127,11 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
     }
 
     /// <inheritdoc/>
-    public override string? Filter(MessagePackage msg)
-    {
-        // TODO: 重做IMGP模块
-        return null;
-    }
-    /// <inheritdoc/>
-    public override async Task<Message> Processor(MessagePackage msg, string? filterOut)
+    public override Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
         _sb.Clear();
         // TODO: 重做IMGP模块
-        return string.Empty;
+        return Task.FromResult<Message?>(string.Empty);
     }
 
     private class JReply { public int errno; public string? msg; }

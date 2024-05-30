@@ -148,7 +148,7 @@ namespace klbotlib
             {
                 //加载核心模块
                 this.LogInfo("加载自带核心模块...");
-                AddModule(new CommandModule(this)).Wait();
+                AddModule(new CommandModule()).Wait();
                 this.Log(GetModuleChainString());
             }
             catch (Exception ex)
@@ -226,10 +226,10 @@ namespace klbotlib
         /// </summary>
         /// <param name="module">模块实例</param>
         /// <param name="context">发送的消息上下文类型</param>
-        /// <param name="userId">用户ID</param>
-        /// <param name="groupId">群组ID</param>
+        /// <param name="userId"></param>
+        /// <param name="groupId"></param>
         /// <param name="msg">待发送消息</param>
-        internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
+        internal async Task SendMessage(Module module, MessageContextType context, long userId, long groupId, Message msg)
             => await _msgDriver.SendMessage(module, context, userId, groupId, msg);
         /// <summary>
         /// 发送群消息
@@ -237,8 +237,8 @@ namespace klbotlib
         /// <param name="module">模块实例</param>
         /// <param name="groupId">目标群组ID</param>
         /// <param name="msg">待发送消息</param>
-        internal Task SendGroupMessage(Module module, long groupId, Message msg)
-            => SendMessage(module, MessageContext.Group, -1, groupId, msg);
+        internal async Task SendGroupMessage(Module module, long groupId, Message msg)
+            => await _msgDriver.SendMessage(module, MessageContextType.Group, -1, groupId, msg);
         /// <summary>
         /// 发送临时消息
         /// </summary>
@@ -246,16 +246,16 @@ namespace klbotlib
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
         /// <param name="msg">待发送消息</param>
-        internal Task SendTempMessage(Module module, long userId, long groupId, Message msg)
-            => SendMessage(module, MessageContext.Group, userId, groupId, msg);
+        internal async Task SendTempMessage(Module module, long userId, long groupId, Message msg)
+            => await _msgDriver.SendMessage(module, MessageContextType.Group, userId, groupId, msg);
         /// <summary>
         /// 发送私聊消息
         /// </summary>
         /// <param name="module">模块实例</param>
         /// <param name="userId">目标用户ID</param>
         /// <param name="msg">待发送消息</param>
-        internal Task SendPrivateMessage(Module module, long userId, Message msg)
-            => SendMessage(module, MessageContext.Group, userId, -1, msg);
+        internal async Task SendPrivateMessage(Module module, long userId, Message msg)
+            => await _msgDriver.SendMessage(module, MessageContextType.Private, userId, -1, msg);
         /// <summary>
         /// 上传群文件
         /// </summary>
@@ -268,51 +268,13 @@ namespace klbotlib
             await _msgDriver.UploadFile(module, groupId, uploadPath, filePath);
         }
         /// <summary>
-        /// 回复消息
+        /// 快速使用给定上下文回复消息
         /// </summary>
         /// <param name="module">调用模块</param>
-        /// <param name="originMsg">待回复的原始消息</param>
+        /// <param name="originContext">待回复的原始消息上下文</param>
         /// <param name="msg">回复内容</param>
-        internal async Task ReplyMessage(Module module, MessagePackage originMsg, Message msg)
-        {
-            if (originMsg is MessagePackage originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, msg);
-            else
-            {
-                switch (originMsg.Context)
-                {
-                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, msg);
-                        return;
-                    default:
-                        module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
-                        return;
-                }
-            }
-        }
-        /// <summary>
-        /// 以纯文本回复消息
-        /// </summary>
-        /// <param name="module">调用模块</param>
-        /// <param name="originMsg">待回复的原始消息</param>
-        /// <param name="plain">回复的纯文本内容</param>
-        internal async Task ReplyMessage(Module module, MessagePackage originMsg, string plain)
-        {
-            if (originMsg is MessagePackage originMsgPkg)
-                await SendMessage(module, originMsg.Context, originMsgPkg.SenderId, originMsg.GroupId, new MessagePlain(plain));
-            else
-            {
-                switch (originMsg.Context)
-                {
-                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, new MessagePlain(plain));
-                        return;
-                    default:
-                        module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
-                        return;
-                }
-            }
-        }
+        internal async Task ReplyMessage(Module module, MessageContext originContext, Message msg)
+            => await _msgDriver.SendMessage(module, originContext.Type, originContext.UserId, originContext.GroupId, msg);
         //操作
         /// <summary>
         /// 禁言
@@ -355,11 +317,11 @@ namespace klbotlib
             }
             this.LogInfo($"[KLBotEvent/Message] {e.Description.Replace('\n', ';')}");
             DiagData.ReceivedMessageCount++;
-            MessagePackage msgPkg = e.Message;
+            var contextType = e.Context.Type;
             // 私聊/临时会话需过滤，范围为目标群组
-            if ((msgPkg.Context == MessageContext.Group || msgPkg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msgPkg.GroupId))
+            if ((contextType == MessageContextType.Group || contextType == MessageContextType.Temp) && !TargetGroupIdList.Contains(e.Context.GroupId))
                 goto processed;
-            Message msg = msgPkg.Collapse();
+            Message msg = e.Message;
             //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
             //另外，帮助消息不计入统计信息
             if (msg is MessagePlain pmsg && pmsg.Text.Trim().EndsWith("帮助"))
@@ -368,7 +330,7 @@ namespace klbotlib
                 {
                     if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
                     {
-                        await ReplyMessage(module, msgPkg, module.HelpInfo);
+                        await ReplyMessage(module, e.Context, new MessagePlain(module.HelpInfo));
                         goto processed;
                     }
                 }
@@ -378,19 +340,18 @@ namespace klbotlib
             {
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool shouldProcess = await module.AddProcessTask(msgPkg);
+                bool shouldProcess = await module.ProcessMessageAndReply(e.Context, msg);
                 if (shouldProcess)
                 {
                     DiagData.ProcessedMessageCount++;
                     DiagData.LastUsedModule = module;
                     if (module.IsTransparent)
                         continue;
-                    else
-                        goto processed;
+                    break;
                 }
             }
         processed:
-            e.KLBotProcessed = true;
+            return;
         }
 
         /// <summary>

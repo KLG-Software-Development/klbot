@@ -63,28 +63,19 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         _query["rn"]= "60";
     }
     /// <inheritdoc/>
-    public override string? Filter(MessagePlain msg)
-    {
-        string text = msg.Text.Trim();
-        return text.EndsWith("图来") && text.Length != 2
-            ? "X图来"
-            : _pattern.IsMatch(text)
-                ? "来点X图"
-                : null;
-    }
-    /// <inheritdoc/>
-    public override async Task<Message> Processor(MessagePlain msg, string? filterOut)
+    public override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         string? url, text = msg.Text.Trim();
-        string word = filterOut switch
-        {
-            "X图来" => text[..(msg.Text.Length - 2)],
-            "来点X图" => _pattern.Match(text).Groups[1].Value,
-            _ => throw new Exception("意外遇到未实现的情况。检查处理器实现是否完整"),
-        };
+        string word;
+        if (text.EndsWith("图来") && text.Length != 2)
+            word = text[..(msg.Text.Length - 2)];
+        else if (_pattern.IsMatch(text))
+            word = _pattern.Match(text).Groups[1].Value;
+        else
+            return null;
         if (_enhanceKeyword.Contains(word))
         {
-            (bool success, url) = await ModuleAccess.GetModule<PLJJModule>(0).GetRandomUrl(word, msg);
+            (bool success, url) = await ModuleAccess.GetModule<PLJJModule>(0).GetRandomUrl(word, context);
             if (success)
                 return $@"\image:\url:{url}";
             else

@@ -58,19 +58,13 @@ namespace klbotlib
         /// <param name="userId">用户ID</param>
         /// <param name="groupId">群组ID</param>
         /// <param name="msg">待发送的消息</param>
-        Task SendMessage(MessageContext context, long userId, long groupId, Message msg);
+        Task SendMessage(MessageContextType context, long userId, long groupId, Message msg);
         /// <summary>
         /// 回复消息接口
         /// </summary>
-        /// <param name="originMsg">待回复的原始消息</param>
+        /// <param name="originContext">待回复的原始消息上下文</param>
         /// <param name="msg">回复内容</param>
-        Task ReplyMessage(MessagePackage originMsg, Message msg);
-        /// <summary>
-        /// 回复消息接口
-        /// </summary>
-        /// <param name="originMsg">待回复的原始消息</param>
-        /// <param name="plainMsg">纯文本回复内容</param>
-        Task ReplyMessage(MessagePackage originMsg, string plainMsg);
+        Task ReplyMessage(MessageContext originContext, Message msg);
         /// <summary>
         /// 发送群消息接口
         /// </summary>
@@ -97,14 +91,14 @@ namespace klbotlib
         /// <param name="target">目标ID</param>
         /// <param name="uploadPath">上传路径</param>
         /// <param name="filePath">文件本地路径</param>
-        Task UploadFile(MessageContext context, long target, string uploadPath, string filePath);
+        Task UploadFile(MessageContextType context, long target, string uploadPath, string filePath);
         /// <summary>
         /// 根据消息ID获取消息接口
         /// </summary>
         /// <param name="target">获取的目标ID</param>
         /// <param name="messageId">消息ID</param>
         /// <returns>消息对象</returns>
-        Task<MessagePackage> GetMessageFromId(long target, long messageId);
+        Task<Message> GetMessageFromId(long target, long messageId);
     }
     /// <summary>
     /// 模块访问API

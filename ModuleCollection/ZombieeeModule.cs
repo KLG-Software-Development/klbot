@@ -14,7 +14,7 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 僵尸文学模块
 /// </summary>
-public class ZombieeeModule : SingleTypeModule<MessagePlain>
+public class ZombieeeModule : SingleTypeModule<MessagePackage>
 {
     private static readonly Dictionary<string, string> _langCode = new()
     {
@@ -35,7 +35,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
         { "54003", "访问频率受限" },
         { "54005", "长query请求频繁" },
     };
-    private static readonly char[] _marks = new[] { '。', '。', '。', '？', '？', '，', '，', '，', '，', '，', '！', '！', '…' };
+    private static readonly char[] _marks = ['。', '。', '。', '？', '？', '，', '，', '，', '，', '，', '！', '！', '…'];
     private static readonly HashSet<string> _typeNames = new()
     {
         "N",
@@ -89,24 +89,14 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public override string HelpInfo => "使用方法：@机器人并发送“生成僵尸文学”";
 
     /// <inheritdoc/>
-    public override string? Filter(MessagePlain msg)
+    public override async Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
-        string text = msg.Text.Trim();
-        if (msg.TargetId.Contains(HostBot.SelfId) && text == "生成僵尸文学")
-            return "generate";
-        else
+        if (!msg.TargetIds.Contains(HostBot.SelfId))
             return null;
-    }
-    /// <inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
-    {
-        switch (filterOut)
-        {
-            case "generate":
-                return await GenerateZombieeeText();
-            default:
-                return $"意外遭遇未知过滤器输出“{filterOut}”。检查模块实现";
-        }
+        string text = msg.AsPlain().Trim();
+        if (text == "生成僵尸文学")
+            return await GenerateZombieeeText();
+        return null;
     }
 
     /// <summary>

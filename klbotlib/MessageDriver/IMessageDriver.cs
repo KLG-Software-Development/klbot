@@ -39,7 +39,7 @@ public interface IMessageDriver : IKLBotLogUnit
     /// <param name="userId">用户ID</param>
     /// <param name="groupId">群组ID</param>
     /// <param name="msg">待发送消息</param>
-    Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg);
+    Task SendMessage(Module module, MessageContextType context, long userId, long groupId, Message msg);
     /// <summary>
     /// 上传群文件接口
     /// </summary>

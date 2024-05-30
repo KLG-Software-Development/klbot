@@ -11,9 +11,10 @@ namespace klbotlib.Modules
         private Invisible ruan = new Invisible();
 
         public override bool UseSignature => false;
-        public override string? Filter(MessagePlain msg)
+        public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
         {
-            long x = msg.SenderId;
+            string? filterOut = null;
+            long x = context.UserId;
             if (x == 2044164212)
             {
                 if (msg.Text == "隐身")
@@ -27,23 +28,20 @@ namespace klbotlib.Modules
                 }
                 if (ruan.K == 0 || ruan.K == 1)
                 {
-                    return "yes";
+                    filterOut = "yes";
                 }
-                else return null;
+                else filterOut = null;
             }
-            else return null;
-        }
-        public override Task<string> Processor(MessagePlain msg, string? filterOut)
-        {
+            else filterOut = null;
             if (filterOut.Equals("yes") && ruan.K == 0)
-                return Task.FromResult(string.Empty);
+                return Task.FromResult<Message?>(string.Empty);
             else if (filterOut.Equals("yes") && ruan.K == 1)
             {
                 ruan.K = 2;
-                return Task.FromResult("kxgg back!");
+                return Task.FromResult<Message?>("kxgg back!");
             }
             else 
-                return Task.FromResult(string.Empty);
+                return Task.FromResult<Message?>(null);
         }
     }
 }

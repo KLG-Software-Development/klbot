@@ -44,7 +44,10 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         switch (e.PostType)
         {
             case "message":
-                OnMessageReceived.Invoke(this, new(e.Time.AsUnixTimestamp(), BuildMessagePackageFromEvent(e)));
+                var time = e.Time.AsUnixTimestamp();
+                var context = GetOneBotMessageEventContext(e.RawEventData);
+                var msg = BuildMessageFromEvent(e);
+                OnMessageReceived.Invoke(this, new(time, context, msg));
                 return;
             default:
                 this.Log($"Dispatcher not configured for post type [{e.PostType}]");
@@ -53,37 +56,42 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     // 从OneBot事件中构造消息
-    private static MessagePackage BuildMessagePackageFromEvent(OneBotEventArgs e)
+    private static Message BuildMessageFromEvent(OneBotEventArgs e)
     {
         var data = e.RawEventData;
-        MessageContext context = GetOneBotMessageEventContext(data);
         if (data.Message == null)
             throw new Exception($"Failed to build Message: Invalid deserialized data: {data}");
-        return new MessagePackage(data.UserId, data.GroupId, data.Message.Select(msg => msg.BuildMessage()));
+        return new MessagePackage(data.Message.Select(msg => msg.ToMessage())).Collapse();
     }
 
     // 推导message事件的上下文类型
     private static MessageContext GetOneBotMessageEventContext(JOneBotEvent rawEvent)
     {
+        MessageContextType type;
         switch (rawEvent.MessageType)
         {
             case "group":
-                return MessageContext.Group;
+                type = MessageContextType.Group;
+                break;
             case "private":
                 switch (rawEvent.SubType)
                 {
                     case "friend":
-                        return MessageContext.Private;
+                        type = MessageContextType.Private;
+                        break;
                     case "group":
-                        return MessageContext.Temp;
+                        type = MessageContextType.Temp;
+                        break;
                     case null:
                         throw new Exception($"OneBotEvent: Unexpected private message sub_type is null");
                     default:
                         throw new Exception($"OneBotEvent: Unknown private message sub_type \"{rawEvent.SubType}\"");
                 }
+                break;
             default:
                 throw new Exception($"OneBotEvent: Unknown message_type \"{rawEvent.MessageType}\"");
         }
+        return new MessageContext(type, rawEvent.SelfId, rawEvent.GroupId);
     }
 
     private async Task CallApiAsync<TResponse>(string uri, string? paramJson)
@@ -136,7 +144,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     /// <inheritdoc/>
     public async Task<Message> GetMessageFromId(long target, long messageId)
     {
-        return await CallApiAsync<JOneBotMessageObj, Message>($"get_msg", $"{{message_id:{messageId}}}", data => data.ToMessagePackage())
+        return await CallApiAsync<JOneBotMessageObj, Message>($"get_msg", $"{{message_id:{messageId}}}", data => data.ToMessage())
             ?? throw new Exception($"Failed to get message by ID {messageId}");
     }
 
@@ -153,7 +161,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     }
 
     /// <inheritdoc/>
-    public async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
+    public async Task SendMessage(Module module, MessageContextType context, long userId, long groupId, Message msg)
     {
         string? msgJson = OneBotJsonHelper.CompileMessageJson(msg);
         if (msgJson == null)
@@ -163,13 +171,13 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         }
         switch (context)
         {
-            case MessageContext.Private:
+            case MessageContextType.Private:
                 await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{\"user_id\":{userId},\"message\":{msgJson}}}", null);
                 return;
-            case MessageContext.Group:
+            case MessageContextType.Group:
                 await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{\"group_id\":{groupId},\"message\":{msgJson}}}", null);
                 return;
-            case MessageContext.Temp:
+            case MessageContextType.Temp:
                 await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{\"user_id\":{userId},\"group_id\":{groupId},\"message\":{msgJson}}}", null);
                 return;
             default:

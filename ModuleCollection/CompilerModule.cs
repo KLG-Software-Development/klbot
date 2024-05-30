@@ -39,49 +39,56 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
     ///<inheritdoc/>
     public override bool UseSignature => false;
     ///<inheritdoc/>
-    public override string? Filter(MessagePlain msg)
-    {
-        return msg.Text.StartsWith(_onlineCommand) ? "compile_ol" : msg.Text.StartsWith(_localCommand) ? "compile" : null;
-    }
-    ///<inheritdoc/>
-    public override async Task<Message> Processor(MessagePlain msg, string? filterOut)
+    public override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         string text = msg.Text.TrimStart();
+        if (text.StartsWith(_onlineCommand))
+            return await CompileOnline(text);
+        else if (msg.Text.StartsWith(_localCommand))
+            return await Compile(text);
+        else
+            return null;
+    }
+
+    private Task<Message?> Compile(string text)
+    {
+        int ptr = 4;
+        while (ptr < text.Length && text[ptr] != '\n')  //获取第一行行尾索引
+            ptr++;
+        if (ptr == text.Length) //到最后也没遇到 骂人
+            return Task.FromResult<Message?>(ModuleAccess.GetModule<FuckModule>().SingleSentence());
+        string language = text[_localCommand.Length..ptr].Trim().ToLower();
+        if (!_supportedLocalLanguages.Contains(language))
+            return Task.FromResult<Message?>($"语言\"{language}\"暂时无法本地编译，改用\"{_onlineCommand} \"尝试在线编译");
+        throw new NotImplementedException();
+    }
+
+    private async Task<Message?> CompileOnline(string text)
+    {
         int ptr = 4;
         while (ptr < text.Length && text[ptr] != '\n')  //获取第一行行尾索引
             ptr++;
         if (ptr == text.Length) //到最后也没遇到 骂人
             return ModuleAccess.GetModule<FuckModule>().SingleSentence();
+        string language = text[_onlineCommand.Length..ptr].Trim().ToLower();
+        _fileExts.TryGetValue(language, out string? fileExt);
+        if (fileExt == null)
+            return $"不支持语言\"{language}\"";
         string code = text[ptr..];
-        switch (filterOut)
+        string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
+        ModuleLog($"Response: {response}");
+        JReply? jreply = JsonSerializer.Deserialize<JReply>(response);
+        if (jreply == null)
+            throw new JsonException("返回结果解析失败：产生了null结果");
+        _sb.Clear();
+        if (!string.IsNullOrWhiteSpace(jreply.errors))
         {
-            case "compile_ol":
-                string language = text[_onlineCommand.Length..ptr].Trim().ToLower();
-                _fileExts.TryGetValue(language, out string? fileExt);
-                if (fileExt == null)
-                    return $"不支持语言\"{language}\"";
-                string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
-                ModuleLog($"Response: {response}");
-                JReply? jreply = JsonSerializer.Deserialize<JReply>(response);
-                if (jreply == null)
-                    throw new JsonException("返回结果解析失败：产生了null结果");
-                _sb.Clear();
-                if (!string.IsNullOrWhiteSpace(jreply.errors))
-                {
-                    _sb.AppendLine("编译输出：");
-                    _sb.AppendLine(jreply.errors.Replace("\\n", "\n"));
-                }
-                _sb.AppendLine("程序输出：");
-                _sb.Append(string.IsNullOrWhiteSpace(jreply.output) ? "[无输出]" : jreply.output.Replace("\\n", "\n"));
-                return _sb.ToString();
-            case "compile":
-                language = text[_localCommand.Length..ptr].Trim().ToLower();
-                if (!_supportedLocalLanguages.Contains(language))
-                    return $"语言\"{language}\"暂时无法本地编译，改用\"{_onlineCommand} \"尝试在线编译";
-                throw new NotImplementedException();
-            default:
-                throw new Exception($"意外遭遇未知过滤器输出\"{filterOut}\"。添加该输出的对应处理");
+            _sb.AppendLine("编译输出：");
+            _sb.AppendLine(jreply.errors.Replace("\\n", "\n"));
         }
+        _sb.AppendLine("程序输出：");
+        _sb.Append(string.IsNullOrWhiteSpace(jreply.output) ? "[无输出]" : jreply.output.Replace("\\n", "\n"));
+        return _sb.ToString();
     }
 
     private string BuildPostBody(string language, string fileExt, string code)

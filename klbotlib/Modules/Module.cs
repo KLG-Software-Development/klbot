@@ -63,19 +63,12 @@ namespace klbotlib.Modules
         /// </summary>
         public virtual string HelpInfo { get => $"[{FriendlyName}]的开发者很懒，没有提供任何帮助信息"; }
         /// <summary>
-        /// 过滤器(Message -> bool)。模块通过这个函数判断是否要处理某一条消息。
-        /// 在模块总开关开启的情况下，如果传入一条消息时输出为空或null，这条消息会忽略，否则它将和输出一同被传送给处理器Processor(Message, string -> string)。
+        /// 处理器(Message -> string)。模块通过这个函数处理所有消息。
         /// </summary>
-        /// <param name="msgPkg">待判断消息</param>
-        /// <returns>过滤器输出的字符串</returns>
-        public abstract string? Filter(MessagePackage msgPkg);
-        /// <summary>
-        /// 处理器(Message -> string)。模块通过这个函数处理所有(通过了过滤器的)消息。
-        /// </summary>
-        /// <param name="msgPkg">待处理消息</param>
-        /// <param name="filterOut">过滤器的输出。可以用于从过滤器中获取额外信息（例如消息的分类结果）</param>
+        /// <param name="context">待处理消息的上下文信息</param>
+        /// <param name="msg">待处理消息</param>
         /// <returns>用字符串表示的处理结果。如果你的模块不打算输出/回复处理结果，应返回null或空字符串</returns>
-        public abstract Task<Message> Processor(MessagePackage msgPkg, string? filterOut);
+        public abstract Task<Message?> Processor(MessageContext context, Message msg);
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
@@ -262,35 +255,33 @@ namespace klbotlib.Modules
             else
                 File.Delete(path);
         }
-        Task<MessagePackage> IMessagingAPI.GetMessageFromId(long target, long messageId)
+        Task<Message> IMessagingAPI.GetMessageFromId(long target, long messageId)
             => HostBot.GetMessageFromId(target, messageId);
-        Task IMessagingAPI.SendMessage(MessageContext context, long userId, long groupId, Message msg)
+        Task IMessagingAPI.SendMessage(MessageContextType context, long userId, long groupId, Message msg)
             => HostBot.SendMessage(this, context, userId, groupId, msg);
-        async Task IMessagingAPI.ReplyMessage(MessagePackage originMsg, Message msg)
+        async Task IMessagingAPI.ReplyMessage(MessageContext originContext, Message msg)
         {
             //统一Assert
             AssertAttachedStatus(true);
-            switch (originMsg.Context)
+            switch (originContext.Type)
             {
-                case MessageContext.Group:
-                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderId, originMsg.GroupId, msg);
+                case MessageContextType.Group:
+                    await _hostBot.SendMessage(this, originContext.Type, originContext.UserId, originContext.GroupId, msg);
                     break;
-                case MessageContext.Temp:
-                case MessageContext.Private:
-                    await _hostBot.SendMessage(this, originMsg.Context, originMsg.SenderId, originMsg.GroupId, msg);
+                case MessageContextType.Temp:
+                case MessageContextType.Private:
+                    await _hostBot.SendMessage(this, originContext.Type, originContext.UserId, originContext.GroupId, msg);
                     break;
             }
         }
-        async Task IMessagingAPI.ReplyMessage(MessagePackage originMsg, string plainMsg)
-            => await (this as IMessagingAPI).ReplyMessage(originMsg, new MessagePlain(plainMsg));
         Task IMessagingAPI.SendGroupMessage(long groupId, Message msg)
-            => HostBot.SendMessage(this, MessageContext.Group, -1, groupId, msg);
+            => HostBot.SendMessage(this, MessageContextType.Group, -1, groupId, msg);
         Task IMessagingAPI.SendTempMessage(long userId, long groupId, Message msg)
-            => HostBot.SendMessage(this, MessageContext.Group, userId, groupId, msg);
+            => HostBot.SendMessage(this, MessageContextType.Group, userId, groupId, msg);
         Task IMessagingAPI.SendPrivateMessage(long userId, Message msg)
-            => HostBot.SendMessage(this, MessageContext.Private, userId, -1, msg);
+            => HostBot.SendMessage(this, MessageContextType.Private, userId, -1, msg);
         [Obsolete]
-        Task IMessagingAPI.UploadFile(MessageContext context, long groupId, string uploadPath, string filePath)
+        Task IMessagingAPI.UploadFile(MessageContextType context, long groupId, string uploadPath, string filePath)
         {
             return HostBot.UploadFile(this, groupId, uploadPath, filePath);
         }
@@ -318,26 +309,6 @@ namespace klbotlib.Modules
             HostBot = null;
             ModuleId = GetType().Name;
             IsAttached = false;
-        }
-        // 向该模块的消息处理队列中添加一条新消息供后续处理。处理的消息返回true；不处理的消息返回false。
-        internal async Task<bool> AddProcessTask(MessagePackage msgPkg)
-        {
-            if (!Enabled)
-                return false;
-            string? filterOut;
-            try
-            {
-                filterOut = Filter(msgPkg);
-            }
-            catch (Exception ex)    //过滤器存在问题
-            {
-                ModuleLog($"模块过滤器产生异常：{ex.Message}\n已跳过该模块。", LogType.Error);
-                return false;
-            }
-            if (string.IsNullOrEmpty(filterOut))    //过滤器输出空，表示不处理
-                return false;
-            await ProcessMessage(msgPkg, filterOut);
-            return true;
         }
         // 从字典中导入模块属性(ModuleProperty)
         internal void ImportDict(Dictionary<string, object?> dict, bool ignoreNull = false)
@@ -434,17 +405,21 @@ namespace klbotlib.Modules
                 throw new Exception("此模块已经附加到宿主KLBot上，无法完成指定操作");
         }
         //处理并调用KLBot回复
-        private async Task ProcessMessage(MessagePackage msgPkg, string? filterOut)
+        internal async Task<bool> ProcessMessageAndReply(MessageContext context, Message msg)
         {
+            if (!Enabled)
+                return false;
             AssertAttachedStatus(true); //统一Assert附加情况
-            string? output;
+            Message? output;
             bool hasError = false;
             try   //对处理器的异常控制
             {
-                ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]等待处理器完成...");
                 DiagData.RestartMeasurement();
-                output = await Processor(msgPkg, filterOut);
+                output = await Processor(context, msg);
                 DiagData.StopMeasurement();
+                if (output == null) // 未处理，退出
+                    return false;
+                ModuleLog("已处理消息");
                 DiagData.ProcessedMessageCount++;
             }
             catch (Exception ex)
@@ -457,7 +432,7 @@ namespace klbotlib.Modules
                 else
                 {
                     output = $"{ModuleId}未正确处理消息";
-                    var debugNotice = new MessagePlain(output + $"\n\n{ex}");
+                    var debugNotice = $"{output} \n\n{ex}";
                     foreach (var adminId in HostBot.AdminIds)
                     {
                         try
@@ -471,27 +446,25 @@ namespace klbotlib.Modules
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(output))  //处理器输出不为空时
+            if (output != null && output is not MessageEmpty)  //处理器输出不为空时
             {
-                string signature = "";
-                if (!hasError)     
-                {
-                    if (UseSignature)
-                        signature = $"[{this}]\n";
-                }
-                else
+                string? signature = null;
+                if (hasError)
                     signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
-                await _hostBot.ReplyMessage(this, msgPkg, signature + output);
-                ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 已调用回复接口.");
+                else if (UseSignature)
+                    signature = $"[{this}]\n";
+                await _hostBot.ReplyMessage(this, context, signature == null ? output : signature + output);
+                ModuleLog("任务结束, 已调用回复接口.");
             }
             else
-                ModuleLog($"[{DateTime.Now:HH:mm:ss}][{Environment.CurrentManagedThreadId}]任务结束, 无回复内容.");
+                ModuleLog("任务结束, 无回复内容.");
             //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
             if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
                 _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
             //否则可以假设模块只修改自身 所以只需保存自己
             else
                 SaveModuleStatus(false);
+            return true;
         }
 
         /// <summary>
@@ -501,85 +474,26 @@ namespace klbotlib.Modules
     }
 
     /// <summary>
-    /// 方便实现只处理简单消息（即只有单一元素的消息）的模块基类
-    /// </summary>
-    public abstract class SimpleMessageModule : Module
-    {
-        /// <summary>
-        /// 简单消息过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
-        /// </summary>
-        /// <param name="msg">待判断消息</param>
-        public abstract string? Filter(Message msg);
-        /// <summary>
-        /// 简单消息处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
-        /// </summary>
-        /// <param name="msg">待处理消息</param>
-        /// <param name="filterOut">消息经过过滤器时的输出</param>
-        /// <returns>用字符串表示的处理结果</returns>
-        public abstract Task<Message> Processor(Message msg, string? filterOut);
-
-        ///<Inheritdoc/>
-        public sealed override string? Filter(MessagePackage msg)
-        {
-            if (msg.IsComplex)
-                return null;
-            return Filter(msg.Collapse());
-        }
-        ///<Inheritdoc/>
-        public sealed override async Task<Message> Processor(MessagePackage msg, string? filterOut)
-        {
-            if (filterOut == null)
-                throw new Exception("过滤器输出意外为空");
-            if (msg.IsComplex)
-            {
-                ModuleLog("意外遇到复杂消息类型，这在任何情况下不应发生", LogType.Error);
-                throw new Exception("意外遇到无法处理的消息类型");
-            }
-            return await Processor(msg, filterOut);
-        }
-
-    }
-
-    /// <summary>
     /// 方便实现只处理单个种类的Message的模块的基类
     /// 如果你的模块只处理单种消息（例如只处理文本消息），继承这玩意可以少写很多类型匹配的废话
     /// </summary>
     /// <typeparam name="T">模块所处理的特定消息类型</typeparam>
-    public abstract class SingleTypeModule<T> : SimpleMessageModule where T : Message
+    public abstract class SingleTypeModule<T> : Module where T : Message
     {
-        /// <summary>
-        /// 单类型过滤器(Message -> bool). 模块通过这个函数判断是否要处理某一条消息. 不符合类型参数的消息会被直接过滤
-        /// </summary>
-        /// <param name="msg">待判断消息</param>
-        public abstract string? Filter(T msg);
         /// <summary>
         /// 处理器(Message -> string). 模块通过这个函数处理所有(通过了过滤器的)消息. 
         /// </summary>
+        /// <param name="context">待判断消息的上下文信息</param>
         /// <param name="msg">待处理消息</param>
-        /// <param name="filterOut">消息经过过滤器时的输出</param>
         /// <returns>用字符串表示的处理结果</returns>
-        public abstract Task<Message> Processor(T msg, string? filterOut);
+        public abstract Task<Message?> Processor(MessageContext context, T msg);
 
         ///<Inheritdoc/>
-        public sealed override string? Filter(Message msg)
+        public sealed override async Task<Message?> Processor(MessageContext context, Message msg)
         {
-            if (msg.GetType() == typeof(T))
-                return Filter((T)msg);
-            else
-                return null;
-        }
-        ///<Inheritdoc/>
-        public sealed override async Task<Message> Processor(Message msg, string? filterOut)
-        {
-            if (filterOut == null)
-                throw new Exception("过滤器输出意外为空");
-            else if (msg is T tmsg)
-                return await Processor(tmsg, filterOut);
-            else
-            {
-                ModuleLog("意外遇到无法处理的消息类型", LogType.Error);
-                throw new Exception("意外遇到无法处理的消息类型");
-            }
+            if (msg is T tmsg)
+                return await Processor(context, tmsg);
+            return null;
         }
     }
 }

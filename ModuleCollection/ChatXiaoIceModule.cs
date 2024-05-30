@@ -10,7 +10,7 @@ namespace klbotlib.Modules;
 
 ///聊天bot模块
 [Obsolete("Bing小冰网页端目前已无法正常使用，因此此模块将不能正常工作")]
-public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
+public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
 {
     private const string _digits = "0123456789abcdef";
     [ModuleSetup]
@@ -68,23 +68,21 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "微软小冰模块";
     /// <inheritdoc/>
-    public sealed override string? Filter(MessagePlain msg) 
-        => msg.TargetId.Count == 1 && msg.TargetId.Contains(HostBot.SelfId) 
-        ? "ok" 
-        : null;
-    /// <inheritdoc/>
-    public sealed override async Task<Message> Processor(MessagePlain msg, string? _)
+    public sealed override async Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
-        string normalizedQuery = AesEncrypt(msg.Text, _password, _bitLength);
-        //JChatterBotRequest requestObj = new(_conversationId, new JQuery(normalizedQuery), _traceId);
+        if (msg.TargetIds.Count != 1 || !msg.TargetIds.Contains(HostBot.SelfId))
+            return null;
+        string normalizedQuery = AesEncrypt(msg.AsPlain(), _password, _bitLength);
         string s = "{\"conversationId\":\"" + _conversationId + "\",\"query\":{\"NormalizedQuery\":\"" + normalizedQuery + "\"},\"from\":\"chatbox\",\"traceId\":\"" + _traceId + "\",\"zoIsGCSResponse\":\"true\"}";
         StringContent jsonAsPlainText = new(s, Encoding.UTF8, "application/json");
         using (jsonAsPlainText)
         {
-            HttpRequestMessage request = new();
-            request.Method = HttpMethod.Post;
-            request.RequestUri = new Uri(_url);
-            request.Content = jsonAsPlainText;
+            HttpRequestMessage request = new()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_url),
+                Content = jsonAsPlainText
+            };
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Arch"));
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Bitness"));
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Full-Version"));

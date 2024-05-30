@@ -9,13 +9,8 @@ public class EchoModule : Module
     public override string FriendlyName => "回显模块";
 
     /// <inheritdoc/>
-    public override string Filter(MessagePackage msgPkg)
+    public override Task<Message?> Processor(MessageContext context, Message msg)
     {
-        return "in";
-    }
-    /// <inheritdoc/>
-    public override Task<Message> Processor(MessagePackage msgPkg, string? filterOut)
-    {
-        return Task.FromResult(msgPkg.ToString());
+        return Task.FromResult<Message?>(msg);
     }
 }

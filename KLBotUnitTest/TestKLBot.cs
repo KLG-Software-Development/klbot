@@ -31,12 +31,10 @@ public class TestKLBot
         KLBot bot = new(TestConst.DefaultConfig, driver);
         Assert.AreEqual(0, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
-        MessagePlain msg = new("some non-sense");
-        driver.AddReceivedMessage(new MessagePackage(-1, TestConst.TargetGroupId, msg));
+        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "some non-sense");
         Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
-        msg = new("##help");
-        driver.AddReceivedMessage(new MessagePackage(-1, TestConst.TargetGroupId, msg));
+        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "##help");
         Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(1, bot.DiagData.ProcessedMessageCount);
     }

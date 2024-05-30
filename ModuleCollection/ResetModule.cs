@@ -23,66 +23,56 @@ public class ResetModule : SingleTypeModule<MessagePlain>
     public override string HelpInfo => "@机器人并：\n发送“day?”可以查询数据；发送“reset”或“day0”可以重置数据";
 
     /// <inheritdoc/>
-    public override string? Filter(MessagePlain msg)
+    public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         if (msg.ContainsTargetId(HostBot.SelfId))
         {
             string msgText = msg.Text.Trim().ToLower();
             if (msgText == "day?")
-                return "day?";
+            {
+                if (!_lastUpdatedDays.ContainsKey(context.UserId))
+                    return (Message)"未找到数据。@机器人并发送“reset”或“day0”创建第一条数据";
+                else
+                {
+                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[context.UserId];
+                    return (Message)$"距离上次reset已经过去{TimeSpanToString(dt)}";
+                }
+            }
             else if (msgText == "reset" || msgText == "day0")
-                return "reset";
-            else
-                return null;
-        }
-        else
-            return null;
-    }
-    /// <inheritdoc/>
-    public override Task<string> Processor(MessagePlain msg, string? filterOut)
-    {
-        switch (filterOut)
-        {
-            case "day?":
-
-                if (!_lastUpdatedDays.ContainsKey(msg.SenderId))
-                    return Task.FromResult("未找到数据。@机器人并发送“reset”或“day0”创建第一条数据");
-                else
+            {
+                if (!_lastUpdatedDays.ContainsKey(context.UserId))
                 {
-                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderId];
-                    return Task.FromResult($"距离上次reset已经过去{TimeSpanToString(dt)}");
-                }
-            case "reset":
-                if (!_lastUpdatedDays.ContainsKey(msg.SenderId))
-                {
-                    _lastUpdatedDays.Add(msg.SenderId, DateTime.Now);
-                    _bestRecords.Add(msg.SenderId, new TimeSpan());
-                    return Task.FromResult(@$"成功为用户[{{\tag:{msg.SenderId}}}]创建数据");
+                    _lastUpdatedDays.Add(context.UserId, DateTime.Now);
+                    _bestRecords.Add(context.UserId, new TimeSpan());
+                    return (Message)@$"成功为用户[{context.UserId}]创建数据";
                 }
                 else
                 {
-                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[msg.SenderId];
-                    _lastUpdatedDays[msg.SenderId] = DateTime.Now;
+                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[context.UserId];
+                    _lastUpdatedDays[context.UserId] = DateTime.Now;
                     //是否打破了记录
-                    TimeSpan record = _bestRecords[msg.SenderId];
+                    TimeSpan record = _bestRecords[context.UserId];
                     if (dt > record)
                     {
-                        _bestRecords[msg.SenderId] = dt;
-                        return Task.FromResult(@$"[{{\tag:{msg.SenderId}}}]成功创造了{TimeSpanToString(_bestRecords[msg.SenderId])}的新纪录！");
+                        _bestRecords[context.UserId] = dt;
+                        return (Message)$"[{context.UserId}]成功创造了{TimeSpanToString(_bestRecords[context.UserId])}的新纪录！";
                     }
                     else
                     {
                         TimeSpan distanceToGoal = record - dt;
                         if (distanceToGoal < _smallTimeSpan)
-                            return Task.FromResult($"已重置数据。\n非常可惜，[{{\\tag:{msg.SenderId}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}");
+                            return (Message)$"已重置数据。\n非常可惜，[{{\\tag:{context.UserId}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}";
                         else
-                            return Task.FromResult("已重置数据");
+                            return (Message)"已重置数据";
                     }
                 }
-            default:
-                throw new Exception($"意外遇到未实现的过滤器输出\"{filterOut}\"");
+            }
+            else
+                return (Message?)null;
         }
-    }
+        else
+            return (Message?)null;
+   }
 
     private string TimeSpanToString(TimeSpan ts)
     {

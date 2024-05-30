@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace klbotlib.Modules;
 
 /// 嘴臭模块
-public class FuckModule : SingleTypeModule<MessagePlain>
+public class FuckModule : Module
 {
     private readonly StringBuilder _sb = new();
     [ModuleSetup]
@@ -53,15 +53,17 @@ public class FuckModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "嘴臭模块";
     /// <inheritdoc/>
-    public sealed override string? Filter(MessagePlain msg)
+    public sealed override Task<Message?> Processor(MessageContext _, Message msg)
     {
-        return _pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetId.Contains(HostBot.SelfId))
-            ? "ok"
-            : null;
+        if (IsTagMe)
+        {
+            if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_pattern.IsMatch(pmsg.AsPlain()))
+                return Task.FromResult<Message?>(null);
+        }
+        else if (msg is not MessagePlain)
+            return Task.FromResult<Message?>(null);
+        return Task.FromResult<Message?>(GenerateFuck());
     }
-    /// <inheritdoc/>
-    public sealed override Task<string> Processor(MessagePlain msg, string? _)
-        => Task.FromResult(GenerateFuck());
 
     /// <summary>
     /// 生成一句脏话

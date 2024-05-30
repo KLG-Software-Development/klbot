@@ -20,7 +20,7 @@ public class Program
         UnmuteCallback_PrintInfo); //调试用消息驱动器
     private static long _userId = 2044164212;    //调试时发出的所有消息的用户ID
     private static long _groupId = 7355608;   //调试时发出的所有消息的群组ID
-    private static MessageContext _context = MessageContext.Group;   //调试时发出的所有消息的上下文类型。默认为群组
+    private static MessageContextType _context = MessageContextType.Group;   //调试时发出的所有消息的上下文类型。默认为群组
     private static bool _tagMe = false;
     private static bool _verbose = false;
 
@@ -99,13 +99,13 @@ start:
 
     //**** Callback ****
     //添加消息（即收到消息）
-    private static void AddMsgCallback_PrintInfo(MessagePackage msgPkg)
+    private static void AddMsgCallback_PrintInfo(MessageContext context, Message msgPkg)
     {
-        Console.WriteLine(GetMessageDebugInfo(msgPkg));
+        Console.WriteLine(GetMessageDebugInfo(context, msgPkg));
         PrintVerboseInfoIfRequired(msgPkg);
     }
     //发送消息
-    private static void SendMsgCallback_PrintInfo(Module module, MessageContext context, long userId, long groupId, Message msg)
+    private static void SendMsgCallback_PrintInfo(Module module, MessageContextType context, long userId, long groupId, Message msg)
         => Console.WriteLine(GetMessageDebugInfo(module, context, userId, groupId, msg.ToString()));
     //上传文件
     private static void UploadCallback_PrintInfo(Module module, long groupId, string uploadPath, string filePath)
@@ -123,9 +123,8 @@ start:
     /// 生成消息的调试信息字符串
     /// </summary>
     /// <returns>消息的调试信息</returns>
-    private static string GetMessageDebugInfo(MessagePackage msgPkg)
+    private static string GetMessageDebugInfo(MessageContext context, Message msg)
     {
-        Message msg = msgPkg.Collapse();
         string content;
         if (msg is MessagePlain pmsg)
             content = pmsg.Text;
@@ -135,12 +134,12 @@ start:
             content = $"[语音消息:<{vmsg.Url.Length} chars>]";
         else
             content = $"[未知类型消息：{msg}]";
-        return msgPkg.Context switch
+        return context.Type switch
         {
-            MessageContext.Group => $"* 用户[{msgPkg.SenderId}]向群组[{msgPkg.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-            MessageContext.Temp => $"* 用户[{msgPkg.SenderId}]通过群组[{msgPkg.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-            MessageContext.Private => $"* 用户[{msgPkg.SenderId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-            _ => $"* 用户[{msgPkg.SenderId}]向群组[{msgPkg.GroupId}]或机器人发送了未知类型[{msgPkg.Context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContextType.Group => $"* 用户[{context.UserId}]向群组[{context.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContextType.Temp => $"* 用户[{context.UserId}]通过群组[{context.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContextType.Private => $"* 用户[{context.UserId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            _ => $"* 用户[{context.UserId}]向群组[{context.GroupId}]或机器人发送了未知类型[{context.Type}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
         };
     }
     /// <summary>
@@ -152,13 +151,13 @@ start:
     /// <param name="groupId">目标群组ID</param>
     /// <param name="content">待发送消息</param>
     /// <returns>消息的调试信息</returns>
-    private static string GetMessageDebugInfo(Module module, MessageContext context, long userId, long groupId, string content)
+    private static string GetMessageDebugInfo(Module module, MessageContextType context, long userId, long groupId, string content)
     {
         return context switch
         {
-            MessageContext.Group => $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-            MessageContext.Temp => $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
-            MessageContext.Private => $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContextType.Group => $"* 模块[{module}]向群组[{groupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContextType.Temp => $"* 模块[{module}]通过群组[{groupId}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
+            MessageContextType.Private => $"* 模块[{module}]向用户[{userId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
             _ => $"* 模块[{module}]向群组[{groupId}]或用户[{userId}]发送了未知类型[{context}]的消息，内容：\n------------------------------------\n  {content}\n------------------------------------",
         };
     }
@@ -215,15 +214,19 @@ start:
         Console.WriteLine("\n调试命令：");
         Console.WriteLine("save all                                      保存所有模块的配置与状态");
     }
-    private static void SendMessagePackageAndPrint(KLBot lcb, MessagePackage msg)
+    private static void SendMessageAndPrint(KLBot lcb, Message msg)
     {
         if (_tagMe)
-            msg.AddTargetId(lcb.SelfId);
-        _localServer.AddReceivedMessage(msg);
+        {
+            msg = msg.Pack();
+            ((MessagePackage)msg).AddTargetId(lcb.SelfId);
+        }
+        MessageContext context = new(_context, _userId, _groupId);
+        _localServer.AddReceivedMessage(context, msg);
         if (_verbose)
         {
             Console.WriteLine("\n详细信息：");
-            Console.WriteLine(msg.ToString());
+            Console.WriteLine($"{context}\n{msg}");
             Console.WriteLine();
         }
     }
@@ -281,16 +284,16 @@ start:
                 Command_SetContext(arg);
                 return;
             case "send-plain":
-                SendMessagePackageAndPrint(lcb, new MessagePackage(_context, _userId, _groupId, arg));
+                SendMessageAndPrint(lcb, new MessagePackage(arg));
                 return;
             case "send-image":
-                SendMessagePackageAndPrint(lcb, new MessageImage(arg, false).Pack(_context, _userId, _groupId));
+                SendMessageAndPrint(lcb, new MessageImage(arg, false));
                 return;
             case "send-flashimage":
-                SendMessagePackageAndPrint(lcb, new MessageImage(arg, true).Pack(_context, _userId, _groupId));
+                SendMessageAndPrint(lcb, new MessageImage(arg, true));
                 return;
             case "send-voice":
-                SendMessagePackageAndPrint(lcb, new MessageVoice(arg).Pack(_context, _userId, _groupId));
+                SendMessageAndPrint(lcb, new MessageVoice(arg));
                 return;
             case "recall":
                 Command_Recall(arg);
@@ -320,15 +323,15 @@ start:
         switch (arg.ToLower())
         {
             case "group":
-                _context = MessageContext.Group;
+                _context = MessageContextType.Group;
                 Console.WriteLine($"会话上下文已设置为群聊");
                 return;
             case "temp":
-                _context = MessageContext.Temp;
+                _context = MessageContextType.Temp;
                 Console.WriteLine($"会话上下文已设置为临时会话");
                 return;
             case "private":
-                _context = MessageContext.Private;
+                _context = MessageContextType.Private;
                 Console.WriteLine($"会话上下文已设置为私聊");
                 return;
             default:
@@ -354,8 +357,7 @@ start:
             Console.WriteLine("无效消息ID");
             return;
         }
-        MessagePackage recall = new(_context, _userId, _groupId, new MessageRecall(authorId, msgId));
-        _localServer.AddReceivedMessage(recall);
+        _localServer.AddReceivedMessage(new(_context, _userId, _groupId), new MessageRecall(authorId, msgId));
     }
     private static void CommandMute(string arg)
     {
@@ -376,7 +378,7 @@ start:
             return;
         }
         MessageMute mute = new(true, _userId, durationSeconds);
-        _localServer.AddReceivedMessage(mute.Pack(MessageContext.Group, _userId, _groupId));
+        _localServer.AddReceivedMessage(new(MessageContextType.Group, _userId, _groupId), mute.Pack());
     }
     private static void CommandUnmute(string arg)
     {
@@ -393,11 +395,7 @@ start:
             return;
         }
         MessageMute unmute = new(true, userId);
-        _localServer.AddReceivedMessage(unmute.Pack(MessageContext.Group, _groupId, _userId));
-    }
-    private static void CommandSaveAll(string arg)
-    {
-        
+        _localServer.AddReceivedMessage(new(MessageContextType.Group, _groupId, _userId), unmute);
     }
     private static void PrintVerboseInfoIfRequired(Message msg)
     {
