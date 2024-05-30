@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules
@@ -104,7 +106,7 @@ namespace klbotlib.Modules
         /// <summary>
         /// 模块的总开关. 默认开启. 此开关关闭时任何消息都会被忽略.
         /// </summary>
-        [ModuleStatus]
+        [JsonInclude]
         public bool Enabled { get; set; } = true;
 
         /// <summary>
@@ -310,7 +312,7 @@ namespace klbotlib.Modules
             IsAttached = false;
         }
         // 从字典中导入模块属性(ModuleProperty)
-        internal void ImportDict(Dictionary<string, object?> dict, bool ignoreNull = false)
+        internal void ImportDict(Dictionary<string, JsonNode?> dict, bool ignoreNull = false)
         {
             Type type = GetType();
             foreach (var kvp in dict)
@@ -355,12 +357,9 @@ namespace klbotlib.Modules
                 }
             }
         }
-        // 把模块的所有模块状态(ModuleStatus)导出到字典
+        // 把模块的所有模块状态导出到字典
         internal Dictionary<string, object?> ExportStatusDict() 
-            => ExportMemberWithAttribute(typeof(ModuleStatusAttribute));
-        // 把模块的所有模块配置(ModuleStatus)导出到字典
-        internal Dictionary<string, object?> ExportSetupDict() 
-            => ExportMemberWithAttribute(typeof(ModuleSetupAttribute));
+            => ExportMemberWithAttribute(typeof(JsonIncludeAttribute));
         //保存模块的状态
         internal void SaveModuleStatus(bool printInfo = true)
         {
@@ -419,6 +418,8 @@ namespace klbotlib.Modules
                 ModuleLog("已处理消息");
                 if (output is not MessageEmpty)
                 {
+                    if (UseSignature)
+                        output = new MessagePackage($"[{this}]\n", output);
                     await _hostBot.ReplyMessage(this, context, output);
                     ModuleLog("已调用回复接口.");
                 }
@@ -437,7 +438,7 @@ namespace klbotlib.Modules
             {
                 DiagData.LastException = ex;
                 this.LogError(ex.ToString());
-                await _hostBot.ReplyMessage(this, context, $"模块{ModuleId}未正确处理消息，已忽略");
+                await _hostBot.ReplyMessage(this, context, $"[KLBot]\n模块{ModuleId}未正确处理消息，已忽略");
                 var debugNotice = $"{ModuleId}未正确处理消息：\n\n{ex}";
                 foreach (var adminId in HostBot.AdminIds)
                 {

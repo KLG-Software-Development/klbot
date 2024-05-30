@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,23 +65,23 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
     private readonly Regex _errorCodePat = new(@"""error_code"":""(\d+)""", RegexOptions.Compiled);
     private readonly Dictionary<int, double> _generalizedHarmonicNumber = new();
 
-    [ModuleSetup]
+    [JsonInclude]
     private string _baseUrl = string.Empty;
-    [ModuleSetup]
+    [JsonInclude]
     private string _appID = string.Empty; //APP ID
-    [ModuleSetup]
+    [JsonInclude]
     private string _key = string.Empty;   //APP KEY
-    [ModuleStatus]
+    [JsonInclude]
     private string _srcLang = string.Empty;       //源语言
-    [ModuleStatus]
+    [JsonInclude]
     private string _dstLang = string.Empty;         //目标语言
-    [ModuleSetup]
+    [JsonInclude]
     private double _power = -0.5;     //幂
-    [ModuleSetup]
+    [JsonInclude]
     private int _reflectNum = 3;     //反射次数
-    [ModuleSetup]
+    [JsonInclude]
     private readonly List<string>[] _patterns = new List<string>[0];  //句式模板
-    [ModuleSetup]
+    [JsonInclude]
     private readonly Dictionary<string, string[]> _dicOf = new();   //词性字典
 
     /// <inheritdoc/>

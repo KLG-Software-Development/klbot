@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -15,7 +16,7 @@ public class TimeModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override bool IsTransparent => true;
 
-    [ModuleStatus]
+    [JsonInclude]
     private int _timeZone = 8; //默认是UTC+8
 
     /// <inheritdoc/>

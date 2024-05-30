@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -10,11 +11,11 @@ namespace klbotlib.Modules;
 /// </summary>
 public class ResetModule : SingleTypeModule<MessagePlain>
 {
-    [ModuleSetup]
+    [JsonInclude]
     private readonly TimeSpan _smallTimeSpan = new(12, 0, 0);
-    [ModuleStatus]
+    [JsonInclude]
     private readonly Dictionary<long, DateTime> _lastUpdatedDays = new();
-    [ModuleStatus]
+    [JsonInclude]
     private readonly Dictionary<long, TimeSpan> _bestRecords = new();
 
     /// <inheritdoc/>

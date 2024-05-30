@@ -12,11 +12,7 @@ public record MessageEmpty : Message { internal MessageEmpty() { } }
 /// <summary>
 /// 纯文本消息类
 /// </summary>
-public record MessagePlain(string Text) : Message
-{
-    /// <inheritdoc/>
-    public static implicit operator MessagePlain(string text) => new(text);
-}
+public record MessagePlain(string Text) : Message;
 /// <summary>
 /// @消息
 /// </summary>

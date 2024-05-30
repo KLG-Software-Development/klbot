@@ -307,9 +307,6 @@ start:
             case "save":
                 _lcb.ModuleChain.ForEach(async m =>
                 {
-#pragma warning disable CS0618 // 类型或成员已过时
-                    await _lcb.SaveModuleSetup(m);
-#pragma warning restore CS0618 // 类型或成员已过时
                     await _lcb.SaveModuleStatus(m);
                 });
                 return;

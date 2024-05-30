@@ -83,7 +83,7 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
         else
             return $"错误[{code}]：{msg}";
     }
-    private string GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
+    private string? GetFuck() => ModuleAccess.GetModule<FuckModule>().SingleSentence();
     private async Task<(bool, string)> TryMergeWithBase64Async(MessageImage msgA, MessageImage msgB)
     {
         string b641 = await _httpHelper.GetAsBase64Async(msgA.Url);

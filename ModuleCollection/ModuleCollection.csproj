@@ -13,8 +13,6 @@
     <RootNamespace>ModuleCollection</RootNamespace>
     <Platforms>AnyCPU;x64</Platforms>
     <Version>0.5.0</Version>
-    <EnableNETAnalyzers>True</EnableNETAnalyzers>
-    <AnalysisLevel>6.0</AnalysisLevel>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
   </PropertyGroup>

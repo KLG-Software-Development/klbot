@@ -18,10 +18,10 @@ namespace klbotlib.Extensions
         }
         public static long GetLong(this JsonNode node, string key)
         {
-            var field = node[key].AsValue();
+            var field = node[key];
             if (field == null)
                 throw new KeyNotFoundException($"Key \"{key}\" not found in JSON object");
-            return (long)field;
+            return (long)(node[key].AsValue());
         }
     }
 }

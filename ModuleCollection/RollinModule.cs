@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -14,13 +15,14 @@ public class RollinModule : SingleTypeModule<MessagePackage>
 {
     private static readonly Random _ro = new();
     private static readonly StringBuilder _sb = new();
-    [ModuleStatus]
+    [JsonInclude]
     private bool _hasRollStarted = false;
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private readonly HashSet<long> _hash = new();
-    [ModuleStatus]
+    [JsonInclude]
     private readonly List<long> _list = new();
-    [ModuleStatus]
+    [JsonInclude]
     private long _owner = -1;
 
     public override string FriendlyName => "抽奖模块";

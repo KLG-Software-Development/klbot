@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Module = klbotlib.Modules.Module;
+using System.Text.Json.Nodes;
 
 namespace klbotlib
 {
@@ -20,7 +21,6 @@ namespace klbotlib
     /// </summary>
     public class KLBot : IKLBotLogUnit
     {
-        private readonly StringBuilder _sb = new();
         private IMessageDriver _msgDriver;
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace klbotlib
         /// <summary>
         /// Log unit name
         /// </summary>
-        public string LogUnitName => "KLBot";
+        public string LogUnitName => "Core/KLBot";
 
         // 最基本的私有构造函数
         private KLBot(IConfiguration config, IMessageDriver driver)
@@ -211,7 +211,6 @@ namespace klbotlib
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
                 CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
                 //载入模块配置
-                await LoadModuleSetup(m);
                 await LoadModuleStatus(m);
                 this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
             }
@@ -443,9 +442,6 @@ namespace klbotlib
                         ModuleChain.ForEach(async m =>
                         {
                             await SaveModuleStatus(m);
-#pragma warning disable CS0618 // 类型或成员已过时
-                            await SaveModuleSetup(m);
-#pragma warning restore CS0618 // 类型或成员已过时
                         });
                     }
                     else if (cmd == "reload")
@@ -476,21 +472,8 @@ namespace klbotlib
         {
             await Parallel.ForEachAsync<Module>(ModuleChain, async (module, _) =>
             {
-                await LoadModuleSetup(module);
                 await LoadModuleStatus(module);
             });
-        }
-        /// <summary>
-        /// 保存该模块的配置
-        /// </summary>
-        [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
-        public async Task SaveModuleSetup(Module module, bool printInfo = true)
-        {
-            string json = KLBotJsonHelper.SerializeFile(module.ExportSetupDict());
-            string filePath = GetModuleSetupPath(module);
-            if (printInfo)
-                this.LogTask($"正在保存模块{module}的配置至\"{filePath}\"...");
-            await File.WriteAllTextAsync(filePath, json);
         }
         /// <summary>
         /// 保存该模块的状态
@@ -516,37 +499,14 @@ namespace klbotlib
                 {
                     if (printInfo)
                         this.LogTask($"正在从\"{filePath}\"加载模块{module}的状态...");
-                    var statusDict = KLBotJsonHelper.DeserializeFile<JModuleMemberDict>(await File.ReadAllTextAsync(filePath));
-                    if (statusDict != null && statusDict.Data != null)
-                        module.ImportDict(statusDict.Data, true);
+                    var statusDict = KLBotJsonHelper.DeserializeFile<Dictionary<string, JsonNode?>>(await File.ReadAllTextAsync(filePath));
+                    if (statusDict != null)
+                        module.ImportDict(statusDict, true);
                 }
             }
             catch (Exception ex)
             {
                 throw new ModuleStatusException(module, ex.Message);
-            }
-        }
-        //载入所有模块配置
-        private async Task LoadModuleSetup(Module module, bool printInfo = true)
-        {
-            try
-            {
-                string filePath = GetModuleSetupPath(module);
-                if (File.Exists(filePath))
-                {
-                    if (printInfo)
-                        this.LogTask($"正在从\"{filePath}\"加载模块{module.ModuleId}的配置...");
-                    var result = KLBotJsonHelper.DeserializeFile<JModuleMemberDict>(await File.ReadAllTextAsync(filePath));
-                    if (result == null || result.Data == null)
-                        throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
-                    module.ImportDict(result.Data);
-                }
-                else
-                    this.LogWarning($"找不到{module.ModuleId}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题");
-            }
-            catch (Exception ex)
-            {
-                throw new ModuleSetupException(module, ex.Message);
             }
         }
 
@@ -565,67 +525,58 @@ namespace klbotlib
         /// </summary>
         public string GetModuleChainString()
         {
-            _sb.Clear();
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.AppendLine("模块链条：");
+            int index = 0;
+            ModuleChain.ForEach(module =>
             {
-                _sb.AppendLine("模块链条：");
-                int index = 0;
-                ModuleChain.ForEach(module =>
-                {
-                    if (module.ModuleName == module.FriendlyName)
-                        _sb.AppendLine($"  [{index}] {module}");
-                    else
-                        _sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
-                    index++;
-                });
-                return _sb.ToString();
-            }
+                if (module.ModuleName == module.FriendlyName)
+                    sb.AppendLine($"  [{index}] {module}");
+                else
+                    sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
+                index++;
+            });
+            return sb.ToString();
         }
         /// <summary>
         /// 返回字符串，其中列出当前监听群组的列表
         /// </summary>
         public string GetListeningGroupListString()
         {
-            _sb.Clear();
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.AppendLine("监听群组列表：");
+            int index = 0;
+            foreach (var target in TargetGroupIdList)
             {
-                _sb.AppendLine("监听群组列表：");
-                int index = 0;
-                foreach (var target in TargetGroupIdList)
-                {
-                    _sb.AppendLine($"  [{index}]  {target}");
-                    index++;
-                }
-                return _sb.ToString();
+                sb.AppendLine($"  [{index}]  {target}");
+                index++;
             }
+            return sb.ToString();
         }
         /// <summary>
         /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
         /// </summary>
         public string GetModuleStatusString()
         {
-            _sb.Clear();
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.AppendLine("模块状态：");
+            foreach (var module in ModuleChain)
             {
-                _sb.AppendLine("模块状态：");
-                foreach (var module in ModuleChain)
+                sb.AppendLine($"<{module.ModuleId}>");
+                Type type = module.GetType();
+                List<MemberInfo> members = new List<MemberInfo>();
+                members.AddRange(type.GetProperties_All().Reverse());
+                members.AddRange(type.GetFields_All().Reverse());
+                foreach (var member in members)
                 {
-                    _sb.AppendLine($"<{module.ModuleId}>");
-                    Type type = module.GetType();
-                    List<MemberInfo> members = new List<MemberInfo>();
-                    members.AddRange(type.GetProperties_All().Reverse());
-                    members.AddRange(type.GetFields_All().Reverse());
-                    foreach (var member in members)
+                    if (member.IsNonHiddenModuleStatus())
                     {
-                        if (member.IsNonHiddenModuleStatus())
-                        {
-                            member.TryGetValue(module, out object? value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
-                            _sb.AppendLine($" {member.Name,-10} = {value}");
-                        }
+                        member.TryGetValue(module, out object? value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
+                        sb.AppendLine($" {member.Name,-10} = {value}");
                     }
                 }
-                return _sb.ToString();
             }
+            return sb.ToString();
         }
 
         private void CreateDirectoryIfNotExist(string path, string dirDescription)

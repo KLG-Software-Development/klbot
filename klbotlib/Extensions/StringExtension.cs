@@ -21,15 +21,6 @@ namespace klbotlib.Extensions
             else
                 return s;
         }
-        public static string Repeat(this string value, int count)
-        {
-            lock (_sb)
-            {
-                _sb.Clear();
-                _sb.Insert(0, value, count);
-                return _sb.ToString();
-            }
-        }
         private static readonly Dictionary<ConsoleColor, int> _ansiColorCode = new()
         {
             { ConsoleColor.Red, 31 },

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using klbotlib.Modules.ModuleUtils;
 
@@ -11,11 +12,11 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
     private readonly Random _ro = new();
     private readonly HttpHelper _httpHelper = new();
     
-    [ModuleSetup]
+    [JsonInclude]
     private int _maxRetryCount = 3;
-    [ModuleStatus]
+    [JsonInclude]
     private List<string>? _urlList;
-    [ModuleStatus]
+    [JsonInclude]
     private DateTime _lastActivateTime = DateTime.UnixEpoch;
     /// <inheritdoc/>
     public sealed override bool UseSignature => false;

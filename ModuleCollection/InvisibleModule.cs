@@ -1,13 +1,14 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
 
 using klbotlib.Modules.KLDNamespace;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
     public class InvisibleModule : SingleTypeModule<MessagePlain>
     {
-        [ModuleStatus]
+        [JsonInclude]
         private Invisible ruan = new Invisible();
 
         public override bool UseSignature => false;

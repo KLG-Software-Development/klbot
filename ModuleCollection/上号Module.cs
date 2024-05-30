@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -12,13 +13,16 @@ public class 上号Module : SingleTypeModule<MessagePlain>
     //应被忽略的不支持消息
     private readonly HashSet<string> _downgradedMsgKeywords = new() { "[QQ红包]", "[视频游戏]", "你的QQ暂不支持查看视频短片"};
     private const string _halReply = @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}！";
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private string _lastMsg = "";
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private string _last2Msg = "";
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private DateTime _lastHal = new();
-    [ModuleSetup]
+    [JsonInclude]
     private readonly TimeSpan _coolDownTime = new(0, 0, 60);
 
     private static bool Is上号(string text) => text.Length <= 5 && text.Contains("上号");

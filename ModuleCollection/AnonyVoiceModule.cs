@@ -1,6 +1,7 @@
 ﻿using klbotlib.Modules.ModuleUtils;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -11,11 +12,13 @@ namespace klbotlib.Modules;
 /// </summary>
 public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
 {
-    [ModuleStatus]
+    [JsonInclude]
     private string _person = "磁性男声";
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private readonly Dictionary<long, UserStatus> _userStat = new();
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private readonly Dictionary<long, long> _targetGroups = new();
     private const string _url = "https://ai.baidu.com/aidemo";
     private const string _prefix = "data:audio/x-mpeg;base64,";

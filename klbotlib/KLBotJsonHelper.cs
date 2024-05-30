@@ -11,6 +11,14 @@ namespace klbotlib.Json
         internal static MediaTypeHeaderValue JsonMime { get; } = MediaTypeHeaderValue.Parse("application/json");
         internal static StringContent CreateAsJson(string s)
             => new StringContent(s, JsonMime);
+        // 用于模块保存的JSON序列化配置
+        private static readonly JsonSerializerOptions _moduleOptions = new()
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.Always,
+            IncludeFields = false
+        };
+
         //用于文件存储的Json序列化配置
         private static readonly JsonSerializerOptions _fileOptions = new()
         {

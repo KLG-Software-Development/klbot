@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -10,7 +11,7 @@ public class FlashGambleModule : Module
 {
     private readonly Random _ro = new();
 
-    [ModuleStatus]
+    [JsonInclude]
     private int _prob = 5;
 
     /// <inheritdoc/>

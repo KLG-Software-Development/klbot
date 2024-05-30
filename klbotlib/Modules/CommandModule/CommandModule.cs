@@ -3,6 +3,7 @@ using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -14,7 +15,7 @@ namespace klbotlib.Modules
         const string _prefix = "##";
         private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$", RegexOptions.Compiled);
 
-        [ModuleSetup]
+        [JsonInclude]
         public Dictionary<long, AuthorType> Users { get; private set; } = new();
 
         internal List<Command> _cmds = new();

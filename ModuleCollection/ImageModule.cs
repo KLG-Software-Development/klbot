@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -20,19 +21,20 @@ public class ImageModule : SingleTypeModule<MessagePlain>
     private readonly Stopwatch _sw = new();
     private readonly NameValueCollection _query = HttpUtility.ParseQueryString(string.Empty);
 
-    [ModuleSetup]
+    [JsonInclude]
     private readonly string _url = "https://image.baidu.com/search/acjson";
-    [ModuleSetup]
+    [JsonInclude]
     private readonly HashSet<string> _enhanceKeyword = new();
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private readonly Dictionary<string, int> _listNumCache = new();  //缓存每个搜索词的结果数量
-    [ModuleStatus]
+    [JsonInclude]
     private int _cacheCount = 0;
-    [ModuleStatus]
+    [JsonInclude]
     private string _lastDownloadTime = "N/A";
-    [ModuleStatus]
+    [JsonInclude]
     private string _lastParseTime = "N/A";
-    [ModuleStatus]
+    [JsonInclude]
     private int Fraction { get; set; } = 50;   //只在前n%的结果内随机
     /// <inheritdoc/>
     public sealed override bool UseSignature => false;

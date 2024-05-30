@@ -3,6 +3,7 @@
 
 using klbotlib.Modules.KLDNamespace;
 using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules
@@ -12,7 +13,7 @@ namespace klbotlib.Modules
     /// </summary>
     public class WelcomekxggModule : SingleTypeModule<MessagePlain>
     {
-        [ModuleStatus]
+        [JsonInclude]
         private Common1 common = new();
         public override bool UseSignature => false;
         public override Task<Message?> Processor(MessageContext context, MessagePlain msg)

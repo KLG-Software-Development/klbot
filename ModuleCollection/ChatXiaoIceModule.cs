@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -13,13 +14,13 @@ namespace klbotlib.Modules;
 public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
 {
     private const string _digits = "0123456789abcdef";
-    [ModuleSetup]
+    [JsonInclude]
     private int _bitLength = 256;
-    [ModuleSetup]
+    [JsonInclude]
     private string _conversationId = "e67a1a2b-3dd8-4208-a733-3911b4791b38";
-    [ModuleSetup]
+    [JsonInclude]
     private string _traceId = "63d15134a3184bc78a8422efb9b4836a";
-    [ModuleSetup]
+    [JsonInclude]
     private string _password = "3d9d5f16-5df0-43d7-902e-19274eecdc41";
     private static readonly byte[] _sBox = {
         0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,

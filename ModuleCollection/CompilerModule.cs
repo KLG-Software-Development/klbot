@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
@@ -27,9 +28,9 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
     private readonly string _onlineCommand = "$编译";
     private readonly string _localCommand = "$本地编译";
 
-    [ModuleSetup]
+    [JsonInclude]
     private readonly string _urlA = "https://tool.runoob.com/compile2.php";
-    [ModuleSetup]
+    [JsonInclude]
     private readonly string _token = "4381fe197827ec87cbac9552f14ec62a";
 
     ///<inheritdoc/>

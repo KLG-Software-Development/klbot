@@ -17,7 +17,7 @@ internal static class JOneBotMessageContentExtension
             case "text":
                 return new MessagePlain(content.Data.GetString("text"));
             case "at":
-                return new MessageAt(content.Data.GetLong("text"));
+                return new MessageAt(content.Data.GetLong("id"));
             case "face":
                 return new MessageFace(content.Data.GetString("id"));
             case "image":
