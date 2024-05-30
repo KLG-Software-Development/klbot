@@ -89,7 +89,6 @@ public record MessagePackage : Message, IReadOnlyList<Message>
     public MessagePackage(IEnumerable<Message> msgs)
     {
         _data = [];
-        _data.AddRange(msgs);
         TargetIds = _targetIds;
         foreach (var msg in msgs)
         {

@@ -13,7 +13,7 @@ namespace klbotlib.Modules
         public override bool UseSignature => false;
         public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
         {
-            string? filterOut = null;
+            string? filterOut;
             long x = context.UserId;
             if (x == 2044164212)
             {
@@ -33,15 +33,17 @@ namespace klbotlib.Modules
                 else filterOut = null;
             }
             else filterOut = null;
+            if (filterOut == null)
+                return (Message?)null;
             if (filterOut.Equals("yes") && ruan.K == 0)
-                return Task.FromResult<Message?>(string.Empty);
+                return (Message?)null;
             else if (filterOut.Equals("yes") && ruan.K == 1)
             {
                 ruan.K = 2;
-                return Task.FromResult<Message?>("kxgg back!");
+                return (Message?)"kxgg back!";
             }
             else 
-                return Task.FromResult<Message?>(null);
+                return (Message?)null;
         }
     }
 }

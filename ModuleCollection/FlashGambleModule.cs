@@ -23,21 +23,20 @@ public class FlashGambleModule : Module
     /// <inheritdoc/>
     public override async Task<Message?> Processor(MessageContext context, Message msg)
     {
-        if (_ro.Next(100) < _prob)
-        {
-            if (msg is MessageRecall recall)
-                return await ProcessRecall(context, recall);
-            else if (msg is MessageImage imsg && imsg.IsFlashImage)
-                return await ProcessFlash(context, imsg);
-            else
-                return null;
-        }
-        ModuleLog("未命中，忽略此条撤回或闪照");
+        if (msg is MessageRecall recall)
+            return await ProcessRecall(context, recall);
+        else if (msg is MessageImage imsg && imsg.IsFlashImage)
+            return await ProcessFlash(context, imsg);
         return null;
     }
 
     private async Task<Message?> ProcessRecall(MessageContext context, MessageRecall recall)
     {
+        if (_ro.Next(100) > _prob)
+        {
+            ModuleLog("未命中，忽略此条撤回或闪照");
+            return null;
+        }
         long target = context.Type == MessageContextType.Group ? context.GroupId :HostBot.SelfId;
         long msgId = recall.MessageId;
         long operatorId = context.UserId;
@@ -56,6 +55,11 @@ public class FlashGambleModule : Module
     }
     private async Task<Message?> ProcessFlash(MessageContext context, MessageImage image)
     {
+        if (_ro.Next(100) > _prob)
+        {
+            ModuleLog("未命中，忽略此条撤回或闪照");
+            return null;
+        }
         await Messaging.ReplyMessage(context, image);
         return string.Empty;
     }

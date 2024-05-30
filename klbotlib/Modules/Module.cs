@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -410,61 +409,49 @@ namespace klbotlib.Modules
             if (!Enabled)
                 return false;
             AssertAttachedStatus(true); //统一Assert附加情况
-            Message? output;
-            bool hasError = false;
             try   //对处理器的异常控制
             {
                 DiagData.RestartMeasurement();
-                output = await Processor(context, msg);
+                Message? output = await Processor(context, msg);
                 DiagData.StopMeasurement();
                 if (output == null) // 未处理，退出
                     return false;
                 ModuleLog("已处理消息");
+                if (output is not MessageEmpty)
+                {
+                    await _hostBot.ReplyMessage(this, context, output);
+                    ModuleLog("已调用回复接口.");
+                }
+                else
+                    ModuleLog("任务结束, 无回复内容.");
+                //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
+                if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
+                    _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
+                //否则可以假设模块只修改自身 所以只需保存自己
+                else
+                    SaveModuleStatus(false);
                 DiagData.ProcessedMessageCount++;
+                return true;
             }
             catch (Exception ex)
             {
-                hasError = true;
                 DiagData.LastException = ex;
-                //网络错误统一处理
-                if (ex is WebException)
-                    output = $"{ModuleId}模块表示自己不幸遭遇了网络错误：{ex.Message}";
-                else
+                this.LogError(ex.ToString());
+                await _hostBot.ReplyMessage(this, context, $"模块{ModuleId}未正确处理消息，已忽略");
+                var debugNotice = $"{ModuleId}未正确处理消息：\n\n{ex}";
+                foreach (var adminId in HostBot.AdminIds)
                 {
-                    output = $"{ModuleId}未正确处理消息";
-                    var debugNotice = $"{output} \n\n{ex}";
-                    foreach (var adminId in HostBot.AdminIds)
+                    try
                     {
-                        try
-                        {
-                            await Messaging.SendPrivateMessage(adminId, debugNotice);
-                        }
-                        catch (Exception noticeEx)
-                        {
-                            this.LogError($"模块崩溃信息上报至ID{adminId}时失败：{noticeEx}");
-                        }
+                        await Messaging.SendPrivateMessage(adminId, debugNotice);
+                    }
+                    catch (Exception noticeEx)
+                    {
+                        this.LogError($"模块崩溃信息上报至ID{adminId}时失败：{noticeEx}");
                     }
                 }
+                return false;
             }
-            if (output != null && output is not MessageEmpty)  //处理器输出不为空时
-            {
-                string? signature = null;
-                if (hasError)
-                    signature = $"[KLBot]\n";  //输出为异常信息，强制加上签名
-                else if (UseSignature)
-                    signature = $"[{this}]\n";
-                await _hostBot.ReplyMessage(this, context, signature == null ? output : signature + output);
-                ModuleLog("任务结束, 已调用回复接口.");
-            }
-            else
-                ModuleLog("任务结束, 无回复内容.");
-            //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
-            if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
-                _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
-            //否则可以假设模块只修改自身 所以只需保存自己
-            else
-                SaveModuleStatus(false);
-            return true;
         }
 
         /// <summary>

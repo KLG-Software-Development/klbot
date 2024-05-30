@@ -1,5 +1,6 @@
 using klbotlib;
 using klbotlib.Modules;
+using klbotlib.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KLBotUnitTest;

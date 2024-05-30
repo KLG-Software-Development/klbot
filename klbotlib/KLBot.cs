@@ -315,7 +315,7 @@ namespace klbotlib
                 this.LogInfo($"[KLBotEvent/Message] Dropped: now - [{e.Timestamp:g}] = {(DateTime.Now - e.Timestamp).TotalSeconds}s > {ProcessWindow.TotalSeconds}s");
                 goto processed;
             }
-            this.LogInfo($"[KLBotEvent/Message] {e.Description.Replace('\n', ';')}");
+            this.LogInfo($"[KLBotEvent/Message] {e.Context} ; {e.Description.Replace('\n', ';')}");
             DiagData.ReceivedMessageCount++;
             var contextType = e.Context.Type;
             // 私聊/临时会话需过滤，范围为目标群组

@@ -129,9 +129,8 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
     /// <inheritdoc/>
     public override Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
-        _sb.Clear();
         // TODO: 重做IMGP模块
-        return Task.FromResult<Message?>(string.Empty);
+        return (Message?)null;
     }
 
     private class JReply { public int errno; public string? msg; }

@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 
 namespace klbotlib;
 
@@ -18,7 +20,8 @@ public record Message
     public MessagePackage Pack()
         => new(this);
     /// <inheritdoc/>
-    public static implicit operator Message(string? text) => string.IsNullOrEmpty(text) ? Message.Empty : new MessagePlain(text);
+    [return: NotNullIfNotNull(nameof(text))]
+    public static implicit operator Message?(string? text) => string.IsNullOrEmpty(text) ? null : new MessagePlain(text);
     /// <inheritdoc/>
     public static implicit operator Task<Message?>(Message? msg) => Task.FromResult(msg);
     /// <summary>

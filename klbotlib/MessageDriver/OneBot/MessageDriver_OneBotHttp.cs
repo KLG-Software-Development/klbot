@@ -91,7 +91,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
             default:
                 throw new Exception($"OneBotEvent: Unknown message_type \"{rawEvent.MessageType}\"");
         }
-        return new MessageContext(type, rawEvent.SelfId, rawEvent.GroupId);
+        return new MessageContext(type, rawEvent.UserId, rawEvent.GroupId);
     }
 
     private async Task CallApiAsync<TResponse>(string uri, string? paramJson)
