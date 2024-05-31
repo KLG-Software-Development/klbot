@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -142,60 +141,7 @@ namespace klbotlib.Modules.ModuleUtils
         /// <returns></returns>
         public async Task<string> PostJsonAsync<T>(string url, T body)
         {
-            JsonContent content = JsonContent.Create(body);
             return await InnerClient.PostAsJsonAsync(url, body).Result.Content.ReadAsStringAsync();
-        }
-    }
-    /// <summary>
-    /// 为模块开发准备的图像帮助类
-    /// </summary>
-    public class ImageHelper
-    {
-        /// <summary>
-        /// 将字节数组并解析为Bitmap对象
-        /// </summary>
-        /// <param name="bin"></param>
-        public (Bitmap, int) BinToBitmap(byte[] bin)
-        {
-            int size = bin.Length;
-            using (var ms = new MemoryStream(bin))
-            {
-                Bitmap bmp = new Bitmap(Image.FromStream(ms));
-                return (bmp, size);
-            }
-        }
-        /// <summary>
-        /// 缩放一张图片到指定分辨率
-        /// </summary>
-        /// <param name="bmp">待缩放图像</param>
-        /// <param name="width">目标宽度</param>
-        /// <param name="height">目标高度px</param>
-        public Bitmap Resize(Bitmap bmp, int width, int height)
-        {
-            Bitmap re = new Bitmap(width, height);
-            using (Graphics graphic = Graphics.FromImage(re))
-            {
-                graphic.DrawImage(bmp, 0, 0, width, height);
-            }
-            return re;
-        }
-        /// <summary>
-        /// 缩放一张图片，使其最大可能大小不超过某个值
-        /// </summary>
-        /// <param name="bmp">待缩放图片</param>
-        /// <param name="sizeLimit">大小限制（字节）</param>
-        public Bitmap ResizeToLimit(Bitmap bmp, int sizeLimit)
-        {
-            //计算当前最大可能占用空间
-            float currentSize = bmp.Width * bmp.Height * 3f;
-            //如果未达到限制，不用缩放直接返回
-            if (currentSize < sizeLimit)
-                return bmp;
-            //边缩放比例 = Sqrt(体积缩放比例)
-            double diagFactor = Math.Sqrt(sizeLimit / currentSize);
-            int _width = (int)(bmp.Width * diagFactor);
-            int _height = (int)(bmp.Height * diagFactor);
-            return Resize(bmp, _width, _height);
         }
     }
 }

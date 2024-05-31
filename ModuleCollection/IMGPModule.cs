@@ -1,10 +1,5 @@
-﻿using klbotlib.Extensions;
-using klbotlib.Modules.ModuleUtils;
-using System;
+﻿using klbotlib.Modules.ModuleUtils;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -74,7 +69,6 @@ public class IMGPModule : SingleTypeModule<MessagePackage>
     };
     private static readonly List<string> _mergeKeyword = new() { "换脸", "囍", "杂交", "交配" };
     private static readonly HttpHelper _httpHelper = new();
-    private static readonly ImageHelper _imgHelper = new();
     private static readonly StringBuilder _sb = new();  //caller clear
     private static string ErrorString(int code, string? msg)
     {
