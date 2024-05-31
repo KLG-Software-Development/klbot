@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using klbotlib.Extensions;
 
 namespace klbotlib;
@@ -59,8 +60,15 @@ internal static class IKLBotLogUnitExtension
     {
         unit.Log(WarningTag + s);
     }
-    public static void LogError(this IKLBotLogUnit unit, string s)
+    public static void LogNullAndThrow<T>(this IKLBotLogUnit unit, [NotNull] T? value, string msgWhenNull)
+    {
+        if (value == null)
+            unit.LogError(msgWhenNull, true);
+    }
+    public static void LogError(this IKLBotLogUnit unit, string s, [DoesNotReturnIf(true)] bool throwException = false)
     {
         unit.Log(ErrorTag + s);
+        if (throwException)
+            throw new Exception(s);
     }
 }

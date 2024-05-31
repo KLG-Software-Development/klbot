@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using klbotlib.Exceptions;
 using Microsoft.Extensions.Configuration;
 
@@ -9,6 +10,32 @@ namespace klbotlib.Extensions;
 /// </summary>
 public static class IConfigurationExtension
 {
+    /// <summary>
+    /// 读取当前配置中给定项的值
+    /// </summary>
+    /// <param name="config"></param>
+    /// <param name="key">键名</param>
+    /// <param name="value">获取的值。若失败则为null</param>
+    /// <param name="section">区段名（可选）</param>
+    /// <returns>若键不存在则抛出异常；成功则返回该配置项的值</returns>
+    /// <exception cref="KLBotInitializationException"></exception>
+    public static bool TryReadValue(this IConfiguration config, string key, [NotNullWhen(true)] out string? value, string? section = null)
+    {
+        value = null;
+        if (section != null)
+        {
+            var configSection = config.GetSection(section);
+            if (!configSection.Exists())
+                return false;
+            value = configSection.GetValue<string>(key);
+            if (value == null)
+                return false;
+        }
+        value = config.GetValue<string>(key);
+        if (value == null)
+            return false;
+        return true;
+    }
     /// <summary>
     /// 读取当前配置中给定项的值
     /// </summary>
@@ -45,6 +72,6 @@ public static class IConfigurationExtension
     /// <returns>若键不存在则抛出异常；成功则返回该配置项的值</returns>
     public static string[] ReadArray(this IConfiguration config, string key, string? section = null, char delim = ',')
     {
-        return config.ReadValue(key, section).Split(delim);
+        return config.ReadValue(key, section).Split(delim, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 }

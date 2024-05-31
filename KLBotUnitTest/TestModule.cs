@@ -16,7 +16,7 @@ public class TestModule
         KLBot testBot = new(TestConst.DefaultConfig, driver);
         var tm = new TimeModule();
         Assert.AreEqual(false, tm.IsAttached, "模块初始情况下模块应处于未附加状态（IsAttach=false）");
-        testBot.AddModule(tm).Wait();
+        testBot.AddModule(tm);
         Assert.AreEqual(true, tm.IsAttached, "调用AddModule()后模块应处于附加状态（IsAttach=true）");
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using System.Threading;
 using klbotlib.MessageDriver;
 using System.Diagnostics;
+using System.IO;
 
 namespace klbot;
 
@@ -58,8 +59,10 @@ class Program
     private static void InitLog()
     {
         Trace.Listeners.Clear();
-        DefaultTraceListener fileLog = new();
-        fileLog.LogFileName = $"klbot.log";
+        DefaultTraceListener fileLog = new()
+        {
+            LogFileName = $"klbot.log"
+        };
         Trace.Listeners.Add(fileLog);
         ConsoleTraceListener consoleLog = new();
         Trace.Listeners.Add(consoleLog);
@@ -83,22 +86,18 @@ start:
                 klg.OnExit();
                 Environment.Exit(-1);
             };
-            await klg.AddModule(new ResetModule());
-            await klg.AddModule(new PLJJModule());
-            await klg.AddModule(new ZombieeeModule());
-            await klg.AddModule(new FlashGambleModule());
-            await klg.AddModule(new RollinModule());
-            await klg.AddModule(new CollapseModule());
-            await klg.AddModule(new CompilerModule());
-            await klg.AddModule(new InvisibleModule());
-            await klg.AddModule(new WelcomekxggModule());
-            await klg.AddModule(new ImageModule());
-            await klg.AddModule(new IMGPModule());
-            await klg.AddModule(new AnonyVoiceModule());
-            await klg.AddModule(new TimeModule());
-            await klg.AddModule(new 上号Module());
-            await klg.AddModule(new ChatQYKModule());
-            await klg.AddModule(new FuckModule());
+            if (_config.TryReadValue("modules", out string? moduleListFile))
+            {
+                if (!File.Exists(moduleListFile))
+                {
+                    Console.WriteLine($"模块列表文件[{moduleListFile}]不存在，将使用默认模块列表");
+                    AddDefaultModules(klg);
+                }
+                else
+                    await AddModulesFromList(klg, moduleListFile);
+            }
+            else
+                AddDefaultModules(klg);
             Console.WriteLine(klg.GetModuleChainString());
             await klg.DefaultLoop();
         }
@@ -150,6 +149,58 @@ start:
                 Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
                 Thread.Sleep(1000);
                 goto start;
+            }
+        }
+    }
+
+    private static void AddDefaultModules(KLBot klg)
+    {
+        klg.AddModule(new ResetModule());
+        klg.AddModule(new PLJJModule());
+        klg.AddModule(new ZombieeeModule());
+        klg.AddModule(new FlashGambleModule());
+        klg.AddModule(new RollinModule());
+        klg.AddModule(new CollapseModule());
+        klg.AddModule(new CompilerModule());
+        klg.AddModule(new InvisibleModule());
+        klg.AddModule(new WelcomekxggModule());
+        klg.AddModule(new ImageModule());
+        klg.AddModule(new IMGPModule());
+        klg.AddModule(new AnonyVoiceModule());
+        klg.AddModule(new TimeModule());
+        klg.AddModule(new 上号Module());
+        klg.AddModule(new ChatQYKModule());
+        klg.AddModule(new FuckModule());
+    }
+
+    private static async Task<(string, string)[]> ParseModuleList(string moduleListFile)
+    {
+        string[] lines = await File.ReadAllLinesAsync(moduleListFile);
+        (string, string)[] moduleList = new (string, string)[lines.Length];
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string[] tokens = lines[i].Split(':');
+            if (tokens.Length != 2)
+                throw new Exception($"无效的模块列表文件：{moduleListFile}: \n行号：{i + 1}: 语法应为\"<模块名> <模块存档路径>\"");
+            moduleList[i] = (tokens[0].Trim(), tokens[1].Trim());
+        }
+        return moduleList;
+    }
+
+    private static async Task AddModulesFromList(KLBot klg, string moduleListFile)
+    {
+        (string, string)[] moduleList = await ParseModuleList(moduleListFile);
+        for (int i = 0; i < moduleList.Length; i++)
+        {
+            (string moduleName, string statusFile) = moduleList[i];
+            try
+            {
+                await klg.LoadModule(moduleName, statusFile);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"从文件[{statusFile}]加载模块[{moduleName}]失败: {ex}");
+                return;
             }
         }
     }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -183,7 +184,8 @@ namespace klbotlib.Modules
                     p.SetValue(this, value);
                     return true;
                 }
-                else return false;
+                else
+                    return false;
             }
             var f = type.GetField(name);
             if (f != null)
@@ -193,7 +195,8 @@ namespace klbotlib.Modules
                     f.SetValue(this, value);
                     return true;
                 }
-                else return false;
+                else
+                    return false;
             }
             return false;
         }
@@ -311,59 +314,10 @@ namespace klbotlib.Modules
             ModuleId = GetType().Name;
             IsAttached = false;
         }
-        // 从字典中导入模块属性(ModuleProperty)
-        internal void ImportDict(Dictionary<string, JsonNode?> dict, bool ignoreNull = false)
-        {
-            Type type = GetType();
-            foreach (var kvp in dict)
-            {
-                PropertyInfo? property = type.GetProperty_All(kvp.Key);
-                if (property != null)
-                {
-                    if (!property.CanWrite)
-                    {
-                        ModuleLog($"配置文件或状态存档中包含模块{ModuleId}中的\"{property.Name}\"字段，但该字段没有set访问器，无法赋值", LogType.Warning);
-                        continue;
-                    }
-                    else if (kvp.Value == null)
-                    {
-                        if (ignoreNull)
-                            continue;
-                        ModuleLog($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", LogType.Error);
-                        throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
-                    }
-                    property.SetValue(this, Convert.ChangeType(kvp.Value, property.PropertyType));
-                    continue;
-                }
-                else
-                {
-                    if (kvp.Key == null)
-                        throw new NullReferenceException("键值对导入失败: 键中意外出现null值");
-                    FieldInfo? field = type.GetField_All(kvp.Key);
-                    if (field != null)
-                    {
-                        if (kvp.Value == null)
-                        {
-                            if (ignoreNull)
-                                continue;
-                            ModuleLog($"键值对导入失败: 配置文件中的\"{kvp.Key}\"字段值为null。请修改成非空值", LogType.Error);
-                            throw new ModuleSetupException(this, "配置字段中出现null值，此行为不符合模块开发规范");
-                        }
-                        field.SetValue(this, Convert.ChangeType(kvp.Value, field.FieldType));
-                        continue;
-                    }
-                    else
-                        ModuleLog($"键值对导入失败: 模块中不存在字段\"{kvp.Key}\"", LogType.Warning);
-                }
-            }
-        }
-        // 把模块的所有模块状态导出到字典
-        internal Dictionary<string, object?> ExportStatusDict() 
-            => ExportMemberWithAttribute(typeof(JsonIncludeAttribute));
         //保存模块的状态
         internal void SaveModuleStatus(bool printInfo = true)
         {
-            string json = KLBotJsonHelper.SerializeFile(ExportStatusDict());
+            string json = KLBotJsonHelper.SerializeFile(this);
             string filePath = HostBot.GetModuleStatusPath(this);
             if (printInfo)
                 ModuleLog($"正在保存状态至\"{filePath}\"...", LogType.Task);

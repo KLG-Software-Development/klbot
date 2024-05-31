@@ -20,7 +20,7 @@ public class TestStatusAutoSave
         MessageDriver_Debug driver = TestConst.GetTestDriver();
         KLBot bot = new(TestConst.DefaultConfig, driver);
         FuckModule module = new();
-        bot.AddModule(module).Wait();
+        bot.AddModule(module);
         bool initState = module.Enabled;
         //通过命令模块修改启用状态
         driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "##switch FuckModule");

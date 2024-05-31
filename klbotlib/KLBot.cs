@@ -148,7 +148,7 @@ namespace klbotlib
             {
                 //加载核心模块
                 this.LogInfo("加载自带核心模块...");
-                AddModule(new CommandModule()).Wait();
+                AddModule(new CommandModule());
                 this.Log(GetModuleChainString());
             }
             catch (Exception ex)
@@ -200,7 +200,7 @@ namespace klbotlib
         /// <summary>
         /// 在当前模块链条的末尾手动添加一个或多个新模块
         /// </summary>
-        public async Task AddModule(params Module[] modules)
+        public void AddModule(params Module[] modules)
         {
             foreach (var m in modules)
             {
@@ -211,9 +211,21 @@ namespace klbotlib
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
                 CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
                 //载入模块配置
-                await LoadModuleStatus(m);
                 this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
             }
+        }
+        /// <summary>
+        /// 从模块存档文件中加载模块实例
+        /// </summary>
+        public async Task LoadModule(string moduleName, string moduleStatusFile)
+        {
+            string statusFilePath = Path.Combine(ModulesSaveDir, moduleStatusFile);
+            Module m = await ModuleLoader.LoadModuleFromFileByName(moduleName, statusFilePath);
+            m.Register(this, ModuleChain.CalcModuleId(m));
+            ModuleChain.AddModule(m);
+            //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
+            CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
+            this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
         }
 
         //**** 内部API ****//
@@ -468,46 +480,20 @@ namespace klbotlib
         /// <summary>
         /// 重新载入所有模块配置和状态
         /// </summary>
-        public async Task ReloadAllModules()
+        public Task ReloadAllModules()
         {
-            await Parallel.ForEachAsync<Module>(ModuleChain, async (module, _) =>
-            {
-                await LoadModuleStatus(module);
-            });
+            throw new NotImplementedException();
         }
         /// <summary>
         /// 保存该模块的状态
         /// </summary>
         public async Task SaveModuleStatus(Module module, bool printInfo = true)
         {
-            string json = KLBotJsonHelper.SerializeFile(module.ExportStatusDict());
+            string json = KLBotJsonHelper.SerializeFile(module);
             string filePath = GetModuleStatusPath(module);
             if (printInfo)
-            {
-                //由于涉及并行处理 需要加锁输出
                 this.LogTask($"正在保存模块{module}的状态至\"{filePath}\"...");
-            }
             await File.WriteAllTextAsync(filePath, json);
-        }
-        //载入模块的状态
-        private async Task LoadModuleStatus(Module module, bool printInfo = true)
-        {
-            try
-            {
-                string filePath = GetModuleStatusPath(module);
-                if (File.Exists(filePath))
-                {
-                    if (printInfo)
-                        this.LogTask($"正在从\"{filePath}\"加载模块{module}的状态...");
-                    var statusDict = KLBotJsonHelper.DeserializeFile<Dictionary<string, JsonNode?>>(await File.ReadAllTextAsync(filePath));
-                    if (statusDict != null)
-                        module.ImportDict(statusDict, true);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new ModuleStatusException(module, ex.Message);
-            }
         }
 
         /// <summary>

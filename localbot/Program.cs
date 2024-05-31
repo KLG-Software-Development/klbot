@@ -26,7 +26,7 @@ public class Program
 
     private static KLBot? _lcb = null;
 
-    public static async Task Main()
+    public static void Main()
     {
         Console.ResetColor();
         DateTime lastErrorTime = DateTime.MinValue;
@@ -47,7 +47,7 @@ start:
             .Build();
 
             _lcb = new KLBot(config, _localServer, asm, _debugTargetGroupId);
-            await _lcb.AddModule(new TimeModule());
+            _lcb.AddModule(new TimeModule());
 
             Console.WriteLine(_lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。命令调用格式：<命令> <值>");

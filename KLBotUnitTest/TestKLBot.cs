@@ -16,10 +16,10 @@ public class TestKLBot
     {
         KLBot bot = new(TestConst.DefaultConfig, TestConst.GetTestDriver());
         Assert.AreEqual(TestConst.CoreModuleCount, bot.ModuleCount);
-        bot.AddModule(new TimeModule()).Wait();
+        bot.AddModule(new TimeModule());
         Assert.AreEqual(TestConst.CoreModuleCount + 1, bot.ModuleCount);
         var tm = new TimeModule();
-        bot.AddModule(tm).Wait();
+        bot.AddModule(tm);
         Assert.AreEqual(TestConst.CoreModuleCount + 2, bot.ModuleCount);
     }
     /// <summary>
