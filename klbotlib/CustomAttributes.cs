@@ -1,17 +1,17 @@
 ﻿using System;
 
-namespace klbotlib.Modules
+namespace klbotlib
 {
     /// <summary>
     /// 模块状态Attribute，用来标记模块属性。
     /// 模块状态用来标记那些决定模块状态的成员，比如某个功能是否开启。
-    /// 只有打上此标记之后，该成员的值才会被Module.ExportStatusDict()保存，且机器人启动或关闭时会自动读取或保存这些成员的值
     /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class HiddenStatusAttribute : Attribute { }
     /// <summary>
-    /// 模块配置Attribute，用来标记模块配置。
-    /// 此Attribute用来标记那些决定模块配置的成员，比如特定文件的存取路径。
-    /// 只有打上此标记之后，该成员的值才能被Module.ExportSetupDict()保存
+    /// 模块合集Attribute，用来标记模块合集。
+    /// 此Attribute用于标记Assembly为模块合集。使用模块名初始化KLBot时仅会在含此标记的程序集中搜索模块类型
     /// </summary>
-    public class _ModuleSetupAttribute : Attribute { }      
+    [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Module)]
+    public class ModuleCollectionAttribute : Attribute { }      
 }

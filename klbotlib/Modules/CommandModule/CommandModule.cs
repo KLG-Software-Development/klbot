@@ -15,8 +15,7 @@ namespace klbotlib.Modules
         const string _prefix = "##";
         private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$", RegexOptions.Compiled);
 
-        [JsonInclude]
-        public Dictionary<long, AuthorType> Users { get; private set; } = new();
+        public Dictionary<long, AuthorType> Users { get; set; } = new() { { 0, AuthorType.开发者 } };
 
         internal List<Command> _cmds = new();
         internal AuthorType GetAuthorType(long id)

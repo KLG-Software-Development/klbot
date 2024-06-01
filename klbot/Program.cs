@@ -109,15 +109,6 @@ start:
             Console.ResetColor();
             Environment.Exit(-1);
         }
-        catch (ModuleSetupException ex)
-        {
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine(ex.Message);
-            Console.WriteLine($"模块配置异常。检查模块的配置文件是否正确，以及该模块是否恰当遵守了模块开发规范");
-            Console.WriteLine("退出中...");
-            Console.ResetColor();
-            Environment.Exit(-1);
-        }
         catch (ModuleStatusException ex)
         {
             Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -199,7 +190,7 @@ start:
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"从文件[{statusFile}]加载模块[{moduleName}]失败: {ex}");
+                Console.WriteLine($"\n从文件[{statusFile}]加载模块[{moduleName}]失败: {ex}");
                 return;
             }
         }

@@ -64,14 +64,6 @@ start:
                 Console.WriteLine("初始化失败。退出中...");
                 Console.ResetColor();
             }
-            else if (ex is ModuleSetupException)
-            {
-                Console.ForegroundColor = ConsoleColor.DarkYellow;
-                Console.WriteLine(ex.Message);
-                Console.WriteLine($"模块配置异常。检查模块的配置文件是否正确，以及该模块是否恰当遵守了模块开发规范");
-                Console.WriteLine("退出中...");
-                Console.ResetColor();
-            }
             else  //无法处理的未知情况
             {
                 Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -307,7 +299,7 @@ start:
             case "save":
                 _lcb.ModuleChain.ForEach(async m =>
                 {
-                    await _lcb.SaveModuleStatus(m);
+                    await m.SaveModuleStatus();
                 });
                 return;
             default:

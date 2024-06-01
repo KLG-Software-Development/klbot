@@ -220,7 +220,8 @@ namespace klbotlib
         public async Task LoadModule(string moduleName, string moduleStatusFile)
         {
             string statusFilePath = Path.Combine(ModulesSaveDir, moduleStatusFile);
-            Module m = await ModuleLoader.LoadModuleFromFileByName(moduleName, statusFilePath);
+            object obj = await ModuleLoader.LoadModuleFromFileByName(moduleName, statusFilePath);
+            Module m = (Module)obj;
             m.Register(this, ModuleChain.CalcModuleId(m));
             ModuleChain.AddModule(m);
             //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
@@ -313,9 +314,7 @@ namespace klbotlib
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleId);
         // 获取模块的ModuleStatus存档文件路径
-        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + "_status.json");
-        // 获取模块的ModuleSetup配置文件路径
-        internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + "_setup.json");
+        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + ".json");
 
         //消息事件处理
         private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
@@ -445,21 +444,13 @@ namespace klbotlib
                         this.LogInfo("手动保存所有模块状态到存档...");
                         ModuleChain.ForEach(async m =>
                         {
-                            await SaveModuleStatus(m);
-                        });
-                    }
-                    else if (cmd == "save all")
-                    {
-                        this.LogTask("手动保存所有模块状态和模块配置到存档...");
-                        ModuleChain.ForEach(async m =>
-                        {
-                            await SaveModuleStatus(m);
+                            await m.SaveModuleStatus();
                         });
                     }
                     else if (cmd == "reload")
                     {
                         this.LogTask("手动重载所有模块存档...");
-                        ReloadAllModules().Wait();
+                        await ReloadAllModules();
                         this.LogInfo("重载已完成");
                     }
                     else if (cmd == "lasterror")
@@ -484,24 +475,13 @@ namespace klbotlib
         {
             throw new NotImplementedException();
         }
-        /// <summary>
-        /// 保存该模块的状态
-        /// </summary>
-        public async Task SaveModuleStatus(Module module, bool printInfo = true)
-        {
-            string json = KLBotJsonHelper.SerializeFile(module);
-            string filePath = GetModuleStatusPath(module);
-            if (printInfo)
-                this.LogTask($"正在保存模块{module}的状态至\"{filePath}\"...");
-            await File.WriteAllTextAsync(filePath, json);
-        }
 
         /// <summary>
         /// 有序退出函数
         /// </summary>
         public void OnExit()
         {
-            ModuleChain.ForEach(m => SaveModuleStatus(m).Wait());
+            ModuleChain.ForEach(async m => await m.SaveModuleStatus());
             this.LogInfo("有序退出完成");
         }
 

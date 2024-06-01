@@ -35,20 +35,24 @@ namespace klbotlib.Modules
         /// 当模块未附加到KLBot上时，等于模块名；
         /// 当模块附加到KLBot上时，等于“模块类名#在同类模块中的排位”
         /// </summary>
+        [JsonIgnore]
         public string ModuleId { get; private set; }
         /// <summary>
         /// 返回此模块是否已经被附加到宿主KLBot上
         /// </summary>
+        [JsonIgnore]
         public bool IsAttached { get; private set; } = false;
         /// <summary>
         /// 决定此模块是否是透明模块(默认为否).
         /// 透明模块处理消息之后会继续向后传递，以使得Bot内部在它之后的模块能继续处理这条消息.
         /// 非透明模块处理消息之后会销毁消息.
         /// </summary>
+        [JsonIgnore]
         public virtual bool IsTransparent { get; } = false;
         /// <summary>
         /// 决定是否在输出前自动加上模块签名"[模块ID]"（默认开启）。
         /// </summary>
+        [JsonIgnore]
         public virtual bool UseSignature { get; } = true;
         /// <summary>
         /// 决定是否使用纯异步执行. 
@@ -74,6 +78,7 @@ namespace klbotlib.Modules
         /// <summary>
         /// 模块所附加到的宿主KLBot
         /// </summary>
+        [JsonIgnore]
         public KLBot? HostBot 
         { 
             get { AssertAttachedStatus(true); return _hostBot; }
@@ -314,14 +319,18 @@ namespace klbotlib.Modules
             ModuleId = GetType().Name;
             IsAttached = false;
         }
-        //保存模块的状态
-        internal void SaveModuleStatus(bool printInfo = true)
+        /// <summary>
+        /// 保存模块的状态
+        /// </summary>
+        /// <param name="printInfo">是否打印保存信息</param>
+        /// <returns></returns>
+        public async Task SaveModuleStatus(bool printInfo = true)
         {
-            string json = KLBotJsonHelper.SerializeFile(this);
+            string json = ModuleLoader.SaveModule(this);
             string filePath = HostBot.GetModuleStatusPath(this);
             if (printInfo)
                 ModuleLog($"正在保存状态至\"{filePath}\"...", LogType.Task);
-            File.WriteAllText(filePath, json);
+            await File.WriteAllTextAsync(filePath, json);
         }
 
         //helper 
@@ -381,10 +390,10 @@ namespace klbotlib.Modules
                     ModuleLog("任务结束, 无回复内容.");
                 //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
                 if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
-                    _hostBot.ModuleChain.ForEach( x => x.SaveModuleStatus(false));
+                    _hostBot.ModuleChain.ForEach( async x => await x.SaveModuleStatus(false));
                 //否则可以假设模块只修改自身 所以只需保存自己
                 else
-                    SaveModuleStatus(false);
+                    await SaveModuleStatus(false);
                 DiagData.ProcessedMessageCount++;
                 return true;
             }

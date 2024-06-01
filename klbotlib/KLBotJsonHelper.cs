@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.Json.Serialization;
+using klbotlib.Modules;
 using System;
 
 namespace klbotlib.Json
@@ -11,20 +11,22 @@ namespace klbotlib.Json
         internal static MediaTypeHeaderValue JsonMime { get; } = MediaTypeHeaderValue.Parse("application/json");
         internal static StringContent CreateAsJson(string s)
             => new StringContent(s, JsonMime);
-        // 用于模块保存的JSON序列化配置
-        private static readonly JsonSerializerOptions _moduleOptions = new()
+        // 用于模块加载的JSON反序列化配置
+        private static readonly JsonSerializerOptions _moduleDeserializeOptions = new()
         {
             WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Always,
-            IncludeFields = false
+            IncludeFields = false,
+        };
+        // 用于模块保存的JSON序列化配置
+        private static readonly JsonSerializerOptions _moduleSerializeOptions = new()
+        {
+            WriteIndented = true,
+            IncludeFields = false,
+            IgnoreReadOnlyProperties = true,
         };
 
         //用于文件存储的Json序列化配置
         private static readonly JsonSerializerOptions _fileOptions = new()
-        {
-            WriteIndented = true
-        };
-        private static readonly JsonSerializerOptions _fileDeserializeOptions = new()
         {
             WriteIndented = true
         };
@@ -34,48 +36,22 @@ namespace klbotlib.Json
         {
             WriteIndented = false,
         };
-        private static readonly AutoCastJsonConverter _autoCastConverter = new();
 
-        static KLBotJsonHelper()
-        {
-            _fileDeserializeOptions.Converters.Add(_autoCastConverter);
-        }
-
-        internal static string SerializeFile<T>(T obj)
-            => JsonSerializer.Serialize(obj, _fileOptions);
         internal static string SerializeNetworkData<T>(T obj)
             => JsonSerializer.Serialize(obj, _networkOptions);
+        internal static string SerializeModule(Module module)
+        {
+            return JsonSerializer.Serialize(module, module.GetType(), _moduleSerializeOptions);
+        }
+        internal static Module? DeserializeModule(string json, Type moduleRuntimeType)
+        {
+            if (!moduleRuntimeType.IsSubclassOf(typeof(Module)))
+                throw new Exception($"Type [{moduleRuntimeType}] is no a sub-type of {nameof(Module)}");
+            return JsonSerializer.Deserialize(json, moduleRuntimeType, _moduleDeserializeOptions) as Module;
+        }
+        internal static string SerializeFile<T>(T obj)
+            => JsonSerializer.Serialize(obj, _fileOptions);
         internal static T? DeserializeFile<T>(string json)
-            => JsonSerializer.Deserialize<T>(json, _fileDeserializeOptions);
-    }
-    internal class AutoCastJsonConverter : JsonConverter<object>
-    {
-        public override object? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            switch (reader.TokenType)
-            {
-                case JsonTokenType.True:
-                    return true;
-                case JsonTokenType.False:
-                    return false;
-                case JsonTokenType.Number:
-                    if (reader.TryGetInt64(out long i64))
-                        return i64;        
-                    return reader.GetDouble();
-                case JsonTokenType.String:
-                    if (reader.TryGetDateTime(out DateTime datetime))
-                        return datetime;
-                    return reader.GetString();
-                default:
-                    using (JsonDocument document = JsonDocument.ParseValue(ref reader))
-                    {
-                        return document.RootElement.Clone();
-                    }
-            }
-        }
-        public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
-        {
-            throw new InvalidOperationException("不支持的操作：仅用于反序列化");
-        }
+            => JsonSerializer.Deserialize<T>(json, _fileOptions);
     }
 }
