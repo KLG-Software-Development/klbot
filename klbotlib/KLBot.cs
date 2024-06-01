@@ -1,6 +1,5 @@
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.Json;
 using klbotlib.Events;
 using klbotlib.Modules;
 using System;
@@ -12,7 +11,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Module = klbotlib.Modules.Module;
-using System.Text.Json.Nodes;
 
 namespace klbotlib
 {
