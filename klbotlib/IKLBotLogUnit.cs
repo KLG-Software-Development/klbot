@@ -37,28 +37,40 @@ internal static class IKLBotLogUnitExtension
         lock(_globalLogLock)
             Trace.WriteLine($"[{DateTime.Now.ToKLBotTimestampString()}][{unit.LogUnitName}][DEBUG] {s}");
     }
+    [Conditional("DEBUG")]
+    public static void DebugLog(this IKLBotLogUnit unit, string tag, string s)
+    {
+        lock(_globalLogLock)
+            Trace.WriteLine($"[{DateTime.Now.ToKLBotTimestampString()}]{tag}[{unit.LogUnitName}][DEBUG] {s}");
+    }
     public static void Log(this IKLBotLogUnit unit, string s)
     {
         lock(_globalLogLock)
             Trace.WriteLine($"[{DateTime.Now.ToKLBotTimestampString()}][{unit.LogUnitName}] {s}");
     }
+    public static void Log(this IKLBotLogUnit unit, string tag, string s)
+    {
+        lock(_globalLogLock)
+            Trace.WriteLine($"[{DateTime.Now.ToKLBotTimestampString()}]{tag}[{unit.LogUnitName}] {s}");
+    }
     public static void Log(this IKLBotLogUnit unit, string s, LogType logType)
     {
         if (!_tagsByLogType.TryGetValue(logType, out string? tag))
-            Log(unit, s);
-        unit.Log(tag + s);
+            unit.Log(s);
+        else
+            unit.Log(tag, s);
     }
     public static void LogTask(this IKLBotLogUnit unit, string s)
     {
-        unit.Log(TaskTag + s);
+        unit.Log(TaskTag, s);
     }
     public static void LogInfo(this IKLBotLogUnit unit, string s)
     {
-        unit.Log(InfoTag + s);
+        unit.Log(InfoTag, s);
     }
     public static void LogWarning(this IKLBotLogUnit unit, string s)
     {
-        unit.Log(WarningTag + s);
+        unit.Log(WarningTag, s);
     }
     public static void LogNullAndThrow<T>(this IKLBotLogUnit unit, [NotNull] T? value, string msgWhenNull)
     {
@@ -67,7 +79,7 @@ internal static class IKLBotLogUnitExtension
     }
     public static void LogError(this IKLBotLogUnit unit, string s, [DoesNotReturnIf(true)] bool throwException = false)
     {
-        unit.Log(ErrorTag + s);
+        unit.Log(ErrorTag, s);
         if (throwException)
             throw new Exception(s);
     }
