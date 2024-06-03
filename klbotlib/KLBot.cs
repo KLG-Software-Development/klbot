@@ -81,7 +81,7 @@ namespace klbotlib
             this.LogInfo($"Driver info: {_msgDriver.DriverInfo}");
             LoadConfig(config);
             //创建模块存档目录（如果不存在）
-            CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
+            CreateDirectory(ModulesSaveDir, "模块存档目录");
         }
         // 构造并添加目标群组
         private KLBot(IConfiguration config, IMessageDriver driver, ISet<long> targetGroups) : this(config, driver)
@@ -207,7 +207,7 @@ namespace klbotlib
                 m.Register(this, ModuleChain.CalcModuleId(m));
                 ModuleChain.AddModule(m);
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
-                CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
+                CreateDirectory(GetModuleCacheDir(m), $"模块{m}的缓存目录");
                 //载入模块配置
                 this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
             }
@@ -223,7 +223,7 @@ namespace klbotlib
             m.Register(this, ModuleChain.CalcModuleId(m));
             ModuleChain.AddModule(m);
             //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
-            CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
+            CreateDirectory(GetModuleCacheDir(m), $"模块{m}的缓存目录");
             this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
         }
 
@@ -315,7 +315,7 @@ namespace klbotlib
         internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + ".json");
 
         //消息事件处理
-        private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
+        private async Task MessageHandler(object? sender, KLBotMessageEventArgs e)
         {
             // 时间窗强制过滤：早于一定时段的消息将彻底丢弃并且不进入统计信息
             if (DateTime.Now - e.Timestamp > ProcessWindow)
@@ -543,7 +543,7 @@ namespace klbotlib
             return sb.ToString();
         }
 
-        private void CreateDirectoryIfNotExist(string path, string dirDescription)
+        private void CreateDirectory(string path, string dirDescription)
         {
             if (!Directory.Exists(path))
             {
@@ -551,8 +551,5 @@ namespace klbotlib
                 Directory.CreateDirectory(path);
             }
         }
-
-        //命令循环的状态。分别代表 未开始、等待命令输入、正在输出
-        internal enum CmdLoopStatus { NotStarted, ReadLn, Output }
     }
 }

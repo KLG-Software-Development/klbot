@@ -74,7 +74,6 @@ public record MessagePackage : Message, IReadOnlyList<Message>
         TargetIds = _targetIds;
         foreach (var msg in msgs)
         {
-            _data.Add(msg);
             if (msg is MessageAt amsg)
                 _targetIds.Add(amsg.TargetId);
         }

@@ -17,7 +17,7 @@ public interface IMessageDriver : IKLBotLogUnit
     /// <summary>
     /// 新消息事件
     /// </summary>
-    event EventHandler<KLBotMessageEventArgs> OnMessageReceived;
+    event AsyncEventHandler<KLBotMessageEventArgs> OnMessageReceived;
     /// <summary>
     /// 向消息服务器验证身份
     /// </summary>

@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -323,14 +321,24 @@ namespace klbotlib.Modules
         /// 保存模块的状态
         /// </summary>
         /// <param name="printInfo">是否打印保存信息</param>
-        /// <returns></returns>
         public async Task SaveModuleStatus(bool printInfo = true)
         {
             string json = ModuleLoader.SaveModule(this);
             string filePath = HostBot.GetModuleStatusPath(this);
             if (printInfo)
-                ModuleLog($"正在保存状态至\"{filePath}\"...", LogType.Task);
+                ModuleLog($"正在保存模块至\"{filePath}\"...", LogType.Task);
+            if (!File.Exists(filePath))
+            {
+                if (printInfo)
+                    ModuleLog($"模块存档\"{filePath}\"不存在，将自动创建"); 
+                string? dir = Path.GetDirectoryName(filePath);
+                if (dir == null)
+                    throw new Exception($"模块存档所在目录\"{dir}\"创建失败");
+                Directory.CreateDirectory(dir);
+                using var _ = new StreamWriter(File.Create(filePath));
+            }
             await File.WriteAllTextAsync(filePath, json);
+            ModuleLog($"模块已保存至存档\"{filePath}\"");
         }
 
         //helper 
@@ -384,13 +392,13 @@ namespace klbotlib.Modules
                     if (UseSignature)
                         output = new MessagePackage($"[{this}]\n", output);
                     await _hostBot.ReplyMessage(this, context, output);
-                    ModuleLog("已调用回复接口.");
+                    ModuleLog($"已调用回复接口: {output}");
                 }
                 else
                     ModuleLog("任务结束, 无回复内容.");
                 //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
                 if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
-                    _hostBot.ModuleChain.ForEach( async x => await x.SaveModuleStatus(false));
+                    _hostBot.ModuleChain.ForEach( async x => await x.SaveModuleStatus(true));
                 //否则可以假设模块只修改自身 所以只需保存自己
                 else
                     await SaveModuleStatus(false);

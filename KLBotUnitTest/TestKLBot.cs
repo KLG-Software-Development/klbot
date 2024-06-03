@@ -2,6 +2,7 @@ using klbotlib;
 using klbotlib.Modules;
 using klbotlib.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
 
 namespace KLBotUnitTest;
 

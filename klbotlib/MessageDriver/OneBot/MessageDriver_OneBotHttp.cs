@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using klbotlib.Events;
@@ -139,7 +138,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     public string DriverInfo => $"OneBot message driver [HTTP@{_caller.ServerUrl}] [Webhook@{_webhookServer.BindAddr}]";
 
     /// <inheritdoc/>
-    public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => {};
+    public event AsyncEventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => Task.CompletedTask;
 
     /// <inheritdoc/>
     public async Task<Message> GetMessageFromId(long target, long messageId)

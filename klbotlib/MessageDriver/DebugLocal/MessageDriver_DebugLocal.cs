@@ -9,7 +9,7 @@ namespace klbotlib.MessageDriver.DebugLocal;
 /// <summary>
 /// 调试用本地模拟消息驱动器
 /// </summary>
-public class MessageDriver_Debug : IMessageDriver
+public class MessageDriver_Debug : IMessageDriver, IKLBotLogUnit
 {
     private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
     private readonly List<Message> _msgBuffer = new();
@@ -64,15 +64,16 @@ public class MessageDriver_Debug : IMessageDriver
     /// </summary>
     /// <param name="context">消息上下文</param>
     /// <param name="msgs">待加入的消息</param>
-    public void AddReceivedMessage(MessageContext context, params Message[] msgs)
+    public Task AddReceivedMessage(MessageContext context, params Message[] msgs)
     {
         foreach (var msg in msgs)
         {
             _msgBuffer.Add(msg);
             _msgCache.Add(_msgCache.Count, msg);
-            OnMessageReceived.Invoke(this, new(DateTime.Now, context, msg));
+            OnMessageReceived.Invoke(this, new(DateTime.Now, context, msg)).Wait();
             AddMessageCallback.Invoke(context, msg);
         }
+        return Task.CompletedTask;
     }
 
     // -------- 以下为接口实现 --------
@@ -83,7 +84,7 @@ public class MessageDriver_Debug : IMessageDriver
     public string DriverInfo => "Local debug message driver";
 
     /// <inheritdoc/>
-    public event EventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => { };
+    public event AsyncEventHandler<KLBotMessageEventArgs> OnMessageReceived = (_, _) => Task.CompletedTask;
 
     /// <inheritdoc/>
     public Task SendMessage(Module module, MessageContextType context, long userId, long groupId, Message msg)

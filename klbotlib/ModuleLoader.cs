@@ -17,7 +17,7 @@ internal static class ModuleLoader
 {
     private class ModuleLoaderLogger : IKLBotLogUnit
     {
-        public string LogUnitName => $"Core/ModuleLoader";
+        public string LogUnitName => "Core/ModuleLoader";
     }
     private static ModuleLoaderLogger _logger = new();
     /// <summary>
@@ -42,13 +42,13 @@ internal static class ModuleLoader
     {
         string json;
         // 读取文件
-        if (!File.Exists(path))
+        if (!File.Exists(path)) // 存档不存在时使用空json进行加载以获取默认模块实例
         {
             _logger.LogWarning($"为模块[{moduleTypeName}]指定的存档\"{path}\"不存在。将自动使用空存档创建默认模块实例。这可能导致问题");
             json = "{}";
         }
         else
-            json = await File.ReadAllTextAsync(path); // 存档不存在时使用空json进行加载以获取默认模块实例
+            json = await File.ReadAllTextAsync(path);
         // 查找类型并检查其是否为模块类型
         Type moduleType = GetModuleTypeByName(moduleTypeName);
         if (!moduleType.IsSubclassOf(typeof(Module)))
