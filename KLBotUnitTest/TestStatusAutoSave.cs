@@ -36,6 +36,10 @@ public class TestStatusAutoSave
             continue;
         Assert.AreEqual(!initState, module.Enabled, "FuckModule.Enabled should have changed");
         // Test save file
+        // 内部WriteAllText()会导致文件短时间内处于长度=0状态，需等待文件完成写入
+        Console.WriteLine("Waiting for file to be saved");
+        while (new FileInfo(savePath).Length == 0)
+            continue;
         JsonNode? node = JsonSerializer.Deserialize<JsonNode>(File.ReadAllText(savePath));
         if (node == null)
             throw new JsonException($"Failed to deserialize {savePath} (1st)");
@@ -51,6 +55,10 @@ public class TestStatusAutoSave
             continue;
         Assert.AreEqual(initState, module.Enabled, "FuckModule.Enabled should have changed (2nd)");
         // Test save file
+        // 内部WriteAllText()会导致文件短时间内处于长度=0状态，需等待文件完成写入
+        Console.WriteLine("Waiting for file to be saved");
+        while (new FileInfo(savePath).Length == 0)
+            continue;
         node = JsonSerializer.Deserialize<JsonNode>(File.ReadAllText(savePath));
         if (node == null)
             throw new JsonException($"Failed to deserialize {savePath} (2nd)");

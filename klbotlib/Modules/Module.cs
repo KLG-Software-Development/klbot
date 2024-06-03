@@ -338,7 +338,8 @@ namespace klbotlib.Modules
                 using var _ = new StreamWriter(File.Create(filePath));
             }
             await File.WriteAllTextAsync(filePath, json);
-            ModuleLog($"模块已保存至存档\"{filePath}\"");
+            if (printInfo)
+                ModuleLog($"模块已保存至存档\"{filePath}\"");
         }
 
         //helper 
@@ -398,7 +399,7 @@ namespace klbotlib.Modules
                     ModuleLog("任务结束, 无回复内容.");
                 //判断模块是否是核心模块。在核心模块的情况下，需要保存全部模块的状态，因为核心模块具有修改其他模块的状态的能力；
                 if (GetType().Assembly.Equals(typeof(KLBot).Assembly))
-                    _hostBot.ModuleChain.ForEach( async x => await x.SaveModuleStatus(true));
+                    _hostBot.ModuleChain.ForEach( async x => await x.SaveModuleStatus(false));
                 //否则可以假设模块只修改自身 所以只需保存自己
                 else
                     await SaveModuleStatus(false);
