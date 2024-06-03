@@ -1,19 +1,21 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
 
 using klbotlib.Modules.KLDNamespace;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
     public class InvisibleModule : SingleTypeModule<MessagePlain>
     {
-        [ModuleStatus]
+        [JsonInclude]
         private Invisible ruan = new Invisible();
 
         public override bool UseSignature => false;
-        public override string? Filter(MessagePlain msg)
+        public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
         {
-            long x = msg.SenderId;
+            string? filterOut;
+            long x = context.UserId;
             if (x == 2044164212)
             {
                 if (msg.Text == "隐身")
@@ -27,23 +29,22 @@ namespace klbotlib.Modules
                 }
                 if (ruan.K == 0 || ruan.K == 1)
                 {
-                    return "yes";
+                    filterOut = "yes";
                 }
-                else return null;
+                else filterOut = null;
             }
-            else return null;
-        }
-        public override Task<string> Processor(MessagePlain msg, string? filterOut)
-        {
+            else filterOut = null;
+            if (filterOut == null)
+                return (Message?)null;
             if (filterOut.Equals("yes") && ruan.K == 0)
-                return Task.FromResult(string.Empty);
+                return (Message?)null;
             else if (filterOut.Equals("yes") && ruan.K == 1)
             {
                 ruan.K = 2;
-                return Task.FromResult("kxgg back!");
+                return (Message?)"kxgg back!";
             }
             else 
-                return Task.FromResult(string.Empty);
+                return (Message?)null;
         }
     }
 }

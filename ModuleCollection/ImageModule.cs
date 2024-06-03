@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -20,19 +21,20 @@ public class ImageModule : SingleTypeModule<MessagePlain>
     private readonly Stopwatch _sw = new();
     private readonly NameValueCollection _query = HttpUtility.ParseQueryString(string.Empty);
 
-    [ModuleSetup]
+    [JsonInclude]
     private readonly string _url = "https://image.baidu.com/search/acjson";
-    [ModuleSetup]
+    [JsonInclude]
     private readonly HashSet<string> _enhanceKeyword = new();
-    [ModuleStatus(IsHidden = true)]
+    [JsonInclude]
+    [HiddenStatus]
     private readonly Dictionary<string, int> _listNumCache = new();  //缓存每个搜索词的结果数量
-    [ModuleStatus]
+    [JsonInclude]
     private int _cacheCount = 0;
-    [ModuleStatus]
+    [JsonInclude]
     private string _lastDownloadTime = "N/A";
-    [ModuleStatus]
+    [JsonInclude]
     private string _lastParseTime = "N/A";
-    [ModuleStatus]
+    [JsonInclude]
     private int Fraction { get; set; } = 50;   //只在前n%的结果内随机
     /// <inheritdoc/>
     public sealed override bool UseSignature => false;
@@ -63,28 +65,19 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         _query["rn"]= "60";
     }
     /// <inheritdoc/>
-    public override string? Filter(MessagePlain msg)
-    {
-        string text = msg.Text.Trim();
-        return text.EndsWith("图来") && text.Length != 2
-            ? "X图来"
-            : _pattern.IsMatch(text)
-                ? "来点X图"
-                : null;
-    }
-    /// <inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
+    public override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         string? url, text = msg.Text.Trim();
-        string word = filterOut switch
-        {
-            "X图来" => text[..(msg.Text.Length - 2)],
-            "来点X图" => _pattern.Match(text).Groups[1].Value,
-            _ => throw new Exception("意外遇到未实现的情况。检查处理器实现是否完整"),
-        };
+        string word;
+        if (text.EndsWith("图来") && text.Length != 2)
+            word = text[..(msg.Text.Length - 2)];
+        else if (_pattern.IsMatch(text))
+            word = _pattern.Match(text).Groups[1].Value;
+        else
+            return null;
         if (_enhanceKeyword.Contains(word))
         {
-            (bool success, url) = await ModuleAccess.GetModule<PLJJModule>(0).GetRandomUrl(word, msg);
+            (bool success, url) = await ModuleAccess.GetModule<PLJJModule>(0).GetRandomUrl(word, context);
             if (success)
                 return $@"\image:\url:{url}";
             else

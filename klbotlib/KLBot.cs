@@ -1,6 +1,5 @@
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
-using klbotlib.Json;
 using klbotlib.Events;
 using klbotlib.Modules;
 using System;
@@ -20,7 +19,6 @@ namespace klbotlib
     /// </summary>
     public class KLBot : IKLBotLogUnit
     {
-        private readonly StringBuilder _sb = new();
         private IMessageDriver _msgDriver;
 
         /// <summary>
@@ -70,7 +68,7 @@ namespace klbotlib
         /// <summary>
         /// Log unit name
         /// </summary>
-        public string LogUnitName => "KLBot";
+        public string LogUnitName => "Core/KLBot";
 
         // 最基本的私有构造函数
         private KLBot(IConfiguration config, IMessageDriver driver)
@@ -83,7 +81,7 @@ namespace klbotlib
             this.LogInfo($"Driver info: {_msgDriver.DriverInfo}");
             LoadConfig(config);
             //创建模块存档目录（如果不存在）
-            CreateDirectoryIfNotExist(ModulesSaveDir, "模块存档目录");
+            CreateDirectory(ModulesSaveDir, "模块存档目录");
         }
         // 构造并添加目标群组
         private KLBot(IConfiguration config, IMessageDriver driver, ISet<long> targetGroups) : this(config, driver)
@@ -148,7 +146,7 @@ namespace klbotlib
             {
                 //加载核心模块
                 this.LogInfo("加载自带核心模块...");
-                AddModule(new CommandModule(this)).Wait();
+                AddModule(new CommandModule());
                 this.Log(GetModuleChainString());
             }
             catch (Exception ex)
@@ -200,7 +198,7 @@ namespace klbotlib
         /// <summary>
         /// 在当前模块链条的末尾手动添加一个或多个新模块
         /// </summary>
-        public async Task AddModule(params Module[] modules)
+        public void AddModule(params Module[] modules)
         {
             foreach (var m in modules)
             {
@@ -209,12 +207,24 @@ namespace klbotlib
                 m.Register(this, ModuleChain.CalcModuleId(m));
                 ModuleChain.AddModule(m);
                 //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
-                CreateDirectoryIfNotExist(GetModuleCacheDir(m), $"模块{m}的缓存目录");
+                CreateDirectory(GetModuleCacheDir(m), $"模块{m}的缓存目录");
                 //载入模块配置
-                await LoadModuleSetup(m);
-                await LoadModuleStatus(m);
                 this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
             }
+        }
+        /// <summary>
+        /// 从模块存档文件中加载模块实例
+        /// </summary>
+        public async Task LoadModule(string moduleName, string moduleStatusFile)
+        {
+            string statusFilePath = Path.Combine(ModulesSaveDir, moduleStatusFile);
+            object obj = await ModuleLoader.LoadModuleFromFileByName(moduleName, statusFilePath);
+            Module m = (Module)obj;
+            m.Register(this, ModuleChain.CalcModuleId(m));
+            ModuleChain.AddModule(m);
+            //为已经加载的每个模块创建缓存目录和存档目录（如果不存在）
+            CreateDirectory(GetModuleCacheDir(m), $"模块{m}的缓存目录");
+            this.LogInfo($"已添加{m.ModuleName}，模块ID为\"{m}\"");
         }
 
         //**** 内部API ****//
@@ -226,10 +236,10 @@ namespace klbotlib
         /// </summary>
         /// <param name="module">模块实例</param>
         /// <param name="context">发送的消息上下文类型</param>
-        /// <param name="userId">用户ID</param>
-        /// <param name="groupId">群组ID</param>
+        /// <param name="userId"></param>
+        /// <param name="groupId"></param>
         /// <param name="msg">待发送消息</param>
-        internal async Task SendMessage(Module module, MessageContext context, long userId, long groupId, Message msg)
+        internal async Task SendMessage(Module module, MessageContextType context, long userId, long groupId, Message msg)
             => await _msgDriver.SendMessage(module, context, userId, groupId, msg);
         /// <summary>
         /// 发送群消息
@@ -237,8 +247,8 @@ namespace klbotlib
         /// <param name="module">模块实例</param>
         /// <param name="groupId">目标群组ID</param>
         /// <param name="msg">待发送消息</param>
-        internal Task SendGroupMessage(Module module, long groupId, Message msg)
-            => SendMessage(module, MessageContext.Group, -1, groupId, msg);
+        internal async Task SendGroupMessage(Module module, long groupId, Message msg)
+            => await _msgDriver.SendMessage(module, MessageContextType.Group, -1, groupId, msg);
         /// <summary>
         /// 发送临时消息
         /// </summary>
@@ -246,16 +256,16 @@ namespace klbotlib
         /// <param name="userId">目标用户ID</param>
         /// <param name="groupId">通过的群组的ID</param>
         /// <param name="msg">待发送消息</param>
-        internal Task SendTempMessage(Module module, long userId, long groupId, Message msg)
-            => SendMessage(module, MessageContext.Group, userId, groupId, msg);
+        internal async Task SendTempMessage(Module module, long userId, long groupId, Message msg)
+            => await _msgDriver.SendMessage(module, MessageContextType.Group, userId, groupId, msg);
         /// <summary>
         /// 发送私聊消息
         /// </summary>
         /// <param name="module">模块实例</param>
         /// <param name="userId">目标用户ID</param>
         /// <param name="msg">待发送消息</param>
-        internal Task SendPrivateMessage(Module module, long userId, Message msg)
-            => SendMessage(module, MessageContext.Group, userId, -1, msg);
+        internal async Task SendPrivateMessage(Module module, long userId, Message msg)
+            => await _msgDriver.SendMessage(module, MessageContextType.Private, userId, -1, msg);
         /// <summary>
         /// 上传群文件
         /// </summary>
@@ -268,51 +278,13 @@ namespace klbotlib
             await _msgDriver.UploadFile(module, groupId, uploadPath, filePath);
         }
         /// <summary>
-        /// 回复消息
+        /// 快速使用给定上下文回复消息
         /// </summary>
         /// <param name="module">调用模块</param>
-        /// <param name="originMsg">待回复的原始消息</param>
+        /// <param name="originContext">待回复的原始消息上下文</param>
         /// <param name="msg">回复内容</param>
-        internal async Task ReplyMessage(Module module, Message originMsg, Message msg)
-        {
-            if (originMsg is MessageCommon originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, msg);
-            else
-            {
-                switch (originMsg.Context)
-                {
-                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, msg);
-                        return;
-                    default:
-                        module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
-                        return;
-                }
-            }
-        }
-        /// <summary>
-        /// 以纯文本回复消息
-        /// </summary>
-        /// <param name="module">调用模块</param>
-        /// <param name="originMsg">待回复的原始消息</param>
-        /// <param name="plain">回复的纯文本内容</param>
-        internal async Task ReplyMessage(Module module, Message originMsg, string plain)
-        {
-            if (originMsg is MessageCommon originMsgCommon)
-                await SendMessage(module, originMsg.Context, originMsgCommon.SenderId, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
-            else
-            {
-                switch (originMsg.Context)
-                {
-                    case MessageContext.Group:  //群聊特殊消息可以被回复：直接回复至群内
-                        await SendMessage(module, MessageContext.Group, -1, originMsg.GroupId, new MessagePlain(SelfId, originMsg.GroupId, plain));
-                        return;
-                    default:
-                        module.LogError($"无法回复消息：消息类型为{originMsg.GetType().Name}，上下文为{originMsg.Context}，因此找不到回复对象");
-                        return;
-                }
-            }
-        }
+        internal async Task ReplyMessage(Module module, MessageContext originContext, Message msg)
+            => await _msgDriver.SendMessage(module, originContext.Type, originContext.UserId, originContext.GroupId, msg);
         //操作
         /// <summary>
         /// 禁言
@@ -340,12 +312,10 @@ namespace klbotlib
         // 获取模块的私有文件夹路径。按照规范，模块存取自己的文件应使用这个目录
         internal string GetModuleCacheDir(Module module) => Path.Combine(ModulesCacheDir, module.ModuleId);
         // 获取模块的ModuleStatus存档文件路径
-        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + "_status.json");
-        // 获取模块的ModuleSetup配置文件路径
-        internal string GetModuleSetupPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + "_setup.json");
+        internal string GetModuleStatusPath(Module module) => Path.Combine(ModulesSaveDir, module.ModuleId + ".json");
 
         //消息事件处理
-        private async void MessageHandler(object? sender, KLBotMessageEventArgs e)
+        private async Task MessageHandler(object? sender, KLBotMessageEventArgs e)
         {
             // 时间窗强制过滤：早于一定时段的消息将彻底丢弃并且不进入统计信息
             if (DateTime.Now - e.Timestamp > ProcessWindow)
@@ -353,12 +323,13 @@ namespace klbotlib
                 this.LogInfo($"[KLBotEvent/Message] Dropped: now - [{e.Timestamp:g}] = {(DateTime.Now - e.Timestamp).TotalSeconds}s > {ProcessWindow.TotalSeconds}s");
                 goto processed;
             }
-            this.LogInfo($"[KLBotEvent/Message] {e.Description.Replace('\n', ';')}");
+            this.LogInfo($"[KLBotEvent/Message] {e.Context} ; {e.Description.Replace('\n', ';')}");
             DiagData.ReceivedMessageCount++;
-            Message msg = e.Message;
+            var contextType = e.Context.Type;
             // 私聊/临时会话需过滤，范围为目标群组
-            if ((msg.Context == MessageContext.Group || msg.Context == MessageContext.Temp) && !TargetGroupIdList.Contains(msg.GroupId))
+            if ((contextType == MessageContextType.Group || contextType == MessageContextType.Temp) && !TargetGroupIdList.Contains(e.Context.GroupId))
                 goto processed;
+            Message msg = e.Message;
             //优先处理所有帮助消息，避免低优先级模块的帮助消息被高优先级模块阻挡
             //另外，帮助消息不计入统计信息
             if (msg is MessagePlain pmsg && pmsg.Text.Trim().EndsWith("帮助"))
@@ -367,7 +338,7 @@ namespace klbotlib
                 {
                     if (pmsg.Text.Trim() == module.FriendlyName + "帮助")
                     {
-                        await ReplyMessage(module, msg, module.HelpInfo);
+                        await ReplyMessage(module, e.Context, new MessagePlain(module.HelpInfo));
                         goto processed;
                     }
                 }
@@ -377,19 +348,18 @@ namespace klbotlib
             {
                 //模块会直接在一个单独的Task上依次处理并回复
                 //防止因为处理或网络速度较慢阻塞其他消息的处理
-                bool shouldProcess = await module.AddProcessTask(msg);
+                bool shouldProcess = await module.ProcessMessageAndReply(e.Context, msg);
                 if (shouldProcess)
                 {
                     DiagData.ProcessedMessageCount++;
                     DiagData.LastUsedModule = module;
                     if (module.IsTransparent)
                         continue;
-                    else
-                        goto processed;
+                    break;
                 }
             }
         processed:
-            e.KLBotProcessed = true;
+            return;
         }
 
         /// <summary>
@@ -472,24 +442,13 @@ namespace klbotlib
                         this.LogInfo("手动保存所有模块状态到存档...");
                         ModuleChain.ForEach(async m =>
                         {
-                            await SaveModuleStatus(m);
-                        });
-                    }
-                    else if (cmd == "save all")
-                    {
-                        this.LogTask("手动保存所有模块状态和模块配置到存档...");
-                        ModuleChain.ForEach(async m =>
-                        {
-                            await SaveModuleStatus(m);
-#pragma warning disable CS0618 // 类型或成员已过时
-                            await SaveModuleSetup(m);
-#pragma warning restore CS0618 // 类型或成员已过时
+                            await m.SaveModuleStatus();
                         });
                     }
                     else if (cmd == "reload")
                     {
                         this.LogTask("手动重载所有模块存档...");
-                        ReloadAllModules().Wait();
+                        await ReloadAllModules();
                         this.LogInfo("重载已完成");
                     }
                     else if (cmd == "lasterror")
@@ -510,82 +469,9 @@ namespace klbotlib
         /// <summary>
         /// 重新载入所有模块配置和状态
         /// </summary>
-        public async Task ReloadAllModules()
+        public Task ReloadAllModules()
         {
-            await Parallel.ForEachAsync<Module>(ModuleChain, async (module, _) =>
-            {
-                await LoadModuleSetup(module);
-                await LoadModuleStatus(module);
-            });
-        }
-        /// <summary>
-        /// 保存该模块的配置
-        /// </summary>
-        [Obsolete("此方法只用于生成配置文件，正常情况下不应被使用。")]
-        public async Task SaveModuleSetup(Module module, bool printInfo = true)
-        {
-            string json = KLBotJsonHelper.SerializeFile(module.ExportSetupDict());
-            string filePath = GetModuleSetupPath(module);
-            if (printInfo)
-                this.LogTask($"正在保存模块{module}的配置至\"{filePath}\"...");
-            await File.WriteAllTextAsync(filePath, json);
-        }
-        /// <summary>
-        /// 保存该模块的状态
-        /// </summary>
-        public async Task SaveModuleStatus(Module module, bool printInfo = true)
-        {
-            string json = KLBotJsonHelper.SerializeFile(module.ExportStatusDict());
-            string filePath = GetModuleStatusPath(module);
-            if (printInfo)
-            {
-                //由于涉及并行处理 需要加锁输出
-                this.LogTask($"正在保存模块{module}的状态至\"{filePath}\"...");
-            }
-            await File.WriteAllTextAsync(filePath, json);
-        }
-        //载入模块的状态
-        private async Task LoadModuleStatus(Module module, bool printInfo = true)
-        {
-            try
-            {
-                string filePath = GetModuleStatusPath(module);
-                if (File.Exists(filePath))
-                {
-                    if (printInfo)
-                        this.LogTask($"正在从\"{filePath}\"加载模块{module}的状态...");
-                    var statusDict = KLBotJsonHelper.DeserializeFile<JModuleMemberDict>(await File.ReadAllTextAsync(filePath));
-                    if (statusDict != null && statusDict.Data != null)
-                        module.ImportDict(statusDict.Data, true);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new ModuleStatusException(module, ex.Message);
-            }
-        }
-        //载入所有模块配置
-        private async Task LoadModuleSetup(Module module, bool printInfo = true)
-        {
-            try
-            {
-                string filePath = GetModuleSetupPath(module);
-                if (File.Exists(filePath))
-                {
-                    if (printInfo)
-                        this.LogTask($"正在从\"{filePath}\"加载模块{module.ModuleId}的配置...");
-                    var result = KLBotJsonHelper.DeserializeFile<JModuleMemberDict>(await File.ReadAllTextAsync(filePath));
-                    if (result == null || result.Data == null)
-                        throw new FormatException($"配置文件加载错误：无法将“{filePath}”反序列化为字典");
-                    module.ImportDict(result.Data);
-                }
-                else
-                    this.LogWarning($"找不到{module.ModuleId}的模块配置文件，模块将以默认状态启动。对于某些必须使用配置文件初始化的模块，这可能导致问题");
-            }
-            catch (Exception ex)
-            {
-                throw new ModuleSetupException(module, ex.Message);
-            }
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -593,7 +479,7 @@ namespace klbotlib
         /// </summary>
         public void OnExit()
         {
-            ModuleChain.ForEach(m => SaveModuleStatus(m).Wait());
+            ModuleChain.ForEach(async m => await m.SaveModuleStatus());
             this.LogInfo("有序退出完成");
         }
 
@@ -603,70 +489,61 @@ namespace klbotlib
         /// </summary>
         public string GetModuleChainString()
         {
-            _sb.Clear();
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.AppendLine("模块链条：");
+            int index = 0;
+            ModuleChain.ForEach(module =>
             {
-                _sb.AppendLine("模块链条：");
-                int index = 0;
-                ModuleChain.ForEach(module =>
-                {
-                    if (module.ModuleName == module.FriendlyName)
-                        _sb.AppendLine($"  [{index}] {module}");
-                    else
-                        _sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
-                    index++;
-                });
-                return _sb.ToString();
-            }
+                if (module.ModuleName == module.FriendlyName)
+                    sb.AppendLine($"  [{index}] {module}");
+                else
+                    sb.AppendLine($"  [{index}] {module}\n      ({module.FriendlyName})");
+                index++;
+            });
+            return sb.ToString();
         }
         /// <summary>
         /// 返回字符串，其中列出当前监听群组的列表
         /// </summary>
         public string GetListeningGroupListString()
         {
-            _sb.Clear();
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.AppendLine("监听群组列表：");
+            int index = 0;
+            foreach (var target in TargetGroupIdList)
             {
-                _sb.AppendLine("监听群组列表：");
-                int index = 0;
-                foreach (var target in TargetGroupIdList)
-                {
-                    _sb.AppendLine($"  [{index}]  {target}");
-                    index++;
-                }
-                return _sb.ToString();
+                sb.AppendLine($"  [{index}]  {target}");
+                index++;
             }
+            return sb.ToString();
         }
         /// <summary>
         /// 返回字符串，其中列出当前各模块标记了ModuleStatus的属性值。但是ModuleStatus属性中IsHidden=true的字段会被忽略。
         /// </summary>
         public string GetModuleStatusString()
         {
-            _sb.Clear();
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.AppendLine("模块状态：");
+            foreach (var module in ModuleChain)
             {
-                _sb.AppendLine("模块状态：");
-                foreach (var module in ModuleChain)
+                sb.AppendLine($"<{module.ModuleId}>");
+                Type type = module.GetType();
+                List<MemberInfo> members = new List<MemberInfo>();
+                members.AddRange(type.GetProperties_All().Reverse());
+                members.AddRange(type.GetFields_All().Reverse());
+                foreach (var member in members)
                 {
-                    _sb.AppendLine($"<{module.ModuleId}>");
-                    Type type = module.GetType();
-                    List<MemberInfo> members = new List<MemberInfo>();
-                    members.AddRange(type.GetProperties_All().Reverse());
-                    members.AddRange(type.GetFields_All().Reverse());
-                    foreach (var member in members)
+                    if (member.IsNonHiddenModuleStatus())
                     {
-                        if (member.IsNonHiddenModuleStatus())
-                        {
-                            member.TryGetValue(module, out object? value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
-                            _sb.AppendLine($" {member.Name,-10} = {value}");
-                        }
+                        member.TryGetValue(module, out object? value);  //忽略返回值。因为这个列表100%由PropertyInfo和FieldInfo组成
+                        sb.AppendLine($" {member.Name,-10} = {value}");
                     }
                 }
-                return _sb.ToString();
             }
+            return sb.ToString();
         }
 
-        private void CreateDirectoryIfNotExist(string path, string dirDescription)
+        private void CreateDirectory(string path, string dirDescription)
         {
             if (!Directory.Exists(path))
             {
@@ -674,8 +551,5 @@ namespace klbotlib
                 Directory.CreateDirectory(path);
             }
         }
-
-        //命令循环的状态。分别代表 未开始、等待命令输入、正在输出
-        internal enum CmdLoopStatus { NotStarted, ReadLn, Output }
     }
 }

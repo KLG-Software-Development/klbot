@@ -12,13 +12,6 @@ namespace klbotlib.Exceptions
         public KLBotInitializationException(string msg) : base($"KLBot初始化失败：{msg}") { }
     }
     /// <summary>
-    /// 模块配置异常
-    /// </summary>
-    public class ModuleSetupException : Exception
-    {
-        internal ModuleSetupException(Module source, string msg) : base($"{source}模块配置异常：{msg}") { }
-    }
-    /// <summary>
     /// 模块状态异常
     /// </summary>
     public class ModuleStatusException : Exception

@@ -11,7 +11,7 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 塌塌模块
 /// </summary>
-public class CollapseModule : SingleTypeModule<MessagePlain>
+public class CollapseModule : SingleTypeModule<MessagePackage>
 {
     private readonly Regex _collapsePat = new(@"塌\s+(.+)", RegexOptions.Compiled);
     private readonly Regex _stepPat = new(@"过程\s+(.+)", RegexOptions.Compiled);
@@ -37,32 +37,24 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
     ///<inheritdoc/>
     public override string HelpInfo => "@机器人并发送\"塌 [问题]\"，可直接获取结果；\n发送\"过程 [问题]\"，可获取可能的计算步骤。";
     ///<inheritdoc/>
-    public override string? Filter(MessagePlain msg)
+    public override async Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
-        if (!msg.TargetId.Contains(HostBot.SelfId))
+        if (!msg.TargetIds.Contains(HostBot.SelfId))
             return null;
-        string text = msg.Text.Trim();
-        return _collapsePat.IsMatch(text)
-            ? "答案"
-            : _stepPat.IsMatch(text)
-                ? "过程"
-                : null;
-    }
-    ///<inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
-    {
-        switch (filterOut)
+        string text = msg.AsPlain().Trim();
+        if (_collapsePat.IsMatch(text))
         {
-            case "答案":
-                string input = _collapsePat.Match(msg.Text.Trim()).Groups[1].Value;
-                string xml = await _helper.GetStringAsync(GetResultUrl(input));
-                return ProcessXML(msg, xml);
-            case "过程":
-                input = _stepPat.Match(msg.Text.Trim()).Groups[1].Value;
-                xml = await _helper.GetStringAsync(GetResultUrl(input));
-                return ProcessXMLStepByStep(msg, xml, input);
+            string input = _collapsePat.Match(text).Groups[1].Value;
+            string xml = await _helper.GetStringAsync(GetResultUrl(input));
+            return ProcessXml(context, xml);
         }
-        return string.Empty;
+        else if (_stepPat.IsMatch(text))
+        {
+            string input = _stepPat.Match(text).Groups[1].Value;
+            string xml = await _helper.GetStringAsync(GetResultUrl(input));
+            return ProcessXmlStepByStep(context, xml, input);
+        }
+        return null;
     }
 
     private static string GetStepByStepUrl(string input, string pod_state)
@@ -112,7 +104,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         return true;
     }
     //XML解析：答案
-    private string ProcessXML(MessageCommon msg, string xml)
+    private string ProcessXml(MessageContext context, string xml)
     {
         if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";
@@ -128,11 +120,11 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         if (img == null)
             return "塌了！结果无法正确表示";
         string result_img_url = img.Attributes["src"].Value;
-        Messaging.ReplyMessage(msg, $@"\image:\url:{result_img_url}");
+        Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
         return "没塌！";
     }
     //XML解析：中间过程
-    private string ProcessXMLStepByStep(MessageCommon msg, string xml, string input)
+    private string ProcessXmlStepByStep(MessageContext context, string xml, string input)
     {
         if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";
@@ -141,7 +133,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
         if (!TryGetPrimaryPod(childs, out XmlNode? primaryPod) || primaryPod == null)
             return "Wolfram Alpha未提供主结果，无法计算";
         string result_img_url = primaryPod.ChildNodes[1].ChildNodes[1].Attributes["src"].Value;
-        Messaging.ReplyMessage(msg, $@"\image:\url:{result_img_url}");
+        Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
         //检查primary result是否可显示过程
         var states = primaryPod["states"];
         string? podState = null;
@@ -169,7 +161,7 @@ public class CollapseModule : SingleTypeModule<MessagePlain>
             if (primaryPod == null || !primaryPod.TryGetFirstChildNodeByAttribute("title", "Possible intermediate steps", out XmlNode? step_pod))
                 return "无法显示过程：不存在可用的中间过程";
             result_img_url = step_pod["img"].Attributes["src"].Value;
-            Messaging.ReplyMessage(msg, $@"\image:\url:{result_img_url}");
+            Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
         }
         else
             return "无法显示过程：不存在可用的中间过程";

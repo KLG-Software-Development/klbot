@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using klbotlib.Modules.ModuleUtils;
 
@@ -11,11 +12,11 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
     private readonly Random _ro = new();
     private readonly HttpHelper _httpHelper = new();
     
-    [ModuleSetup]
+    [JsonInclude]
     private int _maxRetryCount = 3;
-    [ModuleStatus]
+    [JsonInclude]
     private List<string>? _urlList;
-    [ModuleStatus]
+    [JsonInclude]
     private DateTime _lastActivateTime = DateTime.UnixEpoch;
     /// <inheritdoc/>
     public sealed override bool UseSignature => false;
@@ -25,30 +26,26 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
     public sealed override string HelpInfo => "发送“早安”触发每日漂亮姐姐图片";
 
     /// <inheritdoc/>
-    public override string? Filter(MessagePlain msg)
+    public override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         if (msg.Text.Trim() == "早安" && DateTime.Now.Date != _lastActivateTime.Date)
-            return "每日一图";
-        else
-            return null;
-    }
-    /// <inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
-    {
-        _lastActivateTime = DateTime.Now;
-        await Messaging.ReplyMessage(msg, "早安！");
-        (bool success, string url) = await GetRandomUrl("图片", msg, silent: true);
-        if (success)
-            return $@"\image:\url:{url}";
-        else
-            return $"已重试{_maxRetryCount}次。运气太差，放弃获取";
+        {
+            _lastActivateTime = DateTime.Now;
+            await Messaging.ReplyMessage(context, "早安！");
+            (bool success, string url) = await GetRandomUrl("图片", context, silent: true);
+            if (success)
+                return new MessageImage(url, true);
+            else
+                return $"已重试{_maxRetryCount}次。运气太差，放弃获取";
+        }
+        return null;
     }
 
     /// <summary>
     /// 随机返回一条图库内的URL
     /// </summary>
     /// <returns>(是否成功，图片URL)</returns>
-    public async Task<(bool, string)> GetRandomUrl(string enhanceWord, MessageCommon originMsg, bool silent = false)
+    public async Task<(bool, string)> GetRandomUrl(string enhanceWord, MessageContext originContext, bool silent = false)
     {
         int trials = 0;
         //预检查URL可用性
@@ -66,13 +63,13 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
                 case UrlStatus.Timeout:
                     _urlList.RemoveAt(index);
                     if (!silent)
-                        await Messaging.ReplyMessage(originMsg, $"[{trials}]发现缓慢{enhanceWord}，已踢出。将重新获取");
+                        await Messaging.ReplyMessage(originContext, $"[{trials}]发现缓慢{enhanceWord}，已踢出。将重新获取");
                     trials++;
                     continue;
                 case UrlStatus.Error:
                     _urlList.RemoveAt(index);
                     if (!silent)
-                        await Messaging.ReplyMessage(originMsg, $"[{trials}]发现无效{enhanceWord}，已踢出。将重新获取");
+                        await Messaging.ReplyMessage(originContext, $"[{trials}]发现无效{enhanceWord}，已踢出。将重新获取");
                     trials++;
                     continue;
                 default:

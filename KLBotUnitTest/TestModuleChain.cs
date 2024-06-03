@@ -15,7 +15,7 @@ public class TestModuleChain
         MessageDriver_Debug driver = TestConst.GetTestDriver();
         //先添加后移除 结果应等于核心模块数量
         KLBot bot = new(TestConst.DefaultConfig, driver);
-        bot.AddModule(new TimeModule()).Wait();
+        bot.AddModule(new TimeModule());
         Assert.AreEqual(TestConst.CoreModuleCount + 1, bot.ModuleChain.Count);
     }
     [TestMethod]
@@ -24,7 +24,7 @@ public class TestModuleChain
         MessageDriver_Debug driver = TestConst.GetTestDriver();
         KLBot bot = new(TestConst.DefaultConfig, driver);
         var tm1 = new TimeModule();
-        bot.AddModule(tm1).Wait();
+        bot.AddModule(tm1);
         Assert.AreEqual(tm1, bot.ModuleChain[tm1.ModuleId]);
     }
 }

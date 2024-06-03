@@ -1,9 +1,9 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
 #pragma warning disable IDE0044 // 添加只读修饰符
-#pragma warning disable IDE1006 // 命名样式
 
 using klbotlib.Modules.KLDNamespace;
 using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules
@@ -13,12 +13,13 @@ namespace klbotlib.Modules
     /// </summary>
     public class WelcomekxggModule : SingleTypeModule<MessagePlain>
     {
-        [ModuleStatus]
+        [JsonInclude]
         private Common1 common = new();
         public override bool UseSignature => false;
-        public override string? Filter(MessagePlain msg)
+        public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
         {
-            long x = msg.SenderId;
+            string? filterOut;
+            long x = context.UserId;
             if (x == 2044164212)
             {
                 if (common.Y != DateTime.UtcNow.Month || common.Z != DateTime.UtcNow.Day)
@@ -30,20 +31,17 @@ namespace klbotlib.Modules
                 if (common.K == 1)
                 {
                     common.K = 0;
-                    return "yes";
+                    filterOut = "yes";
                 }
                 else
-                    return null;
+                    filterOut = null;
             }
             else
-                return null;
-        }
-        public override Task<string> Processor(MessagePlain msg, string? filterOut)
-        {
+                filterOut =  null;
             if (filterOut == "yes")
-                return Task.FromResult("welcome KXGG!");
+                return (Message)"welcome KXGG!";
             else 
-                return Task.FromResult(string.Empty);
+                return (Message?)null;
         }
     }
 }

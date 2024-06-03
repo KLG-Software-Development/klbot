@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 僵尸文学模块
 /// </summary>
-public class ZombieeeModule : SingleTypeModule<MessagePlain>
+public class ZombieeeModule : SingleTypeModule<MessagePackage>
 {
     private static readonly Dictionary<string, string> _langCode = new()
     {
@@ -35,7 +36,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
         { "54003", "访问频率受限" },
         { "54005", "长query请求频繁" },
     };
-    private static readonly char[] _marks = new[] { '。', '。', '。', '？', '？', '，', '，', '，', '，', '，', '！', '！', '…' };
+    private static readonly char[] _marks = ['。', '。', '。', '？', '？', '，', '，', '，', '，', '，', '！', '！', '…'];
     private static readonly HashSet<string> _typeNames = new()
     {
         "N",
@@ -64,23 +65,23 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     private readonly Regex _errorCodePat = new(@"""error_code"":""(\d+)""", RegexOptions.Compiled);
     private readonly Dictionary<int, double> _generalizedHarmonicNumber = new();
 
-    [ModuleSetup]
+    [JsonInclude]
     private string _baseUrl = string.Empty;
-    [ModuleSetup]
+    [JsonInclude]
     private string _appID = string.Empty; //APP ID
-    [ModuleSetup]
+    [JsonInclude]
     private string _key = string.Empty;   //APP KEY
-    [ModuleStatus]
+    [JsonInclude]
     private string _srcLang = string.Empty;       //源语言
-    [ModuleStatus]
+    [JsonInclude]
     private string _dstLang = string.Empty;         //目标语言
-    [ModuleSetup]
+    [JsonInclude]
     private double _power = -0.5;     //幂
-    [ModuleSetup]
+    [JsonInclude]
     private int _reflectNum = 3;     //反射次数
-    [ModuleSetup]
+    [JsonInclude]
     private readonly List<string>[] _patterns = new List<string>[0];  //句式模板
-    [ModuleSetup]
+    [JsonInclude]
     private readonly Dictionary<string, string[]> _dicOf = new();   //词性字典
 
     /// <inheritdoc/>
@@ -89,24 +90,14 @@ public class ZombieeeModule : SingleTypeModule<MessagePlain>
     public override string HelpInfo => "使用方法：@机器人并发送“生成僵尸文学”";
 
     /// <inheritdoc/>
-    public override string? Filter(MessagePlain msg)
+    public override async Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
-        string text = msg.Text.Trim();
-        if (msg.TargetId.Contains(HostBot.SelfId) && text == "生成僵尸文学")
-            return "generate";
-        else
+        if (!msg.TargetIds.Contains(HostBot.SelfId))
             return null;
-    }
-    /// <inheritdoc/>
-    public override async Task<string> Processor(MessagePlain msg, string? filterOut)
-    {
-        switch (filterOut)
-        {
-            case "generate":
-                return await GenerateZombieeeText();
-            default:
-                return $"意外遭遇未知过滤器输出“{filterOut}”。检查模块实现";
-        }
+        string text = msg.AsPlain().Trim();
+        if (text == "生成僵尸文学")
+            return await GenerateZombieeeText();
+        return null;
     }
 
     /// <summary>

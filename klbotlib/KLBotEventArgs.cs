@@ -17,19 +17,20 @@ public class KLBotEventArgs(DateTime time, string desc) : EventArgs
     /// 事件描述
     /// </summary>
     public string Description { get; } = desc;
-    /// <summary>
-    /// 指示事件是否已被KLBot处理（其它非KLBot订阅者仍可处理）
-    /// </summary>
-    public bool KLBotProcessed { get; internal set; }
 }
 
 /// <summary>
 /// KLBot消息事件
 /// </summary>
 /// <param name="time">事件发生（或最早构建）时间</param>
+/// <param name="context">消息上下文</param>
 /// <param name="msg">对应的消息</param>
-public class KLBotMessageEventArgs(DateTime time, Message msg) : KLBotEventArgs(time, msg.ToString())
+public class KLBotMessageEventArgs(DateTime time, MessageContext context, Message msg) : KLBotEventArgs(time, msg.ToString())
 {
+    /// <summary>
+    /// 消息上下文
+    /// </summary>
+    public MessageContext Context { get; } = context;
     /// <summary>
     /// 对应的消息
     /// </summary>

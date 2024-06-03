@@ -3,6 +3,7 @@ using klbotlib.Modules.CommandModuleNamespace;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -14,8 +15,7 @@ namespace klbotlib.Modules
         const string _prefix = "##";
         private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$", RegexOptions.Compiled);
 
-        [ModuleSetup]
-        public Dictionary<long, AuthorType> Users { get; private set; } = new();
+        public Dictionary<long, AuthorType> Users { get; set; } = new() { { 0, AuthorType.开发者 } };
 
         internal List<Command> _cmds = new();
         internal AuthorType GetAuthorType(long id)
@@ -26,7 +26,7 @@ namespace klbotlib.Modules
                 return Users[id];
         }
 
-        public CommandModule(KLBot hostBot, params Command[] cmds)
+        public CommandModule(params Command[] cmds)
         {
             ModuleLog("正在加载命令...", LogType.Task);
             //自动实例化并添加所有已经定义的、带有[DefaultCommand]标记的Command类
@@ -50,17 +50,18 @@ namespace klbotlib.Modules
         public sealed override bool IsTransparent => false;
         public sealed override string FriendlyName => "命令模块";
         public sealed override string HelpInfo => $"发送“{_prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
-        public sealed override string? Filter(MessagePlain msg) => _cmdPat.IsMatch(msg.Text.Trim()) ? "ok" : null;
-        public sealed override async Task<string> Processor(MessagePlain msg, string? _)
+        public sealed override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
         {
             if (HostBot == null)
                 throw new NullReferenceException("模块尚未链接到主机机器人上");
+            if (!_cmdPat.IsMatch(msg.Text))
+                return null;
             string cmdStr = _cmdPat.Match(msg.Text).Groups[1].Value;
             //遍历命令模块中的命令列表，寻找第一个匹配
             foreach (var cmd in _cmds)
             {
                 if (cmd.IsCmd(cmdStr))
-                    return await cmd.Run(HostBot, msg, cmdStr);
+                    return await cmd.Run(HostBot, context.UserId, msg, cmdStr);
             }
             return $"错误：未知命令'{cmdStr}'";
         }
@@ -99,11 +100,11 @@ namespace klbotlib.Modules.CommandModuleNamespace
         /// <returns></returns>
         public abstract Task<string> CommandTask(KLBot bot, MessagePlain cmdMsg, string cmdStr, CommandArgument args);
 
-        public async Task<string> Run(KLBot bot, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
+        public async Task<string> Run(KLBot bot, long senderId, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
             try
             {
-                AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(msg.SenderId);
+                AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(senderId);
                 if (authority < AuthorityRequirment)
                     return $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}";
                 else
@@ -127,9 +128,9 @@ namespace klbotlib.Modules.CommandModuleNamespace
         public abstract string Usage { get; }
         public abstract string Task(KLBot host, T targetObject, MessagePlain cmdMsg, string cmdStr);
 
-        public string Run(KLBot bot, T targetObject, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
+        public string Run(KLBot bot, T targetObject, long senderId, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
-            AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(msg.SenderId);
+            AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(senderId);
             if (authority < AuthorityRequirment)
                 return $"错误：拒绝访问。\r\n调用者权限级别：{authority}\r\n命令权限级别：{AuthorityRequirment}";
             else

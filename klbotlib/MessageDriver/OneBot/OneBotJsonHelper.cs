@@ -1,4 +1,6 @@
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -25,9 +27,23 @@ internal static class OneBotJsonHelper
 
     public static string? CompileMessageJson(Message msg)
     {
-        if (msg is MessagePlain msgPlain)
+        if (msg is MessagePackage msgPkg)
+            return $"[{string.Join(',', msgPkg.Select(CompileMessageJson))}]";
+        else if (msg is MessagePlain msgPlain)
             return CompileMessageJson("text", new { text = msgPlain.Text });
-        else
-            return null;
+        else if (msg is MessageAt msgAt)
+            return CompileMessageJson("at", new { qq = msgAt.TargetId });
+        else if (msg is MessageFace msgFace)
+            return CompileMessageJson("face", new { id = msgFace.FaceId });
+        else if (msg is MessageVoice msgVoice)
+            return CompileMessageJson("record", new { file = msgVoice.Url });
+        else if (msg is MessageImage msgImg)
+        {
+            if (msgImg.IsFlashImage)
+                return CompileMessageJson("image", new { file = msgImg.Url, type = "flash" });
+            else
+                return CompileMessageJson("image", new { file = msgImg.Url });
+        }
+        return null;
     }
 }

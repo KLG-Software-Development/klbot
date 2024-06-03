@@ -1,48 +1,50 @@
-﻿using System.Linq;
-using System.Security.Cryptography;
+﻿using System;
+using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
 /// 嘴臭模块
-public class FuckModule : SingleTypeModule<MessagePlain>
+public class FuckModule : Module
 {
-    private readonly StringBuilder _sb = new();
-    [ModuleSetup]
+    [JsonInclude]
     private readonly Regex _pattern = new("default_pattern");
-    [ModuleSetup]
+    [JsonInclude]
     private readonly string[]? _sub, _you, _v, _human, _organ, _subfix, _adjOfOrgan, _adv, _connector, _combine, _stuff, _status;
 
     // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
-    [ModuleStatus]
+    [JsonInclude]
     private bool IsTagMe { get; set; } = false;
     // 串联模式 开启时嘴臭模块会输出一系列长嘴臭句子. 否则将输出单句.
-    [ModuleStatus]
+    [JsonInclude]
     private bool IsCascade { get; set; } = true;
     // 生成连续嘴臭句子时的终止概率
-    [ModuleStatus]
+    [JsonInclude]
     private int TermProb { get; set; } = 25;
     // 超过此长度时，串联模式不再累加
-    [ModuleStatus]
+    [JsonInclude]
     private int MaxLength { get; set; } = 20;
 
-    private static string Pick(string[]? a) => a[RandomNumberGenerator.GetInt32(a.Length)];
-    private string GenerateFuck()
+    private static string? Pick(string[]? a)
+    {
+        if (a == null || a.Length == 0)
+            return null;
+        return a[Random.Shared.Next(a.Length)];
+    }
+    private string? GenerateFuck()
     {
         if (IsCascade)
         {
-            lock (_sb)
+            StringBuilder sb = new();
+            sb.Append(SingleSentence());
+            while (Random.Shared.Next(100) > TermProb && sb.Length <= MaxLength)
             {
-                _sb.Clear();
-                _sb.Append(SingleSentence());
-                while (RandomNumberGenerator.GetInt32(100) > TermProb && _sb.Length <= MaxLength)
-                {
-                    _sb.AppendFormat(" {0}", SingleSentence());
-                }
-                return _sb.ToString();
+                sb.AppendFormat(" {0}", SingleSentence());
             }
+            return sb.ToString();
         }
         else
             return SingleSentence();
@@ -53,23 +55,25 @@ public class FuckModule : SingleTypeModule<MessagePlain>
     /// <inheritdoc/>
     public sealed override string FriendlyName => "嘴臭模块";
     /// <inheritdoc/>
-    public sealed override string? Filter(MessagePlain msg)
+    public sealed override Task<Message?> Processor(MessageContext _, Message msg)
     {
-        return _pattern.IsMatch(msg.Text) && (!IsTagMe || msg.TargetId.Contains(HostBot.SelfId))
-            ? "ok"
-            : null;
+        if (IsTagMe)
+        {
+            if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_pattern.IsMatch(pmsg.AsPlain()))
+                return (Message?)null;
+        }
+        else if (msg is not MessagePlain)
+            return Task.FromResult<Message?>(null);
+        return Task.FromResult<Message?>(GenerateFuck());
     }
-    /// <inheritdoc/>
-    public sealed override Task<string> Processor(MessagePlain msg, string? _)
-        => Task.FromResult(GenerateFuck());
 
     /// <summary>
     /// 生成一句脏话
     /// </summary>
     /// <returns>脏话字符串</returns>
-    public string SingleSentence()
+    public string? SingleSentence()
     {
-        int mode = RandomNumberGenerator.GetInt32(20);
+        int mode = Random.Shared.Next(20);
         return mode switch
         {
             0 => Pick(_sub) + Pick(_v) + Pick(_human),//(主)谓宾 (我)操你妈
@@ -95,7 +99,7 @@ public class FuckModule : SingleTypeModule<MessagePlain>
             17 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ) + Pick(_subfix),//谓宾连接词器官
             18 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix),//谓宾连接词形容词器官
             19 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix) + " " + Pick(_v) + Pick(_human) + "的",
-            _ => "操你妈的",
+            _ => "cnmd",
         };
     }
 }

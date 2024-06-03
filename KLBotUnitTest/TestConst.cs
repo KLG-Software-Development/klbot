@@ -10,7 +10,8 @@ static class TestConst
     public const long TargetGroupId = 7355608;
     public const int CoreModuleCount = 1;   //核心模块数量
     public static MessageDriver_Debug GetTestDriver()
-        => new(SelfId, _ => { },
+        => new(SelfId,
+            (_, _) => { },
             (_, _, _, _, _) => { },
             (_, _, _, _) => { },
             (_, _, _, _) => { },
