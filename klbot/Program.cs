@@ -3,14 +3,10 @@ using klbotlib.Exceptions;
 using klbotlib.Extensions;
 using klbotlib.MessageDriver.OneBot;
 using klbotlib.Modules;
-using System;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using System.Threading;
 using klbotlib.MessageDriver;
 using System.Diagnostics;
-using System.IO;
 
 namespace klbot;
 
