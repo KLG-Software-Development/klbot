@@ -167,9 +167,15 @@ start:
         for (int i = 0; i < lines.Length; i++)
         {
             string[] tokens = lines[i].Split(':');
-            if (tokens.Length != 2)
-                throw new Exception($"无效的模块列表文件：{moduleListFile}: \n行号：{i + 1}: 语法应为\"<模块名> <模块存档路径>\"");
-            moduleList[i] = (tokens[0].Trim(), tokens[1].Trim());
+            if (tokens.Length == 2)
+                moduleList[i] = (tokens[0].Trim(), tokens[1].Trim());
+            else if (tokens.Length == 1)
+            {
+                string moduleName = tokens[0].Trim();
+                moduleList[i] = (moduleName, $"{moduleName}.json");
+            }
+            else
+                throw new Exception($"无效的模块列表文件：{moduleListFile}: \n行号：{i + 1}: 语法应为\"<模块名>\"或\"<模块名> <模块存档路径>\"");
         }
         return moduleList;
     }
