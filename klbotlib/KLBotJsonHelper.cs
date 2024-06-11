@@ -16,14 +16,16 @@ internal static class KLBotJsonHelper
         WriteIndented = true,
         IncludeFields = false,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        AllowTrailingCommas = true,
     };
     // 用于模块保存的JSON序列化配置
     private static readonly JsonSerializerOptions s_moduleSerializeOptions = new()
     {
         WriteIndented = true,
         IncludeFields = false,
-        IgnoreReadOnlyProperties = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        AllowTrailingCommas = true,
+        IgnoreReadOnlyProperties = true
     };
 
     //用于文件存储的Json序列化配置

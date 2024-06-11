@@ -74,8 +74,7 @@ public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAc
     {
         get
         {
-            AssertAttachedStatus();
-            return _hostBot;
+            return _hostBot != null && IsAttached ? _hostBot : throw new NullReferenceException("无法获取宿主Bot：模块未注册");
         }
         private set => _hostBot = value;
     }
