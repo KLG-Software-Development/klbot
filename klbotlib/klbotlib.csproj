@@ -24,6 +24,7 @@
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <AnalysisLevel>6.0</AnalysisLevel>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
