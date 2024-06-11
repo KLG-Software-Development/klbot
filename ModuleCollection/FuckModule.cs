@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace klbotlib.Modules;
 
 /// 嘴臭模块
-public class FuckModule : Module
+public class FuckModule : SingleTypeModule<MessagePlain>
 {
     private Regex? _patternRegex;
 
@@ -74,17 +74,14 @@ public class FuckModule : Module
     /// <inheritdoc/>
     public sealed override string FriendlyName => "嘴臭模块";
     /// <inheritdoc/>
-    public sealed override Task<Message?> Processor(MessageContext _, Message msg)
+    public sealed override Task<Message?> Processor(MessageContext _, MessagePlain msg)
     {
         _patternRegex ??= new(Pattern, RegexOptions.Compiled);
-        if (IsTagMe)
-        {
-            if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_patternRegex.IsMatch(pmsg.AsPlain()))
-                return (Message?)null;
-        }
-        else if (msg is not MessagePlain)
-            return Task.FromResult<Message?>(null);
-        return Task.FromResult<Message?>(GenerateFuck());
+        return IsTagMe && !msg.ContainsTargetId(HostBot.SelfId)
+            ? Task.FromResult<Message?>(null)
+            : _patternRegex.IsMatch(msg.Text)
+                ? Task.FromResult<Message?>(GenerateFuck())
+                : Task.FromResult<Message?>(null);
     }
 
     /// <summary>
