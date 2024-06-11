@@ -1,7 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.VisualBasic;
 
 namespace klbotlib;
 
@@ -13,7 +10,7 @@ public record Message
     /// <summary>
     /// 是否为复杂消息
     /// </summary>
-    public bool IsComplex => this is MessagePackage msgPkg ? msgPkg.Count > 0 : false;
+    public bool IsComplex => this is MessagePackage msgPkg && msgPkg.Count > 0;
     /// <summary>
     /// 将消息包装为MessagePackage
     /// </summary>
@@ -27,7 +24,7 @@ public record Message
     /// <summary>
     /// 空消息
     /// </summary>
-    public static MessageEmpty Empty = new MessageEmpty();
+    public static readonly MessageEmpty Empty = new();
 
     /// <summary>
     /// 返回此消息是否@了某个ID

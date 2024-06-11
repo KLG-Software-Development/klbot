@@ -1,7 +1,6 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
 using klbotlib.Exceptions;
 using Microsoft.Extensions.Configuration;
+using System.Diagnostics.CodeAnalysis;
 
 namespace klbotlib.Extensions;
 
@@ -32,9 +31,7 @@ public static class IConfigurationExtension
                 return false;
         }
         value = config.GetValue<string>(key);
-        if (value == null)
-            return false;
-        return true;
+        return value != null;
     }
     /// <summary>
     /// 读取当前配置中给定项的值
@@ -53,14 +50,10 @@ public static class IConfigurationExtension
             if (!configSection.Exists())
                 throw new KLBotInitializationException($"{keyDesc} is required, but the section is not found in the config file");
             string? value = configSection.GetValue<string>(key);
-            if (value == null)
-                throw new KLBotInitializationException($"{keyDesc} is required, but the value is not found in the config file");
-            return value;
+            return value ?? throw new KLBotInitializationException($"{keyDesc} is required, but the value is not found in the config file");
         }
         string? rootValue = config.GetValue<string>(key);
-        if (rootValue == null)
-            throw new KLBotInitializationException($"{keyDesc} is required but not found in the config file");
-        return rootValue;
+        return rootValue ?? throw new KLBotInitializationException($"{keyDesc} is required but not found in the config file");
     }
     /// <summary>
     /// 读取当前配置中给定项的值并转换为分隔数组。默认分隔符为','

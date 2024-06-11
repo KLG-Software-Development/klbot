@@ -1,10 +1,9 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
 #pragma warning disable IDE0044 // 添加只读修饰符
+#pragma warning disable IDE1006 // 命名样式
 
 using klbotlib.Modules.KLDNamespace;
-using System;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
@@ -37,11 +36,8 @@ namespace klbotlib.Modules
                     filterOut = null;
             }
             else
-                filterOut =  null;
-            if (filterOut == "yes")
-                return (Message)"welcome KXGG!";
-            else 
-                return (Message?)null;
+                filterOut = null;
+            return filterOut == "yes" ? (Task<Message?>)(Message)"welcome KXGG!" : (Task<Message?>)(Message?)null;
         }
     }
 }

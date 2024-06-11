@@ -1,22 +1,19 @@
 ﻿using klbotlib.Extensions;
 using klbotlib.Modules.ModuleUtils;
-using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace klbotlib.Modules;
 
 /// 图像模块
-public class ImageModule : SingleTypeModule<MessagePlain>
+public partial class ImageModule : SingleTypeModule<MessagePlain>
 {
-    private readonly static Regex _pattern = new(@"来点(\S+?)图", RegexOptions.Compiled);
-    private readonly static Random _ro = new();
+    private readonly static Regex s_pattern = Pattern();
+    private readonly static Random s_ro = new();
     private readonly HttpHelper _helper = new();
     private readonly Stopwatch _sw = new();
     private readonly NameValueCollection _query = HttpUtility.ParseQueryString(string.Empty);
@@ -24,16 +21,22 @@ public class ImageModule : SingleTypeModule<MessagePlain>
     [JsonInclude]
     private readonly string _url = "https://image.baidu.com/search/acjson";
     [JsonInclude]
-    private readonly HashSet<string> _enhanceKeyword = new();
+    private readonly HashSet<string> _enhanceKeyword = [];
     [JsonInclude]
     [HiddenStatus]
-    private readonly Dictionary<string, int> _listNumCache = new();  //缓存每个搜索词的结果数量
+    private readonly Dictionary<string, int> _listNumCache = [];  //缓存每个搜索词的结果数量
+
+#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
+
     [JsonInclude]
-    private int _cacheCount = 0;
+    protected int _cacheCount = 0;
     [JsonInclude]
-    private string _lastDownloadTime = "N/A";
+    protected string _lastDownloadTime = "N/A";
     [JsonInclude]
-    private string _lastParseTime = "N/A";
+    protected string _lastParseTime = "N/A";
+
+#pragma warning restore CS1591 // 缺少对公共可见类型或成员的 XML 注释
+
     [JsonInclude]
     private int Fraction { get; set; } = 50;   //只在前n%的结果内随机
     /// <inheritdoc/>
@@ -49,20 +52,20 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         _helper.InnerClient.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
         _query.Clear();
         _query["charset"] = "UTF-8";
-        _query["tn"]= "resultjson_com";
-        _query["ipn"]= "rj";
-        _query["ct"]= "201326592";
-        _query["fp"]= "result";
-        _query["cl"]= "2";
-        _query["lm"]= "-1";
-        _query["ie"]= "utf-8";
-        _query["oe"]= "utf-8";
-        _query["st"]= "-1";
-        _query["ic"]= "0";
-        _query["istype"]= "2";
-        _query["qc"]= "";
-        _query["nc"]= "1";
-        _query["rn"]= "60";
+        _query["tn"] = "resultjson_com";
+        _query["ipn"] = "rj";
+        _query["ct"] = "201326592";
+        _query["fp"] = "result";
+        _query["cl"] = "2";
+        _query["lm"] = "-1";
+        _query["ie"] = "utf-8";
+        _query["oe"] = "utf-8";
+        _query["st"] = "-1";
+        _query["ic"] = "0";
+        _query["istype"] = "2";
+        _query["qc"] = "";
+        _query["nc"] = "1";
+        _query["rn"] = "60";
     }
     /// <inheritdoc/>
     public override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
@@ -71,55 +74,53 @@ public class ImageModule : SingleTypeModule<MessagePlain>
         string word;
         if (text.EndsWith("图来") && text.Length != 2)
             word = text[..(msg.Text.Length - 2)];
-        else if (_pattern.IsMatch(text))
-            word = _pattern.Match(text).Groups[1].Value;
+        else if (s_pattern.IsMatch(text))
+            word = s_pattern.Match(text).Groups[1].Value;
         else
             return null;
         if (_enhanceKeyword.Contains(word))
         {
             (bool success, url) = await ModuleAccess.GetModule<PLJJModule>(0).GetRandomUrl(word, context);
-            if (success)
-                return $@"\image:\url:{url}";
-            else
-                return "运气太差，放弃获取";
+            return success ? (Message)$@"\image:\url:{url}" : (Message)"运气太差，放弃获取";
         }
         //每次都使用上一次缓存的list_num（如果存在）
         bool isCached = false;
         int listNum = 0;
-        if (_listNumCache.ContainsKey(word))
+        if (_listNumCache.TryGetValue(word, out int value))
         {
             isCached = true;
-            listNum = _listNumCache[word];
+            listNum = value;
             if (listNum == 0)
                 goto not_found; //缓存的值为0，意味着无结果
         }
         int max_index = Convert.ToInt32(Math.Round(listNum * (Fraction / 100f)));
-        int pn = _ro.Next(max_index);
+        int pn = s_ro.Next(max_index);
         string json = await FetchData(pn, word);
         ModuleLog($"成功获取json，pn={pn}");
         _sw.Restart();
-        JResult? result = JsonSerializer.Deserialize<JResult>(json);
+        JResult result = JsonSerializer.Deserialize<JResult>(json) ?? throw new JsonException("返回结果解析失败：产生了null结果");
         //更新字典
         if (!isCached)
         {
-            _listNumCache.Add(word, result.listNum);
+            _listNumCache.Add(word, result.ListNum);
             _cacheCount++;
         }
         else
-            _listNumCache[word] = result.listNum;
-        if (json == null || result.data == null)
+            _listNumCache[word] = result.ListNum;
+        if (json == null || result.Data == null)
             throw new JsonException("返回结果解析失败：产生了null结果");
-        int index = _ro.Next(result.data.Length);
-        url = result.data[index].middleUrl;
+        int index = s_ro.Next(result.Data.Length);
+        url = result.Data[index].MiddleUrl;
         if (url == null)
-            throw new JsonException("返回结果解析失败：产生了null结果"); ;
+            throw new JsonException("返回结果解析失败：产生了null结果");
+        ;
         _sw.Stop();
         _lastParseTime = _sw.Elapsed.ToMsString();
         if (string.IsNullOrEmpty(url))
             goto not_found;
         else
             return $@"\image:\url:{url}";
-not_found:
+        not_found:
         return $"{HostBot.GetModule<FuckModule>().SingleSentence()}，找不到";
     }
 
@@ -135,6 +136,9 @@ not_found:
         return await response.Content.ReadAsStringAsync();
     }
 
-    private class JResult { public int listNum; public JImage[]? data; }
-    private class JImage { public string? middleUrl; }
+    private record JResult(int ListNum, JImage[]? Data);
+    private record JImage(string MiddleUrl);
+
+    [GeneratedRegex(@"来点(\S+?)图", RegexOptions.Compiled)]
+    private static partial Regex Pattern();
 }

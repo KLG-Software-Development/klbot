@@ -1,63 +1,62 @@
 ﻿using klbotlib.Events;
 using klbotlib.Modules;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace klbotlib.MessageDriver.DebugLocal;
 
 /// <summary>
 /// 调试用本地模拟消息驱动器
 /// </summary>
-public class MessageDriver_Debug : IMessageDriver, IKLBotLogUnit
+/// <remarks>
+/// 创建本地模拟消息驱动器
+/// </remarks>
+/// <param name="selfId">自身ID</param>
+/// <param name="addMsgCallback">消息缓冲区加入新消息时触发的回调</param>
+/// <param name="sendMsgCallback">机器人发送消息时触发的回调</param>
+/// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
+/// <param name="muteCallback">机器人禁言他人时触发的回调</param>
+/// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
+public class MessageDriver_Debug(long selfId, Action<MessageContext, Message> addMsgCallback,
+    Action<Module, MessageContextType, long, long, Message> sendMsgCallback,
+    Action<Module, long, string, string> uploadFileCallback,
+    Action<Module, long, long, uint> muteCallback,
+    Action<Module, long, long> unmuteCallback) : IMessageDriver, IKLBotLogUnit
 {
-    private readonly Dictionary<long, Message> _msgCache = new(); //id - msg
-    private readonly List<Message> _msgBuffer = new();
-    private readonly long _selfId;
+    private readonly Dictionary<long, Message> _msgCache = []; //id - msg
+    private readonly List<Message> _msgBuffer = [];
+    private readonly long _selfId = selfId;
+
+    /// <summary>
+    /// 创建一个空Debug消息驱动
+    /// </summary>
+    /// <param name="selfId"></param>
+    public MessageDriver_Debug(long selfId) : this(selfId,
+        (_, _) => { },
+        (_, _, _, _, _) => { },
+        (_, _, _, _) => { },
+        (_, _, _, _) => { },
+        (_, _, _) => { })
+    { }
 
     /// <summary>
     /// 消息缓冲区加入新消息时触发的回调。参数为消息本身
     /// </summary>
-    public Action<MessageContext, Message> AddMessageCallback { get; private set; }
+    public Action<MessageContext, Message> AddMessageCallback { get; private set; } = addMsgCallback;
     /// <summary>
     /// 机器人发送消息时触发的回调。参数分别为发送消息的来源模块、消息上下文、目标用户ID、目标群聊ID、待发送消息
     /// </summary>
-    public Action<Module, MessageContextType, long, long, Message> SendMessageCallback { get; private set; }
+    public Action<Module, MessageContextType, long, long, Message> SendMessageCallback { get; private set; } = sendMsgCallback;
     /// <summary>
     /// 机器人上传文件时触发的回调。参数为上传文件操作的来源模块、群聊ID、待发送消息
     /// </summary>
-    public Action<Module, long, string, string> UploadFileCallback { get; private set; }
+    public Action<Module, long, string, string> UploadFileCallback { get; private set; } = uploadFileCallback;
     /// <summary>
     /// 机器人禁言他人时触发的回调。参数为禁言操作的来源模块、禁言用户ID、群聊ID、禁言时长（秒）
     /// </summary>
-    public Action<Module, long, long, uint> MuteCallback { get; private set; }
+    public Action<Module, long, long, uint> MuteCallback { get; private set; } = muteCallback;
     /// <summary>
     /// 机器人解除他人禁言时触发的回调。参数为解除禁言操作的来源模块、解除禁言用户ID、群聊ID
     /// </summary>
-    public Action<Module, long, long> UnmuteCallback { get; private set; }
-
-    /// <summary>
-    /// 创建本地模拟消息驱动器
-    /// </summary>
-    /// <param name="selfId">自身ID</param>
-    /// <param name="addMsgCallback">消息缓冲区加入新消息时触发的回调</param>
-    /// <param name="sendMsgCallback">机器人发送消息时触发的回调</param>
-    /// <param name="uploadFileCallback">机器人上传文件时触发的回调</param>
-    /// <param name="muteCallback">机器人禁言他人时触发的回调</param>
-    /// <param name="unmuteCallback">机器人解除他人禁言时触发的回调</param>
-    public MessageDriver_Debug(long selfId, Action<MessageContext, Message> addMsgCallback, 
-        Action<Module, MessageContextType, long, long, Message> sendMsgCallback, 
-        Action<Module, long, string, string> uploadFileCallback,
-        Action<Module, long, long, uint> muteCallback,
-        Action<Module, long, long> unmuteCallback)
-    {
-        _selfId = selfId;
-        AddMessageCallback = addMsgCallback;
-        SendMessageCallback = sendMsgCallback;
-        UploadFileCallback = uploadFileCallback;
-        MuteCallback = muteCallback;
-        UnmuteCallback = unmuteCallback;
-    }
+    public Action<Module, long, long> UnmuteCallback { get; private set; } = unmuteCallback;
 
     /// <summary>
     /// 向消息驱动中添加未读消息
@@ -112,7 +111,7 @@ public class MessageDriver_Debug : IMessageDriver, IKLBotLogUnit
     /// <inheritdoc/>
     public Task<bool> Verify(string key)
     {
-        return Task.FromResult<bool>(true);
+        return Task.FromResult(true);
     }
     /// <inheritdoc/>
     public Task Mute(Module module, long userId, long groupId, uint durationSeconds)

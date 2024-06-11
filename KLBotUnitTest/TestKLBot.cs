@@ -1,8 +1,6 @@
 using klbotlib;
 using klbotlib.Modules;
-using klbotlib.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
 
 namespace KLBotUnitTest;
 
@@ -33,10 +31,10 @@ public class TestKLBot
         KLBot bot = new(TestConst.DefaultConfig, driver);
         Assert.AreEqual(0, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
-        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "some non-sense");
+        _ = driver.AddReceivedMessage(new(-1, TestConst.TargetGroupId), "some non-sense");
         Assert.AreEqual(1, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(0, bot.DiagData.ProcessedMessageCount);
-        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "##help");
+        _ = driver.AddReceivedMessage(new(-1, TestConst.TargetGroupId), "##help");
         Assert.AreEqual(2, bot.DiagData.ReceivedMessageCount);
         Assert.AreEqual(1, bot.DiagData.ProcessedMessageCount);
     }

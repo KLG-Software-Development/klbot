@@ -1,10 +1,7 @@
-﻿using System;
+﻿namespace klbotlib.Extensions;
 
-namespace klbotlib.Extensions
+internal static class DateTimeExtension
 {
-    internal static class DateTimeExtension
-    {
-        public static string ToKLBotTimestampString(this DateTime dateTime)
-            => dateTime.ToString("yyMMdd/HH:mm:ss.fff");
-    }
+    public static string ToKLBotTimestampString(this DateTime dateTime)
+        => dateTime.ToString("yyMMdd/HH:mm:ss.fff");
 }

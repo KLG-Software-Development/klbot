@@ -1,16 +1,13 @@
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
-using System;
-using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text.Json;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
 
 namespace klbotlib.MessageDriver.OneBot;
 
 internal class OneBotHttpApiCaller(string serverUrl, string token) : IKLBotLogUnit
 {
-    private static readonly HttpClient _client = new();
+    private static readonly HttpClient s_client = new();
     private readonly string _token = $"Bearer {token}";
 
     public string ServerUrl { get; } = serverUrl;
@@ -26,15 +23,11 @@ internal class OneBotHttpApiCaller(string serverUrl, string token) : IKLBotLogUn
             request.Content = new StringContent(data, new MediaTypeHeaderValue(MediaTypeNames.Application.Json));
         request.Headers.Add("Authorization", _token);
         this.DebugLog($"[{request.RequestUri}] {data}");
-        var response = await _client.SendAsync(request);
+        var response = await s_client.SendAsync(request);
         string responseJson = await response.Content.ReadAsStringAsync();
         this.DebugLog(responseJson);
-        var ret = OneBotJsonHelper.Deserialize<JOneBotResponse<TOut>>(responseJson);
-        if (ret == null)
-            throw new JsonException("Failed to deserialize JSON");
-        if (ret.Retcode != 0)
-            throw new OneBotResponseException(ret.Retcode, response.ToString());
-        return ret;
+        var ret = OneBotJsonHelper.Deserialize<JOneBotResponse<TOut>>(responseJson) ?? throw new JsonException("Failed to deserialize JSON");
+        return ret.Retcode != 0 ? throw new OneBotResponseException(ret.Retcode, response.ToString()) : ret;
     }
 
     private Uri BuildUri(string uri)

@@ -1,4 +1,3 @@
-using System;
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
 
 namespace klbotlib.MessageDriver.OneBot;

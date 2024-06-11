@@ -1,44 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
 /// 嘴臭模块
 public class FuckModule : Module
 {
-    private readonly Regex? _patternRegex;
+    private Regex? _patternRegex;
 
     [JsonInclude]
-    private readonly string _pattern = "default_pattern";
+    private string Pattern { get; set; } = "default_pattern";
     [JsonInclude]
     private readonly List<string> _sub = [];
     [JsonInclude]
-    private List<string> _you = [];
+    private readonly List<string> _you = [];
     [JsonInclude]
-    private List<string> _v = [];
+    private readonly List<string> _v = [];
     [JsonInclude]
-    private List<string> _human = [];
+    private readonly List<string> _human = [];
     [JsonInclude]
-    private List<string> _organ = [];
+    private readonly List<string> _organ = [];
     [JsonInclude]
-    private List<string> _subfix = [];
+    private readonly List<string> _subfix = [];
     [JsonInclude]
-    private List<string> _adjOfOrgan = [];
+    private readonly List<string> _adjOfOrgan = [];
     [JsonInclude]
-    private List<string> _adv = [];
+    private readonly List<string> _adv = [];
     [JsonInclude]
-    private List<string> _connector = [];
+    private readonly List<string> _connector = [];
     [JsonInclude]
-    private List<string> _combine = [];
+    private readonly List<string> _combine = [];
     [JsonInclude]
-    private List<string> _stuff = [];
+    private readonly List<string> _stuff = [];
     [JsonInclude]
-    private List<string> _status = [];
+    private readonly List<string> _status = [];
 
     // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
     [JsonInclude]
@@ -55,19 +51,17 @@ public class FuckModule : Module
 
     private static string? Pick(IList<string> a)
     {
-        if (a == null || a.Count == 0)
-            return null;
-        return a[Random.Shared.Next(a.Count)];
+        return a == null || a.Count == 0 ? null : a[Random.Shared.Next(a.Count)];
     }
     private string? GenerateFuck()
     {
         if (IsCascade)
         {
             StringBuilder sb = new();
-            sb.Append(SingleSentence());
+            _ = sb.Append(SingleSentence());
             while (Random.Shared.Next(100) > TermProb && sb.Length <= MaxLength)
             {
-                sb.AppendFormat(" {0}", SingleSentence());
+                _ = sb.AppendFormat(" {0}", SingleSentence());
             }
             return sb.ToString();
         }
@@ -82,7 +76,7 @@ public class FuckModule : Module
     /// <inheritdoc/>
     public sealed override Task<Message?> Processor(MessageContext _, Message msg)
     {
-        if (_patternRegex == null)
+        _patternRegex ??= new(Pattern, RegexOptions.Compiled);
         if (IsTagMe)
         {
             if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_patternRegex.IsMatch(pmsg.AsPlain()))

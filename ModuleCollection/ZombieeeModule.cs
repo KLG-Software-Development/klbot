@@ -1,31 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using klbotlib.Modules.ModuleUtils;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using klbotlib.Modules.ModuleUtils;
 
 namespace klbotlib.Modules;
 
 /// <summary>
 /// 僵尸文学模块
 /// </summary>
-public class ZombieeeModule : SingleTypeModule<MessagePackage>
+public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
 {
-    private static readonly Dictionary<string, string> _langCode = new()
-    {
-        { "中文", "zh" },
-        { "英文", "en" },
-        { "韩语", "kor" },
-        { "日语", "jp" },
-        { "世界语", "epo" }
-    };
-    private static readonly Dictionary<string, string> _errorMsg = new()
+    private static readonly Dictionary<string, string> s_errorMsg = new()
     {
         { "52000", "成功" },
         { "52001", "请求超时" },
@@ -36,9 +22,9 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
         { "54003", "访问频率受限" },
         { "54005", "长query请求频繁" },
     };
-    private static readonly char[] _marks = ['。', '。', '。', '？', '？', '，', '，', '，', '，', '，', '！', '！', '…'];
-    private static readonly HashSet<string> _typeNames = new()
-    {
+    private static readonly char[] s_marks = ['。', '。', '。', '？', '？', '，', '，', '，', '，', '，', '！', '！', '…'];
+    private static readonly HashSet<string> s_typeNames =
+    [
         "N",
         "V",
         "ADJ",
@@ -56,33 +42,33 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
         "QUES",
         "NUM",
         "IDIOM"
-    };
+    ];
     private readonly StringBuilder _sb = new();
-    private static readonly Random _ro = new();
-    private static readonly MD5 _md5 = MD5.Create();
+    private static readonly Random s_ro = new();
+    private static readonly MD5 s_md5 = MD5.Create();
     private readonly HttpHelper _helper = new();
-    private readonly Regex _dstPat = new(@""",""dst"":""(.*)""}]}$", RegexOptions.Compiled);
-    private readonly Regex _errorCodePat = new(@"""error_code"":""(\d+)""", RegexOptions.Compiled);
-    private readonly Dictionary<int, double> _generalizedHarmonicNumber = new();
+    private readonly Regex _dstPat = DstPattern();
+    private readonly Regex _errorCodePat = ErrorCodePattern();
+    private readonly Dictionary<int, double> _generalizedHarmonicNumber = [];
 
     [JsonInclude]
-    private string _baseUrl = string.Empty;
+    private readonly string _baseUrl = string.Empty;
     [JsonInclude]
-    private string _appID = string.Empty; //APP ID
+    private readonly string _appID = string.Empty; //APP ID
     [JsonInclude]
-    private string _key = string.Empty;   //APP KEY
+    private readonly string _key = string.Empty;   //APP KEY
     [JsonInclude]
-    private string _srcLang = string.Empty;       //源语言
+    private readonly string _srcLang = string.Empty;       //源语言
     [JsonInclude]
-    private string _dstLang = string.Empty;         //目标语言
+    private readonly string _dstLang = string.Empty;         //目标语言
     [JsonInclude]
-    private double _power = -0.5;     //幂
+    private readonly double _power = -0.5;     //幂
     [JsonInclude]
-    private int _reflectNum = 3;     //反射次数
+    private readonly int _reflectNum = 3;     //反射次数
     [JsonInclude]
-    private readonly List<string>[] _patterns = new List<string>[0];  //句式模板
+    private readonly List<string>[] _patterns = [];  //句式模板
     [JsonInclude]
-    private readonly Dictionary<string, string[]> _dicOf = new();   //词性字典
+    private readonly Dictionary<string, string[]> _dicOf = [];   //词性字典
 
     /// <inheritdoc/>
     public override string FriendlyName => "僵尸文学模块";
@@ -95,9 +81,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
         if (!msg.TargetIds.Contains(HostBot.SelfId))
             return null;
         string text = msg.AsPlain().Trim();
-        if (text == "生成僵尸文学")
-            return await GenerateZombieeeText();
-        return null;
+        return text == "生成僵尸文学" ? (Message)await GenerateZombieeeText() : null;
     }
 
     /// <summary>
@@ -107,10 +91,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
     public async Task<string> GenerateZombieeeText()
     {
         (bool success, string message, string result) = await TryGenerate();
-        if (!success)
-            return $"生成失败：{message}";
-        else
-            return result;
+        return !success ? $"生成失败：{message}" : result;
     }
     /// <summary>
     /// 尝试用当前设定的源语言和目标语言翻译指定内容
@@ -133,7 +114,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
     /// <returns>元组：(生成是否成功, 返回消息, 生成结果)</returns>
     public async Task<(bool, string, string)> TryGenerate()
     {
-        string seed = GenerateSentences(_ro.Next(1, 7));
+        string seed = GenerateSentences(s_ro.Next(1, 7));
         ModuleLog($"反射种子：{seed}");
         return await TryReflect(_reflectNum, seed);
     }
@@ -155,10 +136,10 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
     {
 
         string result = string.Empty;
-        string message = string.Empty;
+        string message;
         try
         {
-            string salt = _ro.Next().ToString();
+            string salt = s_ro.Next().ToString();
             string sign = CalculateSign(query, salt);
             string url = GetRequestUrl(query, srcLang, dstLang, salt, sign);
             HttpResponseMessage response = await _helper.GetAsync(url);
@@ -179,10 +160,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
                 }
                 else
                 {
-                    if (_errorCodePat.IsMatch(re))
-                        message = $"翻译失败：{_errorMsg[_errorCodePat.Match(re).Groups[1].Value]}";
-                    else
-                        message = "翻译失败：未正确识别到翻译结果";
+                    message = _errorCodePat.IsMatch(re) ? $"翻译失败：{s_errorMsg[_errorCodePat.Match(re).Groups[1].Value]}" : "翻译失败：未正确识别到翻译结果";
                     return (true, message, result);
                 }
             }
@@ -200,9 +178,7 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
             return (false, message, result);
         Thread.Sleep(1000);
         (success, message, result) = await TryTranslate(result, _dstLang, _srcLang);
-        if (!success)
-            return (false, message, result);
-        return (true, message, result);
+        return !success ? ((bool, string, string))(false, message, result) : ((bool, string, string))(true, message, result);
     }
     private async Task<(bool, string, string)> TryReflect(int reflectNum, string query)
     {
@@ -219,71 +195,71 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
     }
     private string GenerateSingleSentence()
     {
-        _sb.Clear();
-        int patNumber = _ro.Next(_patterns.Length);
+        _ = _sb.Clear();
+        int patNumber = s_ro.Next(_patterns.Length);
         List<string> pattern = _patterns[patNumber];
         int N = pattern.Count;
         for (int n = 0; n < N; n++)
         {
-            if (_typeNames.Contains(pattern[n]))
+            if (s_typeNames.Contains(pattern[n]))
             {
                 string typeName = pattern[n];
-                int wordIndex = PowerLawDist(_ro.NextDouble(), _power, 0, _dicOf[typeName].Length);
+                int wordIndex = PowerLawDist(_dicOf[typeName].Length);
                 string word = _dicOf[typeName][wordIndex];
-                _sb.Append(word);
+                _ = _sb.Append(word);
             }
             else
-                _sb.Append(pattern[n]);
+                _ = _sb.Append(pattern[n]);
         }
-        _sb.Append(_marks[_ro.Next(_marks.Length)]);
+        _ = _sb.Append(s_marks[s_ro.Next(s_marks.Length)]);
         return _sb.ToString();
     }
     private string GenerateSentences(int numSentenceCount)
     {
-        _sb.Clear();
+        _ = _sb.Clear();
         for (int i = 0; i < numSentenceCount; i++)
         {
-            int patNumber = _ro.Next(_patterns.Length);
+            int patNumber = s_ro.Next(_patterns.Length);
             List<string> pattern = _patterns[patNumber];
             int N = pattern.Count;
             for (int n = 0; n < N; n++)
             {
-                if (_typeNames.Contains(pattern[n]))
+                if (s_typeNames.Contains(pattern[n]))
                 {
                     string typeName = pattern[n];
-                    int wordIndex = PowerLawDist(_ro.NextDouble(), _power, 0, _dicOf[typeName].Length);
+                    int wordIndex = PowerLawDist(_dicOf[typeName].Length);
                     string word = _dicOf[typeName][wordIndex];
-                    _sb.Append(word);
+                    _ = _sb.Append(word);
                 }
                 else
-                    _sb.Append(pattern[n]);
+                    _ = _sb.Append(pattern[n]);
             }
-            _sb.Append(_marks[_ro.Next(_marks.Length)]);
+            _ = _sb.Append(s_marks[s_ro.Next(s_marks.Length)]);
         }
         return _sb.ToString();
     }
     private string CalculateSign(string query, string salt)    //签名
     {
         string hashString = $"{_appID}{query}{salt}{_key}";
-        byte[] hash = _md5.ComputeHash(Encoding.UTF8.GetBytes(hashString));
-        _sb.Clear();
+        byte[] hash = s_md5.ComputeHash(Encoding.UTF8.GetBytes(hashString));
+        _ = _sb.Clear();
         for (int i = 0; i < hash.Length; i++)
         {
-            _sb.Append(Convert.ToString(hash[i], 16).PadLeft(2, '0'));
+            _ = _sb.Append(Convert.ToString(hash[i], 16).PadLeft(2, '0'));
         }
         return _sb.ToString();
     }
-    private int PowerLawDist(double y, double n, int min, int N)
+    private int PowerLawDist(int N)
     {
         double ss = 1 - _power;
-        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * _ro.NextDouble(), 1 / ss)));
+        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * s_ro.NextDouble(), 1 / ss)));
         return index > N ? N : index;
     }
     //计算generalized harmonic number
     private double Hns(int N)
     {
-        if (_generalizedHarmonicNumber.ContainsKey(N))
-            return _generalizedHarmonicNumber[N];
+        if (_generalizedHarmonicNumber.TryGetValue(N, out double value))
+            return value;
         else
         {
             double sum = 0;
@@ -295,4 +271,9 @@ public class ZombieeeModule : SingleTypeModule<MessagePackage>
             return sum;
         }
     }
+
+    [GeneratedRegex(@""",""dst"":""(.*)""}]}$", RegexOptions.Compiled)]
+    private static partial Regex DstPattern();
+    [GeneratedRegex(@"""error_code"":""(\d+)""", RegexOptions.Compiled)]
+    private static partial Regex ErrorCodePattern();
 }

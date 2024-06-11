@@ -1,5 +1,3 @@
-using System;
-
 namespace klbotlib;
 
 /// <summary>
@@ -36,11 +34,11 @@ public enum MessageContextType
     /// <summary>
     /// 私聊
     /// </summary>
-    Private,  
+    Private,
     /// <summary>
     /// 临时会话
     /// </summary>
-    Temp, 
+    Temp,
     /// <summary>
     /// 群组
     /// </summary>

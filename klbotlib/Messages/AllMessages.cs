@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using System.Text;
 
 namespace klbotlib;
@@ -98,7 +97,7 @@ public record MessagePackage : Message, IReadOnlyList<Message>
     {
         StringBuilder sb = new("Message package: ");
         foreach (var msg in _data)
-            sb.AppendLine(msg.ToString());
+            _ = sb.AppendLine(msg.ToString());
         return sb.ToString();
     }
 
@@ -126,7 +125,7 @@ public record MessagePackage : Message, IReadOnlyList<Message>
         foreach (var msg in _data)
         {
             if (msg is MessagePlain pmsg)
-                sb.Append(pmsg.Text);
+                _ = sb.Append(pmsg.Text);
         }
         return sb.ToString();
     }

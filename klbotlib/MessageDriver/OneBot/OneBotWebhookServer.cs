@@ -1,16 +1,11 @@
-using System;
-using System.IO;
-using System.Net;
-using System.Text.Json;
-using System.Threading.Tasks;
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
+using System.Net;
 
 namespace klbotlib.MessageDriver.OneBot;
 
-internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUnit
+internal class OneBotWebhookServer(string bindAddr) : IKLBotLogUnit
 {
     private readonly HttpListener _server = new();
-    private readonly string _token = token;
     public string BindAddr { get; } = bindAddr.EndsWith('/') ? bindAddr : $"{bindAddr}/";
     public event EventHandler<OneBotEventArgs> OneBotEventReceived = (_, _) => { };
 
@@ -34,12 +29,12 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
             try
             {
                 var jEvent = await OneBotJsonHelper.DeserializeAsync<JOneBotEvent>(context.Request.InputStream).ConfigureAwait(false);
-                this.DebugLog(jEvent.ToString());
                 if (jEvent == null)
                 {
-                    this.Log($"Bad content: {jEvent}");
+                    this.Log($"Bad content");
                     goto error;
                 }
+                this.DebugLog(jEvent.ToString());
                 ProcessEvent(jEvent);
             }
             catch (Exception ex)
@@ -64,7 +59,7 @@ internal class OneBotWebhookServer(string bindAddr, string token) : IKLBotLogUni
 
     private void ProcessEvent(JOneBotEvent rawEvent)
     {
-        if (rawEvent.Time == default || rawEvent.SelfId == default ||rawEvent.PostType == null)
+        if (rawEvent.Time == default || rawEvent.SelfId == default || rawEvent.PostType == null)
             throw new Exception($"Failed to build OneBot event: Invalid event data: {rawEvent}");
         OneBotEventReceived.Invoke(this, new(rawEvent.Time, rawEvent.SelfId, rawEvent.PostType, rawEvent));
     }

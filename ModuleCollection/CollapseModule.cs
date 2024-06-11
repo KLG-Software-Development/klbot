@@ -1,9 +1,7 @@
 ﻿using klbotlib.Extensions;
 using klbotlib.Modules.ModuleUtils;
-using System;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace klbotlib.Modules;
@@ -11,10 +9,10 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 塌塌模块
 /// </summary>
-public class CollapseModule : SingleTypeModule<MessagePackage>
+public partial class CollapseModule : SingleTypeModule<MessagePackage>
 {
-    private readonly Regex _collapsePat = new(@"塌\s+(.+)", RegexOptions.Compiled);
-    private readonly Regex _stepPat = new(@"过程\s+(.+)", RegexOptions.Compiled);
+    private readonly Regex _collapsePat = CollapsePattern();
+    private readonly Regex _stepPat = StepPattern();
     private readonly HttpHelper _helper = new();
     private readonly XmlDocument _xmlLoader = new();
 
@@ -46,7 +44,7 @@ public class CollapseModule : SingleTypeModule<MessagePackage>
         {
             string input = _collapsePat.Match(text).Groups[1].Value;
             string xml = await _helper.GetStringAsync(GetResultUrl(input));
-            return ProcessXml(context, xml);
+            return await ProcessXml(context, xml);
         }
         else if (_stepPat.IsMatch(text))
         {
@@ -62,26 +60,34 @@ public class CollapseModule : SingleTypeModule<MessagePackage>
     private static string GetResultUrl(string input)
         => $"https://api.wolframalpha.com/v2/query.jsp?appid=6682H9-A87PYX7R9A&input={Uri.EscapeDataString(input)}&format=image";
 
-    private bool TryGetResultRoot(string xml, out XmlNode? queryresult)
+    private bool TryGetResultRoot(string xml, [NotNullWhen(true)] out XmlNode? queryresult)
     {
         _xmlLoader.LoadXml(xml);
         queryresult = _xmlLoader.GetElementsByTagName("queryresult")[0];
         if (queryresult == null)
             return false;
         //查询失败
-        return queryresult.Attributes["success"].Value == "true";
+        var attributes = queryresult.Attributes;
+        if (attributes == null)
+            return false;
+        var success = attributes["success"];
+        return success != null && success.Value == "true";
     }
     //尝试获取primary pod
-    private static bool TryGetPrimaryPod(XmlNodeList childs, out XmlNode? output)
+    private static bool TryGetPrimaryPod(XmlNodeList childs, [NotNullWhen(true)] out XmlNode? output)
     {
         XmlNode? first_pod = null;
         output = null;
         //获取primary pod
         foreach (XmlNode child in childs)
         {
-            if (child.Attributes == null || child.Attributes["primary"] == null || child.Name != "pod")
+            var attributes = child.Attributes;
+            if (attributes == null || attributes["primary"] == null || child.Name != "pod")
                 continue;
-            else if (child.Attributes["primary"].Value == "true")
+            var primary = attributes["primary"];
+            if (primary == null || primary.Value == null)
+                continue;
+            if (primary.Value == "true")
             {
                 if (first_pod != null)
                     first_pod = child;
@@ -103,8 +109,11 @@ public class CollapseModule : SingleTypeModule<MessagePackage>
         }
         return true;
     }
+
+#pragma warning disable CS8602 // 解引用可能出现空引用。Let it crash
+
     //XML解析：答案
-    private string ProcessXml(MessageContext context, string xml)
+    private async Task<string> ProcessXml(MessageContext context, string xml)
     {
         if (!TryGetResultRoot(xml, out XmlNode? queryresult))
             return "塌了！查询失败，内容可能不合法";
@@ -120,9 +129,10 @@ public class CollapseModule : SingleTypeModule<MessagePackage>
         if (img == null)
             return "塌了！结果无法正确表示";
         string result_img_url = img.Attributes["src"].Value;
-        Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
+        await Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
         return "没塌！";
     }
+
     //XML解析：中间过程
     private string ProcessXmlStepByStep(MessageContext context, string xml, string input)
     {
@@ -133,7 +143,7 @@ public class CollapseModule : SingleTypeModule<MessagePackage>
         if (!TryGetPrimaryPod(childs, out XmlNode? primaryPod) || primaryPod == null)
             return "Wolfram Alpha未提供主结果，无法计算";
         string result_img_url = primaryPod.ChildNodes[1].ChildNodes[1].Attributes["src"].Value;
-        Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
+        _ = Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
         //检查primary result是否可显示过程
         var states = primaryPod["states"];
         string? podState = null;
@@ -161,10 +171,17 @@ public class CollapseModule : SingleTypeModule<MessagePackage>
             if (primaryPod == null || !primaryPod.TryGetFirstChildNodeByAttribute("title", "Possible intermediate steps", out XmlNode? step_pod))
                 return "无法显示过程：不存在可用的中间过程";
             result_img_url = step_pod["img"].Attributes["src"].Value;
-            Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
+            _ = Messaging.ReplyMessage(context, $@"\image:\url:{result_img_url}");
         }
         else
             return "无法显示过程：不存在可用的中间过程";
         return "没塌！";
     }
+
+#pragma warning restore CS8602 // 解引用可能出现空引用。
+
+    [GeneratedRegex(@"塌\s+(.+)", RegexOptions.Compiled)]
+    private static partial Regex CollapsePattern();
+    [GeneratedRegex(@"过程\s+(.+)", RegexOptions.Compiled)]
+    private static partial Regex StepPattern();
 }

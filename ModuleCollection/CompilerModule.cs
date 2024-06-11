@@ -1,10 +1,7 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -14,7 +11,7 @@ namespace klbotlib.Modules;
 public class CompilerModule : SingleTypeModule<MessagePlain>
 {
     private readonly HttpHelper _httpHelper = new();
-    private static readonly Dictionary<string, string> _fileExts = new()
+    private static readonly Dictionary<string, string> s_fileExts = new()
     {
             { "c", "c"},
             { "c++", "cpp"},
@@ -23,8 +20,8 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
             { "java", "java"},
             { "cs", "cs"},
         };
-    private static readonly HashSet<string> _supportedLocalLanguages = new() { };
-    private static readonly StringBuilder _sb = new();
+    private static readonly HashSet<string> s_supportedLocalLanguages = [];
+    private static readonly StringBuilder s_sb = new();
     private readonly string _onlineCommand = "$编译";
     private readonly string _localCommand = "$本地编译";
 
@@ -43,12 +40,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
     public override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         string text = msg.Text.TrimStart();
-        if (text.StartsWith(_onlineCommand))
-            return await CompileOnline(text);
-        else if (msg.Text.StartsWith(_localCommand))
-            return await Compile(text);
-        else
-            return null;
+        return text.StartsWith(_onlineCommand) ? await CompileOnline(text) : msg.Text.StartsWith(_localCommand) ? await Compile(text) : null;
     }
 
     private Task<Message?> Compile(string text)
@@ -59,9 +51,9 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         if (ptr == text.Length) //到最后也没遇到 骂人
             return Task.FromResult<Message?>(ModuleAccess.GetModule<FuckModule>().SingleSentence());
         string language = text[_localCommand.Length..ptr].Trim().ToLower();
-        if (!_supportedLocalLanguages.Contains(language))
-            return Task.FromResult<Message?>($"语言\"{language}\"暂时无法本地编译，改用\"{_onlineCommand} \"尝试在线编译");
-        throw new NotImplementedException();
+        return !s_supportedLocalLanguages.Contains(language)
+            ? Task.FromResult<Message?>($"语言\"{language}\"暂时无法本地编译，改用\"{_onlineCommand} \"尝试在线编译")
+            : throw new NotImplementedException();
     }
 
     private async Task<Message?> CompileOnline(string text)
@@ -72,38 +64,36 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         if (ptr == text.Length) //到最后也没遇到 骂人
             return ModuleAccess.GetModule<FuckModule>().SingleSentence();
         string language = text[_onlineCommand.Length..ptr].Trim().ToLower();
-        _fileExts.TryGetValue(language, out string? fileExt);
+        _ = s_fileExts.TryGetValue(language, out string? fileExt);
         if (fileExt == null)
             return $"不支持语言\"{language}\"";
         string code = text[ptr..];
         string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
         ModuleLog($"Response: {response}");
-        JReply? jreply = JsonSerializer.Deserialize<JReply>(response);
-        if (jreply == null)
-            throw new JsonException("返回结果解析失败：产生了null结果");
-        _sb.Clear();
-        if (!string.IsNullOrWhiteSpace(jreply.errors))
+        JReply? jreply = JsonSerializer.Deserialize<JReply>(response) ?? throw new JsonException("返回结果解析失败：产生了null结果");
+        _ = s_sb.Clear();
+        if (!string.IsNullOrWhiteSpace(jreply.Errors))
         {
-            _sb.AppendLine("编译输出：");
-            _sb.AppendLine(jreply.errors.Replace("\\n", "\n"));
+            _ = s_sb.AppendLine("编译输出：");
+            _ = s_sb.AppendLine(jreply.Errors.Replace("\\n", "\n"));
         }
-        _sb.AppendLine("程序输出：");
-        _sb.Append(string.IsNullOrWhiteSpace(jreply.output) ? "[无输出]" : jreply.output.Replace("\\n", "\n"));
-        return _sb.ToString();
+        _ = s_sb.AppendLine("程序输出：");
+        _ = s_sb.Append(string.IsNullOrWhiteSpace(jreply.Output) ? "[无输出]" : jreply.Output.Replace("\\n", "\n"));
+        return s_sb.ToString();
     }
 
     private string BuildPostBody(string language, string fileExt, string code)
     {
-        _sb.Clear();
-        _sb.Append("code=");
-        _sb.Append(code);
-        _sb.Append("&token=");
-        _sb.Append(_token);
-        _sb.Append("&language=");
-        _sb.Append(language);
-        _sb.Append("&fileext=");
-        _sb.Append(fileExt);
-        return _sb.ToString();
+        _ = s_sb.Clear();
+        _ = s_sb.Append("code=");
+        _ = s_sb.Append(code);
+        _ = s_sb.Append("&token=");
+        _ = s_sb.Append(_token);
+        _ = s_sb.Append("&language=");
+        _ = s_sb.Append(language);
+        _ = s_sb.Append("&fileext=");
+        _ = s_sb.Append(fileExt);
+        return s_sb.ToString();
     }
-    private class JReply { public string? output; public string? errors; }
+    private record JReply(string? Output, string? Errors);
 }

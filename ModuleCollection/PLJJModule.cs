@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using klbotlib.Modules.ModuleUtils;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using klbotlib.Modules.ModuleUtils;
 
 namespace klbotlib.Modules;
 
@@ -11,11 +8,11 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
 {
     private readonly Random _ro = new();
     private readonly HttpHelper _httpHelper = new();
-    
+
     [JsonInclude]
-    private int _maxRetryCount = 3;
+    private readonly int _maxRetryCount = 3;
     [JsonInclude]
-    private List<string>? _urlList;
+    private readonly List<string> _urlList = [];
     [JsonInclude]
     private DateTime _lastActivateTime = DateTime.UnixEpoch;
     /// <inheritdoc/>
@@ -33,10 +30,7 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
             _lastActivateTime = DateTime.Now;
             await Messaging.ReplyMessage(context, "早安！");
             (bool success, string url) = await GetRandomUrl("图片", context, silent: true);
-            if (success)
-                return new MessageImage(url, true);
-            else
-                return $"已重试{_maxRetryCount}次。运气太差，放弃获取";
+            return success ? new MessageImage(url, true) : (Message)$"已重试{_maxRetryCount}次。运气太差，放弃获取";
         }
         return null;
     }
@@ -77,13 +71,13 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
             }
         }
     }
-    
+
     private async Task<UrlStatus> VerifyUrl(string url)
     {
         try
         {
             var response = await _httpHelper.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            _ = response.EnsureSuccessStatusCode();
             return UrlStatus.Ok;
         }
         catch (Exception ex)

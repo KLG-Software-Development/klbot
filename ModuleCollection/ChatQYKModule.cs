@@ -1,17 +1,14 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using System;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
 ///聊天bot模块
-public class ChatQYKModule : SingleTypeModule<MessagePackage>
+public partial class ChatQYKModule : SingleTypeModule<MessagePackage>
 {
-    private const string _url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
-    private static readonly HttpHelper _helper = new();
+    private const string Url = "http://api.qingyunke.com/api.php?key=free&appid=0&msg=";
+    private static readonly HttpHelper s_helper = new();
 
     /// <inheritdoc/>
     public sealed override bool IsTransparent => false;
@@ -26,16 +23,21 @@ public class ChatQYKModule : SingleTypeModule<MessagePackage>
     {
         if (msg.Count != 2 || !msg.ContainsTargetId(HostBot.SelfId))
             return null;
-        string jreply = await _helper.GetStringAsync(_url + msg.AsPlain());
-        return JsonSerializer.Deserialize<ChatterBotReply>(jreply).FormattedContent();
+        string jreply = await s_helper.GetStringAsync(Url + msg.AsPlain());
+        ChatterBotReply? reply = JsonSerializer.Deserialize<ChatterBotReply>(jreply);
+        return reply?.FormattedContent();
     }
 
-    private class ChatterBotReply
+    private partial record ChatterBotReply
     {
-        public int result;
+        public int result = 0;
         public string content = string.Empty;
-        public static Regex trashPat = new(@"{r\+}", RegexOptions.Compiled);
-        public static Regex facePat = new(@"{face:[\d]+}", RegexOptions.Compiled);
+        public static Regex trashPat = TrashPattern();
+        public static Regex facePat = FacePattern();
         public string FormattedContent() => trashPat.Replace(facePat.Replace(content.Replace("{br}", "\r\n"), ""), "");
+        [GeneratedRegex(@"{r\+}", RegexOptions.Compiled)]
+        private static partial Regex TrashPattern();
+        [GeneratedRegex(@"{face:[\d]+}", RegexOptions.Compiled)]
+        private static partial Regex FacePattern();
     }
 }

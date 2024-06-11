@@ -10,33 +10,31 @@ namespace localbot;
 
 public class Program
 {
-    private static readonly HashSet<long> _debugTargetGroupId = new() { 7355608 };  //调试时监听的群组列表
-    private static readonly MessageDriver_Debug _localServer = new(
+    private static readonly HashSet<long> s_debugTargetGroupId = [7355608];  //调试时监听的群组列表
+    private static readonly MessageDriver_Debug s_localServer = new(
         33550336,   //自身ID
-        AddMsgCallback_PrintInfo, 
-        SendMsgCallback_PrintInfo, 
+        AddMsgCallback_PrintInfo,
+        SendMsgCallback_PrintInfo,
         UploadCallback_PrintInfo,
         MuteCallback_PrintInfo,
         UnmuteCallback_PrintInfo); //调试用消息驱动器
-    private static long _userId = 2044164212;    //调试时发出的所有消息的用户ID
-    private static long _groupId = 7355608;   //调试时发出的所有消息的群组ID
-    private static MessageContextType _context = MessageContextType.Group;   //调试时发出的所有消息的上下文类型。默认为群组
-    private static bool _tagMe = false;
-    private static bool _verbose = false;
+    private static long s_userId = 2044164212;    //调试时发出的所有消息的用户ID
+    private static long s_groupId = 7355608;   //调试时发出的所有消息的群组ID
+    private static MessageContextType s_context = MessageContextType.Group;   //调试时发出的所有消息的上下文类型。默认为群组
+    private static bool s_tagMe = false;
+    private static bool s_verbose = false;
 
-    private static KLBot? _lcb = null;
+    private static KLBot? s_lcb = null;
 
     public static void Main()
     {
         Console.ResetColor();
         DateTime lastErrorTime = DateTime.MinValue;
         int serialErrorCounter = 0;
-start:
+    start:
         try
         {
-            Assembly? asm = Assembly.GetAssembly(typeof(ImageModule));
-            if (asm == null)
-                throw new NullReferenceException("无法获取模块集合所在的程序集");
+            Assembly? asm = Assembly.GetAssembly(typeof(ImageModule)) ?? throw new NullReferenceException("无法获取模块集合所在的程序集");
             IConfigurationRoot config = new ConfigurationBuilder().AddInMemoryCollection(
                 new Dictionary<string, string?>()
                 {
@@ -46,14 +44,14 @@ start:
                 })
             .Build();
 
-            _lcb = new KLBot(config, _localServer, asm, _debugTargetGroupId);
-            _lcb.AddModule(new TimeModule());
+            s_lcb = new KLBot(config, s_localServer, asm, s_debugTargetGroupId);
+            s_lcb.AddModule(new TimeModule());
 
-            Console.WriteLine(_lcb.GetModuleChainString());
+            Console.WriteLine(s_lcb.GetModuleChainString());
             Console.WriteLine("初始化完成。命令调用格式：<命令> <值>");
             PrintHelp();
             Console.WriteLine("输入命令开始调试");
-            MainLoop(_lcb);
+            MainLoop(s_lcb);
         }
         catch (Exception ex)
         {
@@ -74,14 +72,12 @@ start:
                 if (serialErrorCounter > 10)
                 {
                     Console.WriteLine("连续10次发生致命错误。将停止重试并有序退出");
-                    if (_lcb != null)
-                        _lcb.OnExit();
+                    s_lcb?.OnExit();
                     return;
                 }
                 else
                 {
-                    if (_lcb != null)
-                        _lcb.OnExit();
+                    s_lcb?.OnExit();
                     Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
                     goto start;
                 }
@@ -117,15 +113,11 @@ start:
     /// <returns>消息的调试信息</returns>
     private static string GetMessageDebugInfo(MessageContext context, Message msg)
     {
-        string content;
-        if (msg is MessagePlain pmsg)
-            content = pmsg.Text;
-        else if (msg is MessageImage imsg)
-            content = imsg.IsFlashImage ? $"[闪照:{imsg.Url}]" : $"[图片x{imsg.Url}]";
-        else if (msg is MessageVoice vmsg)
-            content = $"[语音消息:<{vmsg.Url.Length} chars>]";
-        else
-            content = $"[未知类型消息：{msg}]";
+        string content = msg is MessagePlain pmsg
+            ? pmsg.Text
+            : msg is MessageImage imsg
+            ? imsg.IsFlashImage ? $"[闪照:{imsg.Url}]" : $"[图片x{imsg.Url}]"
+            : msg is MessageVoice vmsg ? $"[语音消息:<{vmsg.Url.Length} chars>]" : $"[未知类型消息：{msg}]";
         return context.Type switch
         {
             MessageContextType.Group => $"* 用户[{context.UserId}]向群组[{context.GroupId}]发送：\n------------------------------------\n  {content}\n------------------------------------",
@@ -188,18 +180,18 @@ start:
         Console.WriteLine("\nLocalBot设定：");
         Console.WriteLine("help                                          打印帮助信息");
         Console.WriteLine("verbose                                       开启详细模式");
-        Console.WriteLine("\n全局消息设定：");                            
+        Console.WriteLine("\n全局消息设定：");
         Console.WriteLine("tag-me                                        开启Tag Me模式（自动@机器人）");
         Console.WriteLine("set-user-id <id>                              设置全局用户ID");
         Console.WriteLine("set-group-id <id>                             设置全局群聊ID");
         Console.WriteLine("set-context <private|group|temp>              设置全局消息上下文");
-        Console.WriteLine("\n发送消息：");                                
+        Console.WriteLine("\n发送消息：");
         Console.WriteLine("send-plain <text>                             发送纯文本消息");
         Console.WriteLine("send-image <URL1,URL2,URL3...>                发送图像消息");
         Console.WriteLine("send-flashimage <URL1,URL2,URL3...>           发送闪照消息");
         Console.WriteLine("send-image-plain <URL1,URL2,URL3...> <text>   发送图文消息");
         Console.WriteLine("send-voice <URL>                              发送语音消息");
-        Console.WriteLine("\n其他操作：");                                
+        Console.WriteLine("\n其他操作：");
         Console.WriteLine("recall <author>,<message id>                  撤回指定消息");
         Console.WriteLine("mute <user>,<duration (s)>                    禁言指定用户");
         Console.WriteLine("unmute <user>                                 解禁指定用户");
@@ -208,14 +200,14 @@ start:
     }
     private static void SendMessageAndPrint(KLBot lcb, Message msg)
     {
-        if (_tagMe)
+        if (s_tagMe)
         {
             msg = msg.Pack();
             ((MessagePackage)msg).AddTargetId(lcb.SelfId);
         }
-        MessageContext context = new(_context, _userId, _groupId);
-        _localServer.AddReceivedMessage(context, msg);
-        if (_verbose)
+        MessageContext context = new(s_context, s_userId, s_groupId);
+        _ = s_localServer.AddReceivedMessage(context, msg);
+        if (s_verbose)
         {
             Console.WriteLine("\n详细信息：");
             Console.WriteLine($"{context}\n{msg}");
@@ -228,8 +220,8 @@ start:
         {
             if (cmd[i] == ' ')
             {
-                command = cmd.Substring(0, i);
-                argument = cmd.Substring(i + 1);
+                command = cmd[..i];
+                argument = cmd[(i + 1)..];
                 return;
             }
         }
@@ -245,20 +237,20 @@ start:
                 PrintHelp();
                 return;
             case "tag-me":
-                _tagMe = !_tagMe;
-                string status = _tagMe ? "开启" : "关闭";
+                s_tagMe = !s_tagMe;
+                string status = s_tagMe ? "开启" : "关闭";
                 Console.WriteLine($"Tag Me模式已{status}");
                 return;
             case "verbose":
-                _verbose = !_verbose;
-                status = _verbose ? "开启" : "关闭";
+                s_verbose = !s_verbose;
+                status = s_verbose ? "开启" : "关闭";
                 Console.WriteLine($"详细模式已{status}");
                 return;
             case "set-user-id":
                 if (long.TryParse(arg, out long userId))
                 {
-                    _userId = userId;
-                    Console.WriteLine($"消息发送者ID已设置为[{_userId}]");
+                    s_userId = userId;
+                    Console.WriteLine($"消息发送者ID已设置为[{s_userId}]");
                 }
                 else
                     Console.WriteLine($"{arg}不是有效的ID");
@@ -266,8 +258,8 @@ start:
             case "set-group-id":
                 if (long.TryParse(arg, out long groupId))
                 {
-                    _groupId = groupId;
-                    Console.WriteLine($"消息发送所在群ID已设置为[{_groupId}]");
+                    s_groupId = groupId;
+                    Console.WriteLine($"消息发送所在群ID已设置为[{s_groupId}]");
                 }
                 else
                     Console.WriteLine($"{arg}不是有效的ID");
@@ -297,7 +289,7 @@ start:
                 CommandMute(arg);
                 return;
             case "save":
-                _lcb.ModuleChain.ForEach(async m =>
+                lcb.ModuleChain.ForEach(async m =>
                 {
                     await m.SaveModuleStatus();
                 });
@@ -312,15 +304,15 @@ start:
         switch (arg.ToLower())
         {
             case "group":
-                _context = MessageContextType.Group;
+                s_context = MessageContextType.Group;
                 Console.WriteLine($"会话上下文已设置为群聊");
                 return;
             case "temp":
-                _context = MessageContextType.Temp;
+                s_context = MessageContextType.Temp;
                 Console.WriteLine($"会话上下文已设置为临时会话");
                 return;
             case "private":
-                _context = MessageContextType.Private;
+                s_context = MessageContextType.Private;
                 Console.WriteLine($"会话上下文已设置为私聊");
                 return;
             default:
@@ -346,7 +338,7 @@ start:
             Console.WriteLine("无效消息ID");
             return;
         }
-        _localServer.AddReceivedMessage(new(_context, _userId, _groupId), new MessageRecall(authorId, msgId));
+        _ = s_localServer.AddReceivedMessage(new(s_context, s_userId, s_groupId), new MessageRecall(authorId, msgId));
     }
     private static void CommandMute(string arg)
     {
@@ -356,7 +348,7 @@ start:
             Console.WriteLine("参数数量错误。应有2个参数：待禁言用户ID, 禁言时长(秒)");
             return;
         }
-        if (!long.TryParse(args[0], out long userId))
+        if (!long.TryParse(args[0], out _))
         {
             Console.WriteLine("无效成员ID");
             return;
@@ -366,13 +358,12 @@ start:
             Console.WriteLine("无效禁言时长");
             return;
         }
-        MessageMute mute = new(true, _userId, durationSeconds);
-        _localServer.AddReceivedMessage(new(MessageContextType.Group, _userId, _groupId), mute.Pack());
+        MessageMute mute = new(true, s_userId, durationSeconds);
+        _ = s_localServer.AddReceivedMessage(new(MessageContextType.Group, s_userId, s_groupId), mute.Pack());
     }
     private static void CommandUnmute(string arg)
     {
         string[] args = arg.Split(',');
-        args = arg.Split(',');
         if (args.Length != 1)
         {
             Console.WriteLine("参数数量错误。应有1个参数：待解除禁言用户ID");
@@ -384,11 +375,11 @@ start:
             return;
         }
         MessageMute unmute = new(true, userId);
-        _localServer.AddReceivedMessage(new(MessageContextType.Group, _groupId, _userId), unmute);
+        _ = s_localServer.AddReceivedMessage(new(MessageContextType.Group, s_groupId, s_userId), unmute);
     }
     private static void PrintVerboseInfoIfRequired(Message msg)
     {
-        if (_verbose)
+        if (s_verbose)
         {
             Console.WriteLine("\n详细信息：");
             Console.WriteLine(msg.ToString());

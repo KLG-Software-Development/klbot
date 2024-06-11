@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace klbotlib.Extensions;
+﻿namespace klbotlib.Extensions;
 /// <summary>
 /// Object类的扩展方法
 /// </summary>
@@ -14,9 +12,6 @@ public static class ObjectExtension
         if (obj == null)
             return "\\NULL OBJECT\\";
         string? s = obj.ToString();
-        if (s == null)
-            return "\\NULL STRING\\";
-        else
-            return s;
+        return s ?? "\\NULL STRING\\";
     }
 }

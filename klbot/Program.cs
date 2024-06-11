@@ -1,28 +1,31 @@
 ﻿using klbotlib;
 using klbotlib.Exceptions;
 using klbotlib.Extensions;
+using klbotlib.MessageDriver;
+using klbotlib.MessageDriver.DebugLocal;
 using klbotlib.MessageDriver.OneBot;
 using klbotlib.Modules;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
-using klbotlib.MessageDriver;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace klbot;
 
-class Program
+internal class Program
 {
-    private static readonly ConfigurationManager _config = new();
+    private static readonly ConfigurationManager s_config = new();
     private static IMessageDriver GetMessageDriver()
     {
-        string driverId = _config.ReadValue("driver_id");
+        string driverId = s_config.ReadValue("driver_id");
         switch (driverId)
         {
             case BuiltinMessageDriverId.OneBotHttpId:
-                string serviceUrl = _config.ReadValue("service_url", driverId);
-                string webhookBindUrl = _config.ReadValue("webhook_url", driverId);
-                string token = _config.ReadValue("token", driverId);
+                string serviceUrl = s_config.ReadValue("service_url", driverId);
+                string webhookBindUrl = s_config.ReadValue("webhook_url", driverId);
+                string token = s_config.ReadValue("token", driverId);
                 return new MessageDriver_OneBotHttp(serviceUrl, webhookBindUrl, token);
+            case BuiltinMessageDriverId.DebugLocalHttpId:
+                return new MessageDriver_Debug(0);
             default:
                 throw new KLBotInitializationException($"Unknown message driver ID \"{driverId}\"");
         }
@@ -31,24 +34,26 @@ class Program
     private static void Init(string? configPath)
     {
         Console.ResetColor();
-        Version? exeVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        var exeAsm = Assembly.GetExecutingAssembly() ?? throw new Exception("Failed to get executable assembly");
+        var exeAsmName = exeAsm.GetName() ?? throw new Exception("Failed to get executable assembly name");
+        Version exeVersion = exeAsmName.Version ?? new();
         Version? libVersion = klbotlib.Info.CoreLibInfo.GetLibVersion();
-        Version? mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion();
+        Version? mcVersion = ModuleCollection.Info.CollectionInfo.GetLibVersion() ?? new();
         Console.WriteLine($"KLBot");
         Console.WriteLine($"exe version: {exeVersion.Major}.{exeVersion.Minor} Build {exeVersion.ToKLGBuildString()}");
         Console.WriteLine($"corelib version: {libVersion.Major}.{libVersion.Minor} Build {libVersion.ToKLGBuildString()}");
         Console.WriteLine($"MC version: {mcVersion.Major}.{mcVersion.Minor} Build {mcVersion.ToKLGBuildString()}\n");
 
-        _config.Sources.Clear();
+        s_config.Sources.Clear();
         if (string.IsNullOrEmpty(configPath))
         {
             Console.WriteLine("Program starts without arguments, reading config from environs");
-            _config.AddEnvironmentVariables();
+            _ = s_config.AddEnvironmentVariables();
         }
         else
         {
             Console.WriteLine($"Config file: {configPath}\n");
-            _config.AddIniFile(configPath);
+            _ = s_config.AddIniFile(configPath);
         }
     }
 
@@ -59,9 +64,9 @@ class Program
         {
             LogFileName = $"klbot.log"
         };
-        Trace.Listeners.Add(fileLog);
+        _ = Trace.Listeners.Add(fileLog);
         ConsoleTraceListener consoleLog = new();
-        Trace.Listeners.Add(consoleLog);
+        _ = Trace.Listeners.Add(consoleLog);
     }
 
     private static async Task Main(string[] args)
@@ -69,20 +74,20 @@ class Program
         InitLog();
         string? configPath = args.Length == 0 ? null : args[0];
         Init(configPath);
-start:
+    start:
         DateTime lastErrorTime = DateTime.MinValue;
         int serialErrorCounter = 0;
         KLBot? klg = null;
         try
         {
             IMessageDriver driver = GetMessageDriver();
-            klg = new KLBot(_config, driver, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
+            klg = new KLBot(s_config, driver, moduleCollection: Assembly.GetAssembly(typeof(ImageModule)));
             Console.CancelKeyPress += (_, _) =>
             {
                 klg.OnExit();
                 Environment.Exit(-1);
             };
-            if (_config.TryReadValue("modules", out string? moduleListFile))
+            if (s_config.TryReadValue("modules", out string? moduleListFile))
             {
                 if (!File.Exists(moduleListFile))
                 {
@@ -125,14 +130,12 @@ start:
             if (serialErrorCounter > 10)
             {
                 Console.WriteLine("连续10次发生致命错误。将停止重试并有序退出");
-                if (klg != null)
-                    klg.OnExit();
+                klg?.OnExit();
                 return;
             }
             else
             {
-                if (klg != null)
-                    klg.OnExit();
+                klg?.OnExit();
                 Console.WriteLine($"[{DateTime.Now:G}] 正在尝试重启KLBot...\n");
                 Thread.Sleep(1000);
                 goto start;
