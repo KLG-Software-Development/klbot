@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using klbotlib.Modules;
 using System;
+using System.Text.Encodings.Web;
 
 namespace klbotlib.Json
 {
@@ -16,6 +17,7 @@ namespace klbotlib.Json
         {
             WriteIndented = true,
             IncludeFields = false,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
         // 用于模块保存的JSON序列化配置
         private static readonly JsonSerializerOptions _moduleSerializeOptions = new()
@@ -23,6 +25,7 @@ namespace klbotlib.Json
             WriteIndented = true,
             IncludeFields = false,
             IgnoreReadOnlyProperties = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
         //用于文件存储的Json序列化配置
