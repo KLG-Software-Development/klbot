@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -10,10 +11,34 @@ namespace klbotlib.Modules;
 /// 嘴臭模块
 public class FuckModule : Module
 {
+    private readonly Regex? _patternRegex;
+
     [JsonInclude]
-    private readonly Regex _pattern = new("default_pattern");
+    private readonly string _pattern = "default_pattern";
     [JsonInclude]
-    private readonly string[]? _sub, _you, _v, _human, _organ, _subfix, _adjOfOrgan, _adv, _connector, _combine, _stuff, _status;
+    private readonly List<string> _sub = [];
+    [JsonInclude]
+    private List<string> _you = [];
+    [JsonInclude]
+    private List<string> _v = [];
+    [JsonInclude]
+    private List<string> _human = [];
+    [JsonInclude]
+    private List<string> _organ = [];
+    [JsonInclude]
+    private List<string> _subfix = [];
+    [JsonInclude]
+    private List<string> _adjOfOrgan = [];
+    [JsonInclude]
+    private List<string> _adv = [];
+    [JsonInclude]
+    private List<string> _connector = [];
+    [JsonInclude]
+    private List<string> _combine = [];
+    [JsonInclude]
+    private List<string> _stuff = [];
+    [JsonInclude]
+    private List<string> _status = [];
 
     // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
     [JsonInclude]
@@ -28,11 +53,11 @@ public class FuckModule : Module
     [JsonInclude]
     private int MaxLength { get; set; } = 20;
 
-    private static string? Pick(string[]? a)
+    private static string? Pick(IList<string> a)
     {
-        if (a == null || a.Length == 0)
+        if (a == null || a.Count == 0)
             return null;
-        return a[Random.Shared.Next(a.Length)];
+        return a[Random.Shared.Next(a.Count)];
     }
     private string? GenerateFuck()
     {
@@ -57,9 +82,10 @@ public class FuckModule : Module
     /// <inheritdoc/>
     public sealed override Task<Message?> Processor(MessageContext _, Message msg)
     {
+        if (_patternRegex == null)
         if (IsTagMe)
         {
-            if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_pattern.IsMatch(pmsg.AsPlain()))
+            if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_patternRegex.IsMatch(pmsg.AsPlain()))
                 return (Message?)null;
         }
         else if (msg is not MessagePlain)
