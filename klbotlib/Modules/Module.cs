@@ -315,6 +315,7 @@ public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAc
         string filePath = HostBot.GetModuleStatusPath(this);
         if (printInfo)
             ModuleLog($"正在保存模块至\"{filePath}\"...", LogType.Task);
+        FileStream fs;
         if (!File.Exists(filePath))
         {
             if (printInfo)
@@ -323,9 +324,15 @@ public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAc
             if (dir == null)
                 throw new Exception($"模块存档所在目录\"{dir}\"创建失败");
             _ = Directory.CreateDirectory(dir);
-            _ = new StreamWriter(File.Create(filePath));
+            fs = File.Create(filePath);
         }
-        await File.WriteAllTextAsync(filePath, json);
+        else
+            fs = File.OpenWrite(filePath);
+        fs.SetLength(0);
+        using (StreamWriter sw = new(fs))
+        {
+            await sw.WriteAsync(json);
+        }
         if (printInfo)
             ModuleLog($"模块已保存至存档\"{filePath}\"");
     }
