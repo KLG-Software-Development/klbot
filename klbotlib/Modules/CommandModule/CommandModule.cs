@@ -1,29 +1,22 @@
 ﻿using klbotlib.Extensions;
 using klbotlib.Modules.CommandModuleNamespace;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules
 {
     //命令模块
-    internal class CommandModule : SingleTypeModule<MessagePlain>
+    internal partial class CommandModule : SingleTypeModule<MessagePlain>
     {
-        const string _prefix = "##";
-        private readonly Regex _cmdPat = new($@"^{_prefix}(.+)$", RegexOptions.Compiled);
+        private const string Prefix = "##";
+        private readonly Regex _cmdPat = CmdPattern();
 
         public Dictionary<long, AuthorType> Users { get; set; } = new() { { 0, AuthorType.开发者 } };
 
-        internal List<Command> _cmds = new();
+        internal List<Command> _cmds = [];
         internal AuthorType GetAuthorType(long id)
         {
-            if (!Users.ContainsKey(id))
-                return AuthorType.野人;
-            else
-                return Users[id];
+            return !Users.ContainsKey(id) ? AuthorType.野人 : Users[id];
         }
 
         public CommandModule(params Command[] cmds)
@@ -33,13 +26,13 @@ namespace klbotlib.Modules
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
             {
-                if (type.Namespace == "klbotlib.Modules.CommandModuleNamespace.Commands" 
-                    && type.GetRootBaseType() == typeof(Command) 
+                if (type.Namespace == "klbotlib.Modules.CommandModuleNamespace.Commands"
+                    && type.GetRootBaseType() == typeof(Command)
                     && Attribute.GetCustomAttribute(type, typeof(DefaultCommandAttribute)) != null)
                 {
                     var constructors = type.GetConstructors();
                     if (constructors.Length > 0)
-                        _cmds.Add((Command)constructors[0].Invoke(Array.Empty<object>()));
+                        _cmds.Add((Command)constructors[0].Invoke([]));
                 }
             }
             int defaultCmdCount = _cmds.Count;
@@ -49,7 +42,7 @@ namespace klbotlib.Modules
 
         public sealed override bool IsTransparent => false;
         public sealed override string FriendlyName => "命令模块";
-        public sealed override string HelpInfo => $"发送“{_prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
+        public sealed override string HelpInfo => $"发送“{Prefix}[命令]”执行指定命令。可以用“##help”查看已载入命令列表";
         public sealed override async Task<Message?> Processor(MessageContext context, MessagePlain msg)
         {
             if (HostBot == null)
@@ -65,6 +58,9 @@ namespace klbotlib.Modules
             }
             return $"错误：未知命令'{cmdStr}'";
         }
+
+        [GeneratedRegex("^##(.+)$", RegexOptions.Compiled)]
+        private static partial Regex CmdPattern();
     }
 }
 
@@ -105,10 +101,9 @@ namespace klbotlib.Modules.CommandModuleNamespace
             try
             {
                 AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(senderId);
-                if (authority < AuthorityRequirment)
-                    return $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}";
-                else
-                    return await CommandTask(bot, msg, cmd, new CommandArgument(cmd));
+                return authority < AuthorityRequirment
+                    ? $"错误：拒绝访问。\n调用者权限级别：{authority}\n命令权限级别：{AuthorityRequirment}"
+                    : await CommandTask(bot, msg, cmd, new CommandArgument(cmd));
             }
             catch (Exception ex)
             {
@@ -131,17 +126,16 @@ namespace klbotlib.Modules.CommandModuleNamespace
         public string Run(KLBot bot, T targetObject, long senderId, MessagePlain msg, string cmd)  //目前类型限定为文本消息, 因为暂时没看到其它形式的命令的可能性
         {
             AuthorType authority = bot.GetModule<CommandModule>().GetAuthorType(senderId);
-            if (authority < AuthorityRequirment)
-                return $"错误：拒绝访问。\r\n调用者权限级别：{authority}\r\n命令权限级别：{AuthorityRequirment}";
-            else
-                return Task(bot, targetObject, msg, cmd);
+            return authority < AuthorityRequirment
+                ? $"错误：拒绝访问。\r\n调用者权限级别：{authority}\r\n命令权限级别：{AuthorityRequirment}"
+                : Task(bot, targetObject, msg, cmd);
         }
     }
     internal class CommandArgument
     {
         public string Command { get; }
-        public List<string> Arguments { get; } = new();
-        public Dictionary<string, string> KeyValuePairs { get; } = new();
+        public List<string> Arguments { get; } = [];
+        public Dictionary<string, string> KeyValuePairs { get; } = [];
         public int Length { get => Arguments.Count; }
         public CommandArgument(string cmdStr)
         {
@@ -153,15 +147,15 @@ namespace klbotlib.Modules.CommandModuleNamespace
                 if (token.Length == 0)
                     continue;
                 else if (TrySplitAtFirst(token, '=', out string key, out string val))
-                    KeyValuePairs.TryAdd(key, val);
+                    _ = KeyValuePairs.TryAdd(key, val);
                 else
                     Arguments.Add(token);
             }
         }
-    
-        private bool TrySplitAtFirst(string s, char c, out string pre, out string suf)
+
+        private static bool TrySplitAtFirst(string s, char c, out string pre, out string suf)
         {
-            
+
             for (int i = 0; i < s.Length; i++)
             {
                 if (s[i] == c)

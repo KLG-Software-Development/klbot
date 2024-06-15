@@ -12,4 +12,8 @@ public static class BuiltinMessageDriverId
     /// OneBot HTTP 驱动ID
     /// </summary>
     public const string OneBotHttpId = "onebot-http";
+    /// <summary>
+    /// DebugLocal 驱动ID
+    /// </summary>
+    public const string DebugLocalHttpId = "debug-local";
 }

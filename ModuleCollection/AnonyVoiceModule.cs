@@ -1,28 +1,26 @@
 ﻿using klbotlib.Modules.ModuleUtils;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
 /// <summary>
 /// 匿名语音模块
 /// </summary>
-public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
+public partial class AnonyVoiceModule : SingleTypeModule<MessagePlain>
 {
     [JsonInclude]
     private string _person = "磁性男声";
     [JsonInclude]
     [HiddenStatus]
-    private readonly Dictionary<long, UserStatus> _userStat = new();
+    private readonly Dictionary<long, UserStatus> _userStat = [];
     [JsonInclude]
     [HiddenStatus]
-    private readonly Dictionary<long, long> _targetGroups = new();
-    private const string _url = "https://ai.baidu.com/aidemo";
-    private const string _prefix = "data:audio/x-mpeg;base64,";
-    private readonly Regex _priReqPat = new(@"^说骚话 (\d{9,11})$", RegexOptions.Compiled);
+    private readonly Dictionary<long, long> _targetGroups = [];
+    private const string Url = "https://ai.baidu.com/aidemo";
+    private const string Prefix = "data:audio/x-mpeg;base64,";
+    private readonly Regex _priReqPat = PriReqPattern();
     private readonly Dictionary<string, string> _perByName = new()
     {
         { "可爱女童", "4103" },
@@ -87,18 +85,16 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
             else if (_userStat.TryGetValue(context.UserId, out UserStatus value) && value == UserStatus.ReadyToSendVoice)
             {
                 _userStat[context.UserId] = UserStatus.Idle;
-                Messaging.ReplyMessage(context, "正在薅羊毛...");
+                _ = Messaging.ReplyMessage(context, "正在薅羊毛...");
                 string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={msg.Text.Trim()}";
-                string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
-                JReply? reply = JsonSerializer.Deserialize<JReply>(json);
-                if (reply == null)
-                    throw new JsonException("返回结果解析失败：产生了null结果");
-                if (reply.errno != 0)
-                    return (Message?)$"错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
-                string mpegB64 = reply.data[_prefix.Length..];
+                string json = _httpHelper.PostFormUrlEncodedAsync(Url, body).Result;
+                JReply? reply = JsonSerializer.Deserialize<JReply>(json) ?? throw new JsonException("返回结果解析失败：产生了null结果");
+                if (reply.Errno != 0)
+                    return (Message?)$"错误[{reply.Errno}]：{reply.Msg}\n重新说点别的吧";
+                string mpegB64 = reply.Data[Prefix.Length..];
                 //SaveFileAsBinary(temp_mpeg_name, Convert.FromBase64String(mpeg_b64));
                 //string b64_amr = ConvertToAmr();
-                Messaging.SendGroupMessage(_targetGroups[context.UserId], new MessageVoice(mpegB64)); // 当前MessageVoice不支持直接包含语音数据
+                _ = Messaging.SendGroupMessage(_targetGroups[context.UserId], new MessageVoice(mpegB64)); // 当前MessageVoice不支持直接包含语音数据
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], "[DEBUG]上面是原mpeg编码。接下来是PCM编码测试：");
                 //HostBot.SendGroupMessage(this, target_groups[msg.SenderID], @"\voice:\base64:" + ConvertToSlk());
                 return (Message?)"已发送";
@@ -123,34 +119,29 @@ public class AnonyVoiceModule : SingleTypeModule<MessagePlain>
     public string TextToSpeech(string text)
     {
         string body = $"type=tns&per={_person}&spd=5&pit=5&vol=15&aue=6&tex={text.Trim()}";
-        string json = _httpHelper.PostFormUrlEncodedAsync(_url, body).Result;
-        JReply? reply = JsonSerializer.Deserialize<JReply>(json);
-        if (reply == null)
-            throw new JsonException("返回结果解析失败：产生了null结果");
-        if (reply.errno != 0)
-            return $"匿名语音模块TTS API错误[{reply.errno}]：{reply.msg}\n重新说点别的吧";
-        string mpeg_b64 = reply.data[_prefix.Length..];
+        string json = _httpHelper.PostFormUrlEncodedAsync(Url, body).Result;
+        JReply? reply = JsonSerializer.Deserialize<JReply>(json) ?? throw new JsonException("返回结果解析失败：产生了null结果");
+        if (reply.Errno != 0)
+            return $"匿名语音模块TTS API错误[{reply.Errno}]：{reply.Msg}\n重新说点别的吧";
+        string mpeg_b64 = reply.Data[Prefix.Length..];
         return @"\voice:\base64:" + mpeg_b64;
     }
 
     private bool IsNewOrIdleUser(long id) => !_userStat.ContainsKey(id) || _userStat[id] == UserStatus.Idle;
     private void ToWaitForTextState(long userId, long groupId)    //转移至等待输入文本状态
     {
-        if (!_userStat.ContainsKey(userId))
-            _userStat.Add(userId, UserStatus.ReadyToSendVoice);
-        else
+        if (!_userStat.TryAdd(userId, UserStatus.ReadyToSendVoice))
             _userStat[userId] = UserStatus.ReadyToSendVoice;
-        if (!_targetGroups.ContainsKey(userId))
-            _targetGroups.Add(userId, groupId);
-        else
+        if (!_targetGroups.TryAdd(userId, groupId))
             _targetGroups[userId] = groupId;
-
     }
 
-    private class JReply { public int errno; public string? msg; public string? data; }
+    private record JReply(int Errno, string Msg, string Data);
     private enum UserStatus
     {
         Idle = 1, ReadyToSendVoice = 2
     }
 
+    [GeneratedRegex(@"^说骚话 (\d{9,11})$", RegexOptions.Compiled)]
+    private static partial Regex PriReqPattern();
 }

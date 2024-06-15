@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace klbotlib.Modules;
+﻿namespace klbotlib.Modules;
 
 /// 消息回显模块
 public class EchoModule : Module

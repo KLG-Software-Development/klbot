@@ -1,7 +1,6 @@
 ﻿using klbotlib;
 using klbotlib.MessageDriver.DebugLocal;
 using klbotlib.Modules;
-using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KLBotUnitTest;

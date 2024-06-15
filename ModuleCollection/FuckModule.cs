@@ -1,44 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
 /// 嘴臭模块
-public class FuckModule : Module
+public class FuckModule : SingleTypeModule<MessagePlain>
 {
-    private readonly Regex? _patternRegex;
+    private Regex? _patternRegex;
 
     [JsonInclude]
-    private readonly string _pattern = "default_pattern";
+    private string Pattern { get; set; } = "default_pattern";
     [JsonInclude]
-    private readonly List<string> _sub = [];
+    private string[] Sub { get; set; } = [];
     [JsonInclude]
-    private List<string> _you = [];
+    private string[] You { get; set; } = [];
     [JsonInclude]
-    private List<string> _v = [];
+    private string[] V { get; set; } = [];
     [JsonInclude]
-    private List<string> _human = [];
+    private string[] Human { get; set; } = [];
     [JsonInclude]
-    private List<string> _organ = [];
+    private string[] Organ { get; set; } = [];
     [JsonInclude]
-    private List<string> _subfix = [];
+    private string[] Suffix { get; set; } = [];
     [JsonInclude]
-    private List<string> _adjOfOrgan = [];
+    private string[] AdjOfOrgan { get; set; } = [];
     [JsonInclude]
-    private List<string> _adv = [];
+    private string[] Adv { get; set; } = [];
     [JsonInclude]
-    private List<string> _connector = [];
+    private string[] Connector { get; set; } = [];
     [JsonInclude]
-    private List<string> _combine = [];
+    private string[] Combine { get; set; } = [];
     [JsonInclude]
-    private List<string> _stuff = [];
+    private string[] Stuff { get; set; } = [];
     [JsonInclude]
-    private List<string> _status = [];
+    private string[] Status { get; set; } = [];
 
     // TagMe开关. 决定嘴臭模块是否只处理@自身的消息（不适用于聊天模块。聊天模块永远只处理@自身的消息）
     [JsonInclude]
@@ -55,19 +51,17 @@ public class FuckModule : Module
 
     private static string? Pick(IList<string> a)
     {
-        if (a == null || a.Count == 0)
-            return null;
-        return a[Random.Shared.Next(a.Count)];
+        return a == null || a.Count == 0 ? null : a[Random.Shared.Next(a.Count)];
     }
     private string? GenerateFuck()
     {
         if (IsCascade)
         {
             StringBuilder sb = new();
-            sb.Append(SingleSentence());
+            _ = sb.Append(SingleSentence());
             while (Random.Shared.Next(100) > TermProb && sb.Length <= MaxLength)
             {
-                sb.AppendFormat(" {0}", SingleSentence());
+                _ = sb.AppendFormat(" {0}", SingleSentence());
             }
             return sb.ToString();
         }
@@ -80,17 +74,14 @@ public class FuckModule : Module
     /// <inheritdoc/>
     public sealed override string FriendlyName => "嘴臭模块";
     /// <inheritdoc/>
-    public sealed override Task<Message?> Processor(MessageContext _, Message msg)
+    public sealed override Task<Message?> Processor(MessageContext _, MessagePlain msg)
     {
-        if (_patternRegex == null)
-        if (IsTagMe)
-        {
-            if (msg is not MessagePackage pmsg || !pmsg.TargetIds.Contains(HostBot.SelfId) || !_patternRegex.IsMatch(pmsg.AsPlain()))
-                return (Message?)null;
-        }
-        else if (msg is not MessagePlain)
-            return Task.FromResult<Message?>(null);
-        return Task.FromResult<Message?>(GenerateFuck());
+        _patternRegex ??= new(Pattern, RegexOptions.Compiled);
+        return IsTagMe && !msg.ContainsTargetId(HostBot.SelfId)
+            ? Task.FromResult<Message?>(null)
+            : _patternRegex.IsMatch(msg.Text)
+                ? Task.FromResult<Message?>(GenerateFuck())
+                : Task.FromResult<Message?>(null);
     }
 
     /// <summary>
@@ -102,29 +93,29 @@ public class FuckModule : Module
         int mode = Random.Shared.Next(20);
         return mode switch
         {
-            0 => Pick(_sub) + Pick(_v) + Pick(_human),//(主)谓宾 (我)操你妈
-            1 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ),//(主)谓宾连接词器官 (我)操你妈了个比
-            2 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ),//(主)谓宾连接词形容词器官 (我)操你妈了个臭比
-            3 => Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ),//(主)谓副宾连接词形容词器官
-            4 => Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + " " + Pick(_v) + Pick(_human) + "的",
+            0 => Pick(Sub) + Pick(V) + Pick(Human),//(主)谓宾 (我)操你妈
+            1 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Organ),//(主)谓宾连接词器官 (我)操你妈了个比
+            2 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ),//(主)谓宾连接词形容词器官 (我)操你妈了个臭比
+            3 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ),//(主)谓副宾连接词形容词器官
+            4 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + " " + Pick(V) + Pick(Human) + "的",
             //(主)谓副宾连接词形容词器官 谓宾
-            5 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_combine) + Pick(_stuff),//(主)谓宾连接词称号玩意
-            6 => Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_combine) + Pick(_stuff),//(主)谓副宾连接词称号玩意
-            7 => Pick(_combine) + Pick(_stuff),//称号玩意
-            8 => Pick(_you) + Pick(_status) + Pick(_combine) + Pick(_stuff),//(你)(他妈)称号玩意
-            9 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ) + Pick(_subfix),//(主)谓宾连接词器官
-            10 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix),//(主)谓宾连接词形容词器官
-            11 => Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix),//(主)谓副宾连接词形容词器官
-            12 => Pick(_sub) + Pick(_v) + Pick(_adv) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix) + Pick(_v) + Pick(_human) + "的",
+            5 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Combine) + Pick(Stuff),//(主)谓宾连接词称号玩意
+            6 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(Combine) + Pick(Stuff),//(主)谓副宾连接词称号玩意
+            7 => Pick(Combine) + Pick(Stuff),//称号玩意
+            8 => Pick(You) + Pick(Status) + Pick(Combine) + Pick(Stuff),//(你)(他妈)称号玩意
+            9 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Organ) + Pick(Suffix),//(主)谓宾连接词器官
+            10 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix),//(主)谓宾连接词形容词器官
+            11 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix),//(主)谓副宾连接词形容词器官
+            12 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix) + Pick(V) + Pick(Human) + "的",
             //(主)谓副宾连接词形容词器官谓宾
-            13 => Pick(_human) + Pick(_connector) + Pick(_organ),//宾连接词器官
-            14 => Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ),//宾连接词形容词器官
-            15 => Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_v) + Pick(_human) + "的",
+            13 => Pick(Human) + Pick(Connector) + Pick(Organ),//宾连接词器官
+            14 => Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ),//宾连接词形容词器官
+            15 => Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(V) + Pick(Human) + "的",
             //谓副宾连接词形容词器官谓宾
-            16 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_combine) + Pick(_stuff),//(主)谓宾连接词称号玩意
-            17 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_organ) + Pick(_subfix),//谓宾连接词器官
-            18 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix),//谓宾连接词形容词器官
-            19 => Pick(_sub) + Pick(_v) + Pick(_human) + Pick(_connector) + Pick(_adjOfOrgan) + Pick(_organ) + Pick(_subfix) + " " + Pick(_v) + Pick(_human) + "的",
+            16 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Combine) + Pick(Stuff),//(主)谓宾连接词称号玩意
+            17 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Organ) + Pick(Suffix),//谓宾连接词器官
+            18 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix),//谓宾连接词形容词器官
+            19 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix) + " " + Pick(V) + Pick(Human) + "的",
             _ => "cnmd",
         };
     }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace klbotlib.Modules;
 
@@ -11,8 +8,8 @@ namespace klbotlib.Modules;
 public class 上号Module : SingleTypeModule<MessagePlain>
 {
     //应被忽略的不支持消息
-    private readonly HashSet<string> _downgradedMsgKeywords = new() { "[QQ红包]", "[视频游戏]", "你的QQ暂不支持查看视频短片"};
-    private const string _halReply = @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}！";
+    private readonly HashSet<string> _downgradedMsgKeywords = ["[QQ红包]", "[视频游戏]", "你的QQ暂不支持查看视频短片"];
+    private const string HalReply = @"蛤儿，我的蛤儿{\face:大哭}{\face:大哭}{\face:大哭}！";
     [JsonInclude]
     [HiddenStatus]
     private string _lastMsg = "";
@@ -55,7 +52,7 @@ public class 上号Module : SingleTypeModule<MessagePlain>
         else if (msgText.Contains("蛤儿") && DateTime.Now - _lastHal > _coolDownTime)
         {
             (bool success, _, string result) = await ModuleAccess.GetModule<ZombieeeModule>().TryFastGenerate();
-            output = success ? result + _halReply : _halReply;
+            output = success ? result + HalReply : HalReply;
             //刷新冷却时间
             _lastHal = DateTime.Now;
         }

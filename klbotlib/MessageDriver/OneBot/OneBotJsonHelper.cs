@@ -1,27 +1,23 @@
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace klbotlib.MessageDriver.OneBot;
 
 internal static class OneBotJsonHelper
 {
-    private static readonly JsonSerializerOptions _protocolDeserializeOptions = new()
+    private static readonly JsonSerializerOptions s_protocolDeserializeOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
     };
 
     public static T? Deserialize<T>(string json)
-        => JsonSerializer.Deserialize<T>(json, _protocolDeserializeOptions);
+        => JsonSerializer.Deserialize<T>(json, s_protocolDeserializeOptions);
 
     public static async Task<T?> DeserializeAsync<T>(Stream utf8Json)
-        => await JsonSerializer.DeserializeAsync<T>(utf8Json, _protocolDeserializeOptions);
+        => await JsonSerializer.DeserializeAsync<T>(utf8Json, s_protocolDeserializeOptions);
 
     private static string CompileMessageJson<T>(string type, T data)
     {
-        string dataJson = JsonSerializer.Serialize(data, _protocolDeserializeOptions);
+        string dataJson = JsonSerializer.Serialize(data, s_protocolDeserializeOptions);
         return $"{{\"type\":\"{type}\",\"data\":{dataJson}}}";
     }
 
@@ -39,10 +35,9 @@ internal static class OneBotJsonHelper
             return CompileMessageJson("record", new { file = msgVoice.Url });
         else if (msg is MessageImage msgImg)
         {
-            if (msgImg.IsFlashImage)
-                return CompileMessageJson("image", new { file = msgImg.Url, type = "flash" });
-            else
-                return CompileMessageJson("image", new { file = msgImg.Url });
+            return msgImg.IsFlashImage
+                ? CompileMessageJson("image", new { file = msgImg.Url, type = "flash" })
+                : CompileMessageJson("image", new { file = msgImg.Url });
         }
         return null;
     }

@@ -2,12 +2,8 @@
 using klbotlib.MessageDriver.DebugLocal;
 using klbotlib.Modules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace KLBotUnitTest;
 
@@ -30,7 +26,7 @@ public class TestStatusAutoSave
         bool initState = module.Enabled;
         long processed = bot.DiagData.ProcessedMessageCount;
         // 通过命令模块修改启用状态
-        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "##switch FuckModule");
+        _ = driver.AddReceivedMessage(new(-1, TestConst.TargetGroupId), "##switch FuckModule");
         Console.WriteLine("Waiting for message to be fully processed");
         while (bot.DiagData.ProcessedMessageCount == processed)
             continue;
@@ -40,16 +36,12 @@ public class TestStatusAutoSave
         Console.WriteLine("Waiting for file to be saved");
         while (new FileInfo(savePath).Length == 0)
             continue;
-        JsonNode? node = JsonSerializer.Deserialize<JsonNode>(File.ReadAllText(savePath));
-        if (node == null)
-            throw new JsonException($"Failed to deserialize {savePath} (1st)");
-        bool? enabledJson = (bool?)node["Enabled"];
-        if (enabledJson == null)
-            throw new JsonException("Cannot read Enabled field from json file. (1st)");
+        JsonNode? node = JsonSerializer.Deserialize<JsonNode>(File.ReadAllText(savePath)) ?? throw new JsonException($"Failed to deserialize {savePath} (1st)");
+        bool? enabledJson = (bool?)node["Enabled"] ?? throw new JsonException("Cannot read Enabled field from json file. (1st)");
         Assert.AreEqual(!initState, enabledJson, $"FuckModule.Enabled field in \"{savePath}\"should have changed (1st)");
 
         // 通过命令模块再次修改启用状态
-        driver.AddReceivedMessage(new (-1, TestConst.TargetGroupId), "##switch FuckModule");
+        _ = driver.AddReceivedMessage(new(-1, TestConst.TargetGroupId), "##switch FuckModule");
         Console.WriteLine("Waiting for message to be fully processed");
         while (bot.DiagData.ProcessedMessageCount == processed)
             continue;

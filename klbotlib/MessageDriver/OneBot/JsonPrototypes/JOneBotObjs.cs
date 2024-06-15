@@ -10,8 +10,8 @@ internal static class JOneBotMessageExtension
 {
     public static Message ToMessage(this JOneBotMessageObj jmsg)
     {
-        if (jmsg.Message == null)
-            throw new OneBotException($"Failed to build message package from JOneBotMessageObj {jmsg}");
-        return jmsg.Message.ToMessage();
+        return jmsg.Message == null
+            ? throw new OneBotException($"Failed to build message package from JOneBotMessageObj {jmsg}")
+            : jmsg.Message.ToMessage();
     }
 }

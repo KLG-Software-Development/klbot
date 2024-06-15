@@ -1,6 +1,5 @@
-using System;
-using System.Text.Json.Nodes;
 using klbotlib.Extensions;
+using System.Text.Json.Nodes;
 
 namespace klbotlib.MessageDriver.OneBot.JsonPrototypes;
 
@@ -22,12 +21,9 @@ internal static class JOneBotMessageContentExtension
                 return new MessageFace(content.Data.GetString("id"));
             case "image":
                 string url;
-                if (content.Data.ContainsKey("url"))
-                    url = content.Data.GetString("url");
-                else
-                    url = content.Data.GetString("file");
+                url = content.Data.ContainsKey("url") ? content.Data.GetString("url") : content.Data.GetString("file");
                 if (content.Data.ContainsKey("type"))
-                    return new MessageImage(url, true);;
+                    return new MessageImage(url, true); ;
                 return new MessageImage(url, false);
             default:
                 return Message.Empty;

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace klbotlib.Modules;
 
@@ -12,7 +10,7 @@ public class FlashGambleModule : Module
     private readonly Random _ro = new();
 
     [JsonInclude]
-    private int _prob = 5;
+    private readonly int _prob = 5;
 
     /// <inheritdoc/>
     public override string FriendlyName => "犯贱赌博模块";
@@ -38,7 +36,7 @@ public class FlashGambleModule : Module
             ModuleLog("未命中，忽略此条撤回或闪照");
             return null;
         }
-        long target = context.Type == MessageContextType.Group ? context.GroupId :HostBot.SelfId;
+        long target = context.Type == MessageContextType.Group ? context.GroupId : HostBot.SelfId;
         long msgId = recall.MessageId;
         long operatorId = context.UserId;
         Message originMsg = await Messaging.GetMessageFromId(target, msgId);

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -14,9 +11,9 @@ public class ResetModule : SingleTypeModule<MessagePlain>
     [JsonInclude]
     private readonly TimeSpan _smallTimeSpan = new(12, 0, 0);
     [JsonInclude]
-    private readonly Dictionary<long, DateTime> _lastUpdatedDays = new();
+    private readonly Dictionary<long, DateTime> _lastUpdatedDays = [];
     [JsonInclude]
-    private readonly Dictionary<long, TimeSpan> _bestRecords = new();
+    private readonly Dictionary<long, TimeSpan> _bestRecords = [];
 
     /// <inheritdoc/>
     public override string FriendlyName => "Reset模块";
@@ -31,17 +28,17 @@ public class ResetModule : SingleTypeModule<MessagePlain>
             string msgText = msg.Text.Trim().ToLower();
             if (msgText == "day?")
             {
-                if (!_lastUpdatedDays.ContainsKey(context.UserId))
+                if (!_lastUpdatedDays.TryGetValue(context.UserId, out DateTime value))
                     return (Message)"未找到数据。@机器人并发送“reset”或“day0”创建第一条数据";
                 else
                 {
-                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[context.UserId];
+                    TimeSpan dt = DateTime.Now - value;
                     return (Message)$"距离上次reset已经过去{TimeSpanToString(dt)}";
                 }
             }
-            else if (msgText == "reset" || msgText == "day0")
+            else if (msgText is "reset" or "day0")
             {
-                if (!_lastUpdatedDays.ContainsKey(context.UserId))
+                if (!_lastUpdatedDays.TryGetValue(context.UserId, out DateTime value))
                 {
                     _lastUpdatedDays.Add(context.UserId, DateTime.Now);
                     _bestRecords.Add(context.UserId, new TimeSpan());
@@ -49,7 +46,7 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                 }
                 else
                 {
-                    TimeSpan dt = DateTime.Now - _lastUpdatedDays[context.UserId];
+                    TimeSpan dt = DateTime.Now - value;
                     _lastUpdatedDays[context.UserId] = DateTime.Now;
                     //是否打破了记录
                     TimeSpan record = _bestRecords[context.UserId];
@@ -61,10 +58,9 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                     else
                     {
                         TimeSpan distanceToGoal = record - dt;
-                        if (distanceToGoal < _smallTimeSpan)
-                            return (Message)$"已重置数据。\n非常可惜，[{{\\tag:{context.UserId}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}";
-                        else
-                            return (Message)"已重置数据";
+                        return distanceToGoal < _smallTimeSpan
+                            ? (Task<Message?>)(Message)$"已重置数据。\n非常可惜，[{{\\tag:{context.UserId}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}"
+                            : (Task<Message?>)(Message)"已重置数据";
                     }
                 }
             }
@@ -73,19 +69,19 @@ public class ResetModule : SingleTypeModule<MessagePlain>
         }
         else
             return (Message?)null;
-   }
+    }
 
-    private string TimeSpanToString(TimeSpan ts)
+    private static string TimeSpanToString(TimeSpan ts)
     {
         StringBuilder sb = new();
         if (ts.Days != 0)
-            sb.AppendFormat("{0}天", ts.Days);
+            _ = sb.AppendFormat("{0}天", ts.Days);
         if (ts.Hours != 0)
-            sb.AppendFormat("{0}小时", ts.Hours);
+            _ = sb.AppendFormat("{0}小时", ts.Hours);
         if (ts.Minutes != 0)
-            sb.AppendFormat("{0}分钟", ts.Minutes);
+            _ = sb.AppendFormat("{0}分钟", ts.Minutes);
         if (ts.Seconds != 0)
-            sb.AppendFormat("{0}秒", ts.Seconds);
+            _ = sb.AppendFormat("{0}秒", ts.Seconds);
         return sb.ToString();
     }
 }

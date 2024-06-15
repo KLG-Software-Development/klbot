@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using klbotlib.Events;
 using klbotlib.Extensions;
 using klbotlib.MessageDriver.OneBot.JsonPrototypes;
@@ -25,7 +22,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     public MessageDriver_OneBotHttp(string httpServiceUrl, string webhookBindUrl, string token)
     {
         _caller = new(httpServiceUrl, token);
-        _webhookServer = new(webhookBindUrl, token);
+        _webhookServer = new(webhookBindUrl);
         // 注册webhook事件处理器
         _webhookServer.OneBotEventReceived += OneBotEventLog;
         _webhookServer.OneBotEventReceived += OneBotEventDispatch;
@@ -46,7 +43,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
                 var time = e.Time.AsUnixTimestamp();
                 var context = GetOneBotMessageEventContext(e.RawEventData);
                 var msg = BuildMessageFromEvent(e);
-                OnMessageReceived.Invoke(this, new(time, context, msg));
+                _ = OnMessageReceived.Invoke(this, new(time, context, msg));
                 return;
             default:
                 this.Log($"Dispatcher not configured for post type [{e.PostType}]");
@@ -58,38 +55,26 @@ public class MessageDriver_OneBotHttp : IMessageDriver
     private static Message BuildMessageFromEvent(OneBotEventArgs e)
     {
         var data = e.RawEventData;
-        if (data.Message == null)
-            throw new Exception($"Failed to build Message: Invalid deserialized data: {data}");
-        return new MessagePackage(data.Message.Select(msg => msg.ToMessage())).Collapse();
+        return data.Message == null
+            ? throw new Exception($"Failed to build Message: Invalid deserialized data: {data}")
+            : new MessagePackage(data.Message.Select(msg => msg.ToMessage())).Collapse();
     }
 
     // 推导message事件的上下文类型
     private static MessageContext GetOneBotMessageEventContext(JOneBotEvent rawEvent)
     {
-        MessageContextType type;
-        switch (rawEvent.MessageType)
+        var type = rawEvent.MessageType switch
         {
-            case "group":
-                type = MessageContextType.Group;
-                break;
-            case "private":
-                switch (rawEvent.SubType)
-                {
-                    case "friend":
-                        type = MessageContextType.Private;
-                        break;
-                    case "group":
-                        type = MessageContextType.Temp;
-                        break;
-                    case null:
-                        throw new Exception($"OneBotEvent: Unexpected private message sub_type is null");
-                    default:
-                        throw new Exception($"OneBotEvent: Unknown private message sub_type \"{rawEvent.SubType}\"");
-                }
-                break;
-            default:
-                throw new Exception($"OneBotEvent: Unknown message_type \"{rawEvent.MessageType}\"");
-        }
+            "group" => MessageContextType.Group,
+            "private" => rawEvent.SubType switch
+            {
+                "friend" => MessageContextType.Private,
+                "group" => MessageContextType.Temp,
+                null => throw new Exception($"OneBotEvent: Unexpected private message sub_type is null"),
+                _ => throw new Exception($"OneBotEvent: Unknown private message sub_type \"{rawEvent.SubType}\""),
+            },
+            _ => throw new Exception($"OneBotEvent: Unknown message_type \"{rawEvent.MessageType}\""),
+        };
         return new MessageContext(type, rawEvent.UserId, rawEvent.GroupId);
     }
 
@@ -98,7 +83,7 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         try
         {
             var response = await _caller.Call<TResponse>(uri, paramJson);
-            if (response.Data == null)
+            if (response == null || response.Data == null)
                 this.Log($"Invalid response: {response}");
         }
         catch (Exception ex)
@@ -112,14 +97,12 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         try
         {
             var response = await _caller.Call<TResponse>(uri, paramJson);
-            if (response.Data == null)
+            if (response == null || response.Data == null)
             {
                 this.Log($"Invalid response: {response}");
                 return default;
             }
-            if (extractor == null)
-                return default;
-            return extractor(response.Data);
+            return extractor == null ? default : extractor(response.Data);
         }
         catch (Exception ex)
         {
@@ -171,13 +154,13 @@ public class MessageDriver_OneBotHttp : IMessageDriver
         switch (context)
         {
             case MessageContextType.Private:
-                await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{\"user_id\":{userId},\"message\":{msgJson}}}", null);
+                _ = await CallApiAsync<JOneBotSentMessage, long>("send_private_msg", $"{{\"user_id\":{userId},\"message\":{msgJson}}}", null);
                 return;
             case MessageContextType.Group:
-                await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{\"group_id\":{groupId},\"message\":{msgJson}}}", null);
+                _ = await CallApiAsync<JOneBotSentMessage, long>("send_group_msg ", $"{{\"group_id\":{groupId},\"message\":{msgJson}}}", null);
                 return;
             case MessageContextType.Temp:
-                await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{\"user_id\":{userId},\"group_id\":{groupId},\"message\":{msgJson}}}", null);
+                _ = await CallApiAsync<JOneBotSentMessage, long>("send_msg", $"{{\"user_id\":{userId},\"group_id\":{groupId},\"message\":{msgJson}}}", null);
                 return;
             default:
                 throw new Exception($"Unsupported message context: {context}");

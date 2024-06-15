@@ -1,10 +1,5 @@
 ﻿#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -13,15 +8,14 @@ namespace klbotlib.Modules;
 /// </summary>
 public class RollinModule : SingleTypeModule<MessagePackage>
 {
-    private static readonly Random _ro = new();
-    private static readonly StringBuilder _sb = new();
+    private static readonly Random s_ro = new();
     [JsonInclude]
     private bool _hasRollStarted = false;
     [JsonInclude]
     [HiddenStatus]
-    private readonly HashSet<long> _hash = new();
+    private readonly HashSet<long> _hash = [];
     [JsonInclude]
-    private readonly List<long> _list = new();
+    private readonly List<long> _list = [];
     [JsonInclude]
     private long _owner = -1;
 
@@ -47,8 +41,8 @@ public class RollinModule : SingleTypeModule<MessagePackage>
             else
             {
                 List<long> targets = [.. msg.TargetIds];
-                targets.Remove(HostBot.SelfId);
-                int index = _ro.Next(targets.Count);
+                _ = targets.Remove(HostBot.SelfId);
+                int index = s_ro.Next(targets.Count);
                 return $"抽奖结果为：{targets[index]}";
             }
         }
@@ -77,10 +71,10 @@ public class RollinModule : SingleTypeModule<MessagePackage>
                 _hasRollStarted = false;
                 return "无人参加，抽奖已直接结束";
             }
-            List<Message> msgs = [ "抽奖开始。参与者列表：\n" ];
+            List<Message> msgs = ["抽奖开始。参与者列表：\n"];
             msgs.AddRange(_list.Select(id => new MessageAt(id)));
             await Messaging.ReplyMessage(context, new MessagePackage(msgs));
-            int index = _ro.Next(_list.Count);
+            int index = s_ro.Next(_list.Count);
             long winner = _list[index];
             //抽奖结束，清理与重置
             _hash.Clear();

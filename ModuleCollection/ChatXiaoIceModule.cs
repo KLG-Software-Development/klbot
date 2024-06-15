@@ -1,11 +1,12 @@
-﻿using klbotlib.Modules.ModuleUtils;
-using System;
-using System.Linq;
-using System.Net.Http;
+﻿#pragma warning disable IDE0044 // 添加只读修饰符
+#pragma warning disable IDE0052 // 删除未读的私有成员
+#pragma warning disable IDE1006 // 命名样式
+#pragma warning disable IDE0051 // 删除未使用的私有成员
+
+using klbotlib.Modules.ModuleUtils;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace klbotlib.Modules;
 
@@ -13,16 +14,16 @@ namespace klbotlib.Modules;
 [Obsolete("Bing小冰网页端目前已无法正常使用，因此此模块将不能正常工作")]
 public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
 {
-    private const string _digits = "0123456789abcdef";
+    private const string Digits = "0123456789abcdef";
     [JsonInclude]
-    private int _bitLength = 256;
+    private readonly int _bitLength = 256;
     [JsonInclude]
-    private string _conversationId = "e67a1a2b-3dd8-4208-a733-3911b4791b38";
+    private readonly string _conversationId = "e67a1a2b-3dd8-4208-a733-3911b4791b38";
     [JsonInclude]
-    private string _traceId = "63d15134a3184bc78a8422efb9b4836a";
+    private readonly string _traceId = "63d15134a3184bc78a8422efb9b4836a";
     [JsonInclude]
-    private string _password = "3d9d5f16-5df0-43d7-902e-19274eecdc41";
-    private static readonly byte[] _sBox = {
+    private readonly string _password = "3d9d5f16-5df0-43d7-902e-19274eecdc41";
+    private static readonly byte[] _sBox = [
         0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
         0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
         0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
@@ -39,8 +40,8 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
         0x70,0x3e,0xb5,0x66,0x48,0x03,0xf6,0x0e,0x61,0x35,0x57,0xb9,0x86,0xc1,0x1d,0x9e,
         0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
         0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16
-    };
-    private static readonly byte[,] _rCon = 
+    ];
+    private static readonly byte[,] _rCon =
     {
         { 0, 0, 0, 0},
         { 1, 0, 0, 0},
@@ -55,7 +56,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
         { 54, 0, 0, 0}
     };
 
-    private const string _url = "https://cn.bing.com/english/zochatv2?cc=cn&ensearch=0";
+    private const string Url = "https://cn.bing.com/english/zochatv2?cc=cn&ensearch=0";
     private readonly HttpHelper _helper = new();
     private readonly StringBuilder _sb = new();
     private readonly Random _ro = new();
@@ -81,7 +82,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
             HttpRequestMessage request = new()
             {
                 Method = HttpMethod.Post,
-                RequestUri = new Uri(_url),
+                RequestUri = new Uri(Url),
                 Content = jsonAsPlainText
             };
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Arch"));
@@ -91,13 +92,13 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Model"));
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Platform"));
             request.Headers.AcceptCharset.Add(new("Sec-CH-UA-Platform-Version"));
-            request.Headers.Accept.Add(new ("*/*"));
+            request.Headers.Accept.Add(new("*/*"));
             request.Headers.AcceptLanguage.ParseAdd(new("zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2"));
             request.Headers.AcceptEncoding.ParseAdd(new("br"));
             request.Headers.Referrer = new Uri("https://www.bing.com/search?q=c&qs=HS&sc=8-0&cvid=2B5E29D953D249AB9AADB000E841C382&FORM=QBLH&sp=1");
             ;
-            HttpResponseMessage response = await _helper.InnerClient.PostAsync(_url, jsonAsPlainText);
-            response.EnsureSuccessStatusCode();
+            HttpResponseMessage response = await _helper.InnerClient.PostAsync(Url, jsonAsPlainText);
+            _ = response.EnsureSuccessStatusCode();
             string reply = response.Content.ReadAsStringAsync().Result;
             JChatterBotReply? jreply = JsonSerializer.Deserialize<JChatterBotReply>(reply);
             if (jreply == null)
@@ -118,7 +119,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
     {
         plain = StringPreprocess(plain);
         password = StringPreprocess(password);
-        if (!(bitLength == 128 || bitLength == 192 || bitLength == 256))
+        if (bitLength is not (128 or 192 or 256))
             throw new ArgumentException("不支持的AES位宽");
         byte[] buffer = Encoding.ASCII.GetBytes(password)[..32];
         for (int i = 0; i < buffer.Length; i++)
@@ -134,15 +135,15 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
         long tt = k % 1000;
         long it = k / 1000;
         int rt = (int)(_ro.NextDouble() * 65535);
-        for (int f = 0; f < 2; f++) 
-            h[f] = RshU(tt, f * 8 & 255);
-        for (int f = 0; f < 2; f++) 
-            h[f + 2] = RshU(rt, f * 8 & 255);
-        for (int f = 0; f < 4; f++) 
-            h[f + 4] = RshU(it, f * 8 & 255);
-        _sb.Clear();
+        for (int f = 0; f < 2; f++)
+            h[f] = RshU(tt, (f * 8) & 255);
+        for (int f = 0; f < 2; f++)
+            h[f + 2] = RshU(rt, (f * 8) & 255);
+        for (int f = 0; f < 4; f++)
+            h[f + 4] = RshU(it, (f * 8) & 255);
+        _ = _sb.Clear();
         for (int f = 0; f < 8; f++)
-            _sb.Append((char)h[f]);
+            _ = _sb.Append((char)h[f]);
         string w = _sb.ToString();
         var ut = R_ExtendKey(l);
         int b = Convert.ToInt32(Math.Ceiling(plain.Length / 16.0));
@@ -150,17 +151,17 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
         for (int i = 0; i < b; i++)
         {
             for (int e = 0; e < 4; e++)
-                h[15 - e] = RshU(i, e * 8 & 255);
+                h[15 - e] = RshU(i, (e * 8) & 255);
             for (int e = 0; e < 4; e++)
                 h[11 - e] = RshU(i / 4294967296, e * 8);
             var ft = I(h, ut);
-            int g = i < b - 1 
-                ? 16 
-                : (plain.Length - 1) % 16 + 1;
+            int g = i < b - 1
+                ? 16
+                : ((plain.Length - 1) % 16) + 1;
             char[] p = new char[g];
             for (int f = 0; f < g; f++)
             {
-                p[f] = (char)(ft[f] ^ plain[i * 16 + f]);
+                p[f] = (char)(ft[f] ^ plain[(i * 16) + f]);
                 //p[f] = String.fromCharCode(p[f]);
             }
             d[i] = new string(p);
@@ -171,24 +172,24 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
 
     private string StringPreprocess(string s)
     {
-        _sb.Clear();
+        _ = _sb.Clear();
         char[] cs = s.ToCharArray();
         for (int i = 0; i < s.Length; i++)
         {
             char c = cs[i];
-            if (0x0080 <= c && c <= 0x07ff)
+            if (c is >= (char)0x0080 and <= (char)0x07ff)
             {
-                _sb.Append((char)(192 | c >> 6));
-                _sb.Append((char)(128 | c & 63));
+                _ = _sb.Append((char)(192 | (c >> 6)));
+                _ = _sb.Append((char)(128 | (c & 63)));
             }
-            else if (0x0800 <= c && c <= 0xffff)
+            else if (c is >= (char)0x0800 and <= (char)0xffff)
             {
-                _sb.Append((char)(224 | c >> 12));
-                _sb.Append((char)(128 | c >> 6 & 63));
-                _sb.Append((char)(128 | c & 63));
+                _ = _sb.Append((char)(224 | (c >> 12)));
+                _ = _sb.Append((char)(128 | ((c >> 6) & 63)));
+                _ = _sb.Append((char)(128 | (c & 63)));
             }
             else
-                _sb.Append(c);
+                _ = _sb.Append(c);
         }
         return _sb.ToString();
     }
@@ -250,7 +251,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
         for (int u = 0; u < 4; u++)
         {
             for (int f = 0; f < r; f++)
-                keyArraySlice4[u, f] ^= exKeyArray[i * 4 + f, u];
+                keyArraySlice4[u, f] ^= exKeyArray[(i * 4) + f, u];
         }
         return keyArraySlice4;
     }
@@ -277,12 +278,12 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
     }
     private string V_ToHexString(string n)
     {
-        _sb.Clear();
-        _sb.Append("0x");
+        _ = _sb.Clear();
+        _ = _sb.Append("0x");
         for (int t = 0; t < n.Length; t++)
         {
-            _sb.Append(_digits[n[t] >> 4]);
-            _sb.Append(_digits[n[t] & 15]);
+            _ = _sb.Append(Digits[n[t] >> 4]);
+            _ = _sb.Append(Digits[n[t] & 15]);
         }
         return _sb.ToString();
     }
@@ -291,7 +292,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
     //不知道什么意思的函数
     private byte[] I(byte[] keyArray, byte[,] exKeyArray)
     {
-        int l = exKeyArray.GetLength(0) / 4 - 1;
+        int l = (exKeyArray.GetLength(0) / 4) - 1;
         byte[,] keyArraySlice4 = new byte[4, 4];  //r
         //keyArray切成4片
         for (var i = 0; i < 4 * 4; i++)
@@ -335,8 +336,8 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
             for (int u = 0; u < 4; u++)
             {
                 t[u] = n[u, i];
-                r[u] = (n[u, i] & 128) != 0 
-                    ? (byte)(n[u, i] << 1 ^ 283) 
+                r[u] = (n[u, i] & 128) != 0
+                    ? (byte)((n[u, i] << 1) ^ 283)
                     : (byte)(n[u, i] << 1);
             }
             n[0, i] = (byte)(r[0] ^ t[1] ^ r[1] ^ t[2] ^ t[3]);
@@ -349,28 +350,18 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
     private byte RshU(dynamic b, int n)
         => (byte)((uint)b >> n);
 
-    private class JChatterBotRequest
+    private class JChatterBotRequest(string conversationId, JQuery query, string traceId)
     {
-        string conversationId;
-        JQuery query;
-        string traceId;
-        #pragma warning disable CS0414 //理由：虽然该字段未被使用，但是为了保证服务器认可JSON选择保留
+        string conversationId = conversationId;
+        JQuery query = query;
+        string traceId = traceId;
+#pragma warning disable CS0414 //理由：虽然该字段未被使用，但是为了保证服务器认可JSON选择保留
         string fromfrom = "chatbox";
-        #pragma warning restore CS0414
-        public JChatterBotRequest(string conversationId, JQuery query, string traceId)
-        {
-            this.conversationId = conversationId;
-            this.query = query;
-            this.traceId = traceId;
-        }
+#pragma warning restore CS0414
     }
-    private class JQuery
+    private class JQuery(string normalizedQuery)
     {
-        string NormalizedQuery;
-        public JQuery(string normalizedQuery)
-        {
-            NormalizedQuery = normalizedQuery;
-        }
+        string NormalizedQuery = normalizedQuery;
     }
     private class JChatterBotReply
     {
