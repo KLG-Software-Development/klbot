@@ -93,16 +93,16 @@ public class FuckModule : SingleTypeModule<MessagePlain>
         int mode = Random.Shared.Next(20);
         return mode switch
         {
-            0 => Pick(Sub) + Pick(V) + Pick(Human),//(主)谓宾 (我)操你妈
-            1 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Organ),//(主)谓宾连接词器官 (我)操你妈了个比
-            2 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ),//(主)谓宾连接词形容词器官 (我)操你妈了个臭比
+            0 => Pick(Sub) + Pick(V) + Pick(Human),//(主)谓宾
+            1 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Organ),//(主)谓宾连接词器官
+            2 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ),//(主)谓宾连接词形容词器官
             3 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ),//(主)谓副宾连接词形容词器官
             4 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + " " + Pick(V) + Pick(Human) + "的",
             //(主)谓副宾连接词形容词器官 谓宾
             5 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Combine) + Pick(Stuff),//(主)谓宾连接词称号玩意
             6 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(Combine) + Pick(Stuff),//(主)谓副宾连接词称号玩意
             7 => Pick(Combine) + Pick(Stuff),//称号玩意
-            8 => Pick(You) + Pick(Status) + Pick(Combine) + Pick(Stuff),//(你)(他妈)称号玩意
+            8 => Pick(You) + Pick(Status) + Pick(Combine) + Pick(Stuff),//(你)(XX)称号玩意
             9 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(Organ) + Pick(Suffix),//(主)谓宾连接词器官
             10 => Pick(Sub) + Pick(V) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix),//(主)谓宾连接词形容词器官
             11 => Pick(Sub) + Pick(V) + Pick(Adv) + Pick(Human) + Pick(Connector) + Pick(AdjOfOrgan) + Pick(Organ) + Pick(Suffix),//(主)谓副宾连接词形容词器官
