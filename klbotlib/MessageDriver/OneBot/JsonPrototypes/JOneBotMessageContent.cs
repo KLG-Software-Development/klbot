@@ -16,7 +16,10 @@ internal static class JOneBotMessageContentExtension
             case "text":
                 return new MessagePlain(content.Data.GetString("text"));
             case "at":
-                return new MessageAt(content.Data.GetLong("id"));
+                string qqStr = content.Data.GetString("qq");
+                if (!long.TryParse(qqStr, out long qq)) // 暂不支持非纯数字id
+                    throw new NotImplementedException($"Non-numeric ID {nameof(MessageAt)} is not supported");
+                return new MessageAt(qq);
             case "face":
                 return new MessageFace(content.Data.GetString("id"));
             case "image":
