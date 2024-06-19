@@ -12,7 +12,7 @@ namespace klbotlib.Modules
     public class InvisibleModule : SingleTypeModule<MessagePlain>
     {
         [JsonInclude]
-        private readonly Invisible ruan = new();
+        private Invisible ruan { get; set; } = new();
 
         public override bool UseSignature => false;
         public override Task<Message?> Processor(MessageContext context, MessagePlain msg)

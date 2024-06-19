@@ -9,14 +9,14 @@ namespace klbotlib.Modules;
 public class RollinModule : SingleTypeModule<MessagePackage>
 {
     [JsonInclude]
-    private bool _hasRollStarted = false;
+    private bool HasRollStarted { get; set; } = false;
     [JsonInclude]
     [HiddenStatus]
-    private readonly HashSet<long> _hash = [];
+    private HashSet<long> Hash { get; set; } = [];
     [JsonInclude]
-    private readonly List<long> _list = [];
+    private List<long> List { get; set; } = [];
     [JsonInclude]
-    private long _owner = -1;
+    private long Owner { get; set; } = -1;
 
     public override string FriendlyName => "抽奖模块";
     public override bool UseSignature => false;
@@ -31,11 +31,11 @@ public class RollinModule : SingleTypeModule<MessagePackage>
         {
             if (msg.TargetIds.Count == 1)  //只@了机器人，主动加入
             {
-                if (_hasRollStarted)
-                    return $"当前已经有尚未结束的抽奖。发起人：[{_owner}]";
-                _hasRollStarted = true;
-                _owner = context.UserId;
-                return $"用户 [{_owner}] 发起了一次抽奖。@机器人并发送“加入”参与抽奖";
+                if (HasRollStarted)
+                    return $"当前已经有尚未结束的抽奖。发起人：[{Owner}]";
+                HasRollStarted = true;
+                Owner = context.UserId;
+                return $"用户 [{Owner}] 发起了一次抽奖。@机器人并发送“加入”参与抽奖";
             }
             else
             {
@@ -47,39 +47,39 @@ public class RollinModule : SingleTypeModule<MessagePackage>
         }
         else if (text == "加入")
         {
-            if (!_hasRollStarted)
+            if (!HasRollStarted)
                 return "当前没有进行中的抽奖";
-            if (_hash.Add(context.UserId))
+            if (Hash.Add(context.UserId))
             {
-                _list.Add(context.UserId);
-                return $"用户 {{\\tag:{context.UserId}}} 加入了抽奖。\n当前参与人数：{_hash.Count}";
+                List.Add(context.UserId);
+                return $"用户 {{\\tag:{context.UserId}}} 加入了抽奖。\n当前参与人数：{Hash.Count}";
             }
             else
                 return $"你已经加入过了，{ModuleAccess.GetModule<FuckModule>().SingleSentence()}";
         }
         else if (text == "开始抽奖")
         {
-            if (context.UserId != _owner)
+            if (context.UserId != Owner)
                 return @$"只有抽奖发起人可以控制抽奖进程";
-            if (_list.Count == 0)
+            if (List.Count == 0)
             {
                 //抽奖结束，清理与重置
-                _hash.Clear();
-                _list.Clear();
-                _owner = -1;
-                _hasRollStarted = false;
+                Hash.Clear();
+                List.Clear();
+                Owner = -1;
+                HasRollStarted = false;
                 return "无人参加，抽奖已直接结束";
             }
             List<Message> msgs = ["抽奖开始。参与者列表：\n"];
-            msgs.AddRange(_list.Select(id => new MessageAt(id)));
+            msgs.AddRange(List.Select(id => new MessageAt(id)));
             await Messaging.ReplyMessage(context, new MessagePackage(msgs));
-            int index = Random.Shared.Next(_list.Count);
-            long winner = _list[index];
+            int index = Random.Shared.Next(List.Count);
+            long winner = List[index];
             //抽奖结束，清理与重置
-            _hash.Clear();
-            _list.Clear();
-            _owner = -1;
-            _hasRollStarted = false;
+            Hash.Clear();
+            List.Clear();
+            Owner = -1;
+            HasRollStarted = false;
             return @$"抽奖结果为：{{\tag:{winner}}}";
         }
         else

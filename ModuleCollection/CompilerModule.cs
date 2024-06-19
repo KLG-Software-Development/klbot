@@ -19,16 +19,16 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
             { "c#", "cs"},
             { "java", "java"},
             { "cs", "cs"},
-        };
+    };
     private static readonly HashSet<string> s_supportedLocalLanguages = [];
     private static readonly StringBuilder s_sb = new();
     private readonly string _onlineCommand = "$编译";
     private readonly string _localCommand = "$本地编译";
 
     [JsonInclude]
-    private readonly string _urlA = "https://tool.runoob.com/compile2.php";
+    private string? UrlA { get; set; }
     [JsonInclude]
-    private readonly string _token = "4381fe197827ec87cbac9552f14ec62a";
+    private string? Token { get; set; }
 
     ///<inheritdoc/>
     public override string FriendlyName => "编译模块";
@@ -68,7 +68,13 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         if (fileExt == null)
             return $"不支持语言\"{language}\"";
         string code = text[ptr..];
-        string response = await _httpHelper.PostFormUrlEncodedAsync(_urlA, BuildPostBody(language, fileExt, code));
+        if (UrlA == null)
+        {
+            string msg = "未加载有效API URL，无法继续执行，将退出";
+            ModuleLog(msg);
+            return msg;
+        }
+        string response = await _httpHelper.PostFormUrlEncodedAsync(UrlA, BuildPostBody(language, fileExt, code));
         ModuleLog($"Response: {response}");
         JReply? jreply = JsonSerializer.Deserialize<JReply>(response) ?? throw new JsonException("返回结果解析失败：产生了null结果");
         _ = s_sb.Clear();
@@ -88,7 +94,7 @@ public class CompilerModule : SingleTypeModule<MessagePlain>
         _ = s_sb.Append("code=");
         _ = s_sb.Append(code);
         _ = s_sb.Append("&token=");
-        _ = s_sb.Append(_token);
+        _ = s_sb.Append(Token);
         _ = s_sb.Append("&language=");
         _ = s_sb.Append(language);
         _ = s_sb.Append("&fileext=");
