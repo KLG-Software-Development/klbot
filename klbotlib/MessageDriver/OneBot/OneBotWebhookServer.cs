@@ -23,38 +23,37 @@ internal class OneBotWebhookServer(string bindAddr) : IKLBotLogUnit
             var request = context.Request;
             if (request.ContentType != "application/json")
             {
-                this.Log($"Bad ContentType: \"{request.ContentType}\"");
-                goto error;
+                await ResponseWithError(context, $"Bad ContentType: \"{request.ContentType}\"");
+                goto endResponse;
             }
             try
             {
                 var jEvent = await OneBotJsonHelper.DeserializeAsync<JOneBotEvent>(context.Request.InputStream).ConfigureAwait(false);
                 if (jEvent == null)
                 {
-                    this.Log($"Bad content");
-                    goto error;
+                    await ResponseWithError(context, "Bad content");
+                    goto endResponse;
                 }
                 this.DebugLog(jEvent.ToString());
                 ProcessEvent(jEvent);
             }
             catch (Exception ex)
             {
-                using StreamWriter sw = new(context.Response.OutputStream);
-                await sw.WriteLineAsync(ex.ToString());
-                this.Log(ex.ToString());
-                sw.Close();
-                goto error;
+                await ResponseWithError(context, ex.ToString());
             }
-            context.Response.StatusCode = 204;
+        endResponse:
             context.Response.Close();
-            continue;
-        error:
-            this.DebugLog("500 fuckoff");
-            context.Response.StatusCode = 500;
-            context.Response.StatusDescription = "FUCKOFF";
-            context.Response.Close();
-            continue;
         }
+    }
+
+    private async Task ResponseWithError(HttpListenerContext context, string message)
+    {
+        this.Log($"Webhook: {message}");
+        context.Response.StatusCode = 500;
+        context.Response.StatusDescription = "FUCKOFF";
+        using StreamWriter sw = new(context.Response.OutputStream);
+        await sw.WriteLineAsync(message);
+        sw.Close();
     }
 
     private void ProcessEvent(JOneBotEvent rawEvent)
