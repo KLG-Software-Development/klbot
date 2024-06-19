@@ -28,6 +28,8 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
         {
             _lastActivateTime = DateTime.Now;
             await Messaging.ReplyMessage(context, "早安！");
+            if (_urlList.Count == 0)
+                return "抱歉，由于未装载URL列表，今日PLJJ图片无法发送";
             (bool success, string url) = await GetRandomUrl("图片", context, silent: true);
             return success ? new MessageImage(url, true) : (Message)$"已重试{_maxRetryCount}次。运气太差，放弃获取";
         }
