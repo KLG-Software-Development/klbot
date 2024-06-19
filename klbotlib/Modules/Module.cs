@@ -372,6 +372,7 @@ public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAc
         if (!IsAttached || _hostBot == null || HostBot == null)
             throw new Exception("此模块尚未附加到宿主KLBot上，无法完成指定操作");
     }
+
     //处理并调用KLBot回复
     internal async Task<bool> ProcessMessageAndReply(MessageContext context, Message msg)
     {
@@ -389,7 +390,7 @@ public abstract class Module : IFileAPI, IMessagingAPI, IOperationAPI, IModuleAc
             if (output is not MessageEmpty)
             {
                 if (UseSignature)
-                    output = new MessagePackage($"[{this}]\n", output);
+                    output = MessagePackage.Join($"[{this}]\n", output);
                 await _hostBot.ReplyMessage(this, context, output);
                 ModuleLog($"已调用回复接口: {output}");
             }

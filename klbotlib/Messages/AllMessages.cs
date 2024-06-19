@@ -91,6 +91,21 @@ public record MessagePackage : Message, IReadOnlyList<Message>
                 _targetIds.Add(amsg.TargetId);
         }
     }
+    /// <summary>
+    /// 串联若干个消息包
+    /// </summary>
+    public static MessagePackage Join(params Message[] msgs)
+    {
+        List<Message> allMsgs = [];
+        foreach (var msg in msgs)
+        {
+            if (msg is MessagePackage msgPkg)
+                allMsgs.AddRange(msgPkg);
+            else
+                allMsgs.Add(msg);
+        }
+        return new MessagePackage(allMsgs);
+    }
 
     /// <inheritdoc/>
     public override string ToString()

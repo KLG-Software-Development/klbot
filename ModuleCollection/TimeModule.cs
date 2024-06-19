@@ -21,7 +21,7 @@ public class TimeModule : SingleTypeModule<MessagePlain>
     public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
     {
         if (msg.Text == "报时")
-            return new MessagePackage(DateTime.UtcNow.AddHours(_timeZone).ToString(), new MessageFace("0"));
+            return new MessagePackage(DateTime.UtcNow.AddHours(_timeZone).ToString(), new MessageFace("5"));
         else if (msg.Text.StartsWith("设置时区为"))
         {
             if (int.TryParse(msg.Text.AsSpan(5), out int result))
