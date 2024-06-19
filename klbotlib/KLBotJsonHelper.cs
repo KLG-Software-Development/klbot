@@ -5,7 +5,10 @@ using System.Text.Json;
 
 namespace klbotlib.Json;
 
-internal static class KLBotJsonHelper
+/// <summary>
+/// 提供JSON帮助
+/// </summary>
+public static class KLBotJsonHelper
 {
     internal static MediaTypeHeaderValue JsonMime { get; } = MediaTypeHeaderValue.Parse("application/json");
     internal static StringContent CreateAsJson(string s)
@@ -39,6 +42,22 @@ internal static class KLBotJsonHelper
     {
         WriteIndented = false,
     };
+
+    // 默认JSON反序列化配置：包含库
+    private static readonly JsonSerializerOptions s_defaultDeserializeOptions = new()
+    {
+        IncludeFields = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        AllowTrailingCommas = true,
+    };
+
+    /// <summary>
+    /// 使用默认配置反序列化
+    /// </summary>
+    public static T? DeserializeDefault<T>(string json)
+    {
+        return JsonSerializer.Deserialize<T>(json, s_defaultDeserializeOptions);
+    }
 
     internal static string SerializeNetworkData<T>(T obj)
         => JsonSerializer.Serialize(obj, s_networkOptions);

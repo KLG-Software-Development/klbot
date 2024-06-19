@@ -1,4 +1,5 @@
-﻿using klbotlib.Modules.ModuleUtils;
+﻿using klbotlib.Json;
+using klbotlib.Modules.ModuleUtils;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -24,7 +25,7 @@ public partial class ChatQYKModule : SingleTypeModule<MessagePackage>
         if (msg.Count != 2 || !msg.ContainsTargetId(HostBot.SelfId))
             return null;
         string jreply = await s_helper.GetStringAsync(Url + msg.AsPlain());
-        ChatterBotReply? reply = JsonSerializer.Deserialize<ChatterBotReply>(jreply);
+        ChatterBotReply? reply = KLBotJsonHelper.DeserializeDefault<ChatterBotReply>(jreply);
         return reply?.FormattedContent();
     }
 

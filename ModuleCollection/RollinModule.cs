@@ -42,7 +42,7 @@ public class RollinModule : SingleTypeModule<MessagePackage>
                 List<long> targets = [.. msg.TargetIds];
                 _ = targets.Remove(HostBot.SelfId);
                 int index = Random.Shared.Next(targets.Count);
-                return $"抽奖结果为：{targets[index]}";
+                return new MessagePackage("抽奖结果为：", new MessageAt(targets[index]));
             }
         }
         else if (text == "加入")
@@ -80,9 +80,14 @@ public class RollinModule : SingleTypeModule<MessagePackage>
             _list.Clear();
             _owner = -1;
             _hasRollStarted = false;
-            return @$"抽奖结果为：{{\tag:{winner}}}";
+            return new MessagePackage("抽奖结果为：", new MessageAt(winner));
         }
         else
             return null;
+    }
+
+    private static void Roll()
+    {
+        
     }
 }
