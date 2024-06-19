@@ -6,7 +6,7 @@ namespace klbotlib.Modules;
 /// <summary>
 /// 上号模块
 /// </summary>
-public class ResetModule : SingleTypeModule<MessagePlain>
+public class ResetModule : SingleTypeModule<MessagePackage>
 {
     [JsonInclude]
     private readonly TimeSpan _smallTimeSpan = new(12, 0, 0);
@@ -21,11 +21,11 @@ public class ResetModule : SingleTypeModule<MessagePlain>
     public override string HelpInfo => "@机器人并：\n发送“day?”可以查询数据；发送“reset”或“day0”可以重置数据";
 
     /// <inheritdoc/>
-    public override Task<Message?> Processor(MessageContext context, MessagePlain msg)
+    public override Task<Message?> Processor(MessageContext context, MessagePackage msg)
     {
         if (msg.ContainsTargetId(HostBot.SelfId))
         {
-            string msgText = msg.Text.Trim().ToLower();
+            string msgText = msg.AsPlain().Trim().ToLower();
             if (msgText == "day?")
             {
                 if (!_lastUpdatedDays.TryGetValue(context.UserId, out DateTime value))
@@ -42,7 +42,7 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                 {
                     _lastUpdatedDays.Add(context.UserId, DateTime.Now);
                     _bestRecords.Add(context.UserId, new TimeSpan());
-                    return (Message)@$"成功为用户[{context.UserId}]创建数据";
+                    return new MessagePackage("成功为用户[", new MessageAt(context.UserId), "]创建数据");
                 }
                 else
                 {
@@ -53,13 +53,15 @@ public class ResetModule : SingleTypeModule<MessagePlain>
                     if (dt > record)
                     {
                         _bestRecords[context.UserId] = dt;
-                        return (Message)$"[{context.UserId}]成功创造了{TimeSpanToString(_bestRecords[context.UserId])}的新纪录！";
+                        return new MessagePackage("[",
+                            new MessageAt(context.UserId),
+                            $"]成功创造了{TimeSpanToString(_bestRecords[context.UserId])}的新纪录！");
                     }
                     else
                     {
                         TimeSpan distanceToGoal = record - dt;
                         return distanceToGoal < _smallTimeSpan
-                            ? (Task<Message?>)(Message)$"已重置数据。\n非常可惜，[{{\\tag:{context.UserId}}}]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}"
+                            ? (Task<Message?>)new MessagePackage($"已重置数据。\n非常可惜，[", new MessageAt(context.UserId), "]距离刷新纪录仅剩{TimeSpanToString(distanceToGoal)}")
                             : (Task<Message?>)(Message)"已重置数据";
                     }
                 }

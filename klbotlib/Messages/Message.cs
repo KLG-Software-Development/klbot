@@ -25,17 +25,4 @@ public record Message
     /// 空消息
     /// </summary>
     public static readonly MessageEmpty Empty = new();
-
-    /// <summary>
-    /// 返回此消息是否@了某个ID
-    /// </summary>
-    /// <param name="id">待判断ID</param>
-    public bool ContainsTargetId(long id)
-    {
-        if (this is MessagePackage pmsg)
-            return pmsg.TargetIds.Contains(id);
-        else if (this is MessageAt amsg)
-            return amsg.TargetId == id;
-        return false;
-    }
 }
