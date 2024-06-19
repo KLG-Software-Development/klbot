@@ -130,6 +130,15 @@ public record MessagePackage : Message, IReadOnlyList<Message>
         return sb.ToString();
     }
 
+    /// <summary>
+    /// 返回此消息是否@了某个ID
+    /// </summary>
+    /// <param name="id">待判断ID</param>
+    public bool ContainsTargetId(long id)
+    {
+        return TargetIds.Contains(id);
+    }
+
     // --- 以下为接口实现 ---
 
     /// <inheritdoc/>
