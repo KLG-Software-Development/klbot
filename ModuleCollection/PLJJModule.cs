@@ -6,7 +6,6 @@ namespace klbotlib.Modules;
 /// 图像模块
 public class PLJJModule : SingleTypeModule<MessagePlain>
 {
-    private readonly Random _ro = new();
     private readonly HttpHelper _httpHelper = new();
 
     [JsonInclude]
@@ -45,7 +44,7 @@ public class PLJJModule : SingleTypeModule<MessagePlain>
         //预检查URL可用性
         while (true)
         {
-            int index = _ro.Next(_urlList.Count);
+            int index = Random.Shared.Next(_urlList.Count);
             string url = _urlList[index];
             if (trials > _maxRetryCount)
                 return (false, string.Empty);

@@ -44,7 +44,6 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
         "IDIOM"
     ];
     private readonly StringBuilder _sb = new();
-    private static readonly Random s_ro = new();
     private static readonly MD5 s_md5 = MD5.Create();
     private readonly HttpHelper _helper = new();
     private readonly Regex _dstPat = DstPattern();
@@ -114,7 +113,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
     /// <returns>元组：(生成是否成功, 返回消息, 生成结果)</returns>
     public async Task<(bool, string, string)> TryGenerate()
     {
-        string seed = GenerateSentences(s_ro.Next(1, 7));
+        string seed = GenerateSentences(Random.Shared.Next(1, 7));
         ModuleLog($"反射种子：{seed}");
         return await TryReflect(_reflectNum, seed);
     }
@@ -139,7 +138,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
         string message;
         try
         {
-            string salt = s_ro.Next().ToString();
+            string salt = Random.Shared.Next().ToString();
             string sign = CalculateSign(query, salt);
             string url = GetRequestUrl(query, srcLang, dstLang, salt, sign);
             HttpResponseMessage response = await _helper.GetAsync(url);
@@ -196,7 +195,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
     private string GenerateSingleSentence()
     {
         _ = _sb.Clear();
-        int patNumber = s_ro.Next(_patterns.Length);
+        int patNumber = Random.Shared.Next(_patterns.Length);
         List<string> pattern = _patterns[patNumber];
         int N = pattern.Count;
         for (int n = 0; n < N; n++)
@@ -211,7 +210,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
             else
                 _ = _sb.Append(pattern[n]);
         }
-        _ = _sb.Append(s_marks[s_ro.Next(s_marks.Length)]);
+        _ = _sb.Append(s_marks[Random.Shared.Next(s_marks.Length)]);
         return _sb.ToString();
     }
     private string GenerateSentences(int numSentenceCount)
@@ -219,7 +218,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
         _ = _sb.Clear();
         for (int i = 0; i < numSentenceCount; i++)
         {
-            int patNumber = s_ro.Next(_patterns.Length);
+            int patNumber = Random.Shared.Next(_patterns.Length);
             List<string> pattern = _patterns[patNumber];
             int N = pattern.Count;
             for (int n = 0; n < N; n++)
@@ -234,7 +233,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
                 else
                     _ = _sb.Append(pattern[n]);
             }
-            _ = _sb.Append(s_marks[s_ro.Next(s_marks.Length)]);
+            _ = _sb.Append(s_marks[Random.Shared.Next(s_marks.Length)]);
         }
         return _sb.ToString();
     }
@@ -252,7 +251,7 @@ public partial class ZombieeeModule : SingleTypeModule<MessagePackage>
     private int PowerLawDist(int N)
     {
         double ss = 1 - _power;
-        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * s_ro.NextDouble(), 1 / ss)));
+        int index = Convert.ToInt32(Math.Round(Math.Pow(Hns(N) * ss * Random.Shared.NextDouble(), 1 / ss)));
         return index > N ? N : index;
     }
     //计算generalized harmonic number

@@ -8,7 +8,6 @@ namespace klbotlib.Modules;
 /// </summary>
 public class RollinModule : SingleTypeModule<MessagePackage>
 {
-    private static readonly Random s_ro = new();
     [JsonInclude]
     private bool _hasRollStarted = false;
     [JsonInclude]
@@ -42,7 +41,7 @@ public class RollinModule : SingleTypeModule<MessagePackage>
             {
                 List<long> targets = [.. msg.TargetIds];
                 _ = targets.Remove(HostBot.SelfId);
-                int index = s_ro.Next(targets.Count);
+                int index = Random.Shared.Next(targets.Count);
                 return $"抽奖结果为：{targets[index]}";
             }
         }
@@ -74,7 +73,7 @@ public class RollinModule : SingleTypeModule<MessagePackage>
             List<Message> msgs = ["抽奖开始。参与者列表：\n"];
             msgs.AddRange(_list.Select(id => new MessageAt(id)));
             await Messaging.ReplyMessage(context, new MessagePackage(msgs));
-            int index = s_ro.Next(_list.Count);
+            int index = Random.Shared.Next(_list.Count);
             long winner = _list[index];
             //抽奖结束，清理与重置
             _hash.Clear();

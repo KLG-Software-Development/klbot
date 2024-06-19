@@ -7,8 +7,6 @@ namespace klbotlib.Modules;
 /// </summary>
 public class FlashGambleModule : Module
 {
-    private readonly Random _ro = new();
-
     [JsonInclude]
     private readonly int _prob = 5;
 
@@ -31,7 +29,7 @@ public class FlashGambleModule : Module
 
     private async Task<Message?> ProcessRecall(MessageContext context, MessageRecall recall)
     {
-        if (_ro.Next(100) > _prob)
+        if (Random.Shared.Next(100) > _prob)
         {
             ModuleLog("未命中，忽略此条撤回或闪照");
             return null;
@@ -54,7 +52,7 @@ public class FlashGambleModule : Module
     }
     private async Task<Message?> ProcessFlash(MessageContext context, MessageImage image)
     {
-        if (_ro.Next(100) > _prob)
+        if (Random.Shared.Next(100) > _prob)
         {
             ModuleLog("未命中，忽略此条撤回或闪照");
             return null;
