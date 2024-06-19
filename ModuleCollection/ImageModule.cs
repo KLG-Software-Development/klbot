@@ -13,7 +13,6 @@ namespace klbotlib.Modules;
 public partial class ImageModule : SingleTypeModule<MessagePlain>
 {
     private readonly static Regex s_pattern = Pattern();
-    private readonly static Random s_ro = new();
     private readonly HttpHelper _helper = new();
     private readonly Stopwatch _sw = new();
     private readonly NameValueCollection _query = HttpUtility.ParseQueryString(string.Empty);
@@ -94,7 +93,7 @@ public partial class ImageModule : SingleTypeModule<MessagePlain>
                 goto not_found; //缓存的值为0，意味着无结果
         }
         int max_index = Convert.ToInt32(Math.Round(listNum * (Fraction / 100f)));
-        int pn = s_ro.Next(max_index);
+        int pn = Random.Shared.Next(max_index);
         string json = await FetchData(pn, word);
         ModuleLog($"成功获取json，pn={pn}");
         _sw.Restart();
@@ -109,7 +108,7 @@ public partial class ImageModule : SingleTypeModule<MessagePlain>
             _listNumCache[word] = result.ListNum;
         if (json == null || result.Data == null)
             throw new JsonException("返回结果解析失败：产生了null结果");
-        int index = s_ro.Next(result.Data.Length);
+        int index = Random.Shared.Next(result.Data.Length);
         url = result.Data[index].MiddleUrl;
         if (url == null)
             throw new JsonException("返回结果解析失败：产生了null结果");

@@ -59,7 +59,6 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
     private const string Url = "https://cn.bing.com/english/zochatv2?cc=cn&ensearch=0";
     private readonly HttpHelper _helper = new();
     private readonly StringBuilder _sb = new();
-    private readonly Random _ro = new();
 
     /// <inheritdoc/>
     public sealed override bool IsTransparent => false;
@@ -134,7 +133,7 @@ public class ChatXiaoIceModule : SingleTypeModule<MessagePackage>
         long k = (long)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalMilliseconds;
         long tt = k % 1000;
         long it = k / 1000;
-        int rt = (int)(_ro.NextDouble() * 65535);
+        int rt = (int)(Random.Shared.NextDouble() * 65535);
         for (int f = 0; f < 2; f++)
             h[f] = RshU(tt, (f * 8) & 255);
         for (int f = 0; f < 2; f++)
