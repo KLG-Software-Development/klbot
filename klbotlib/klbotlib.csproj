@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
     <StartupObject />
     <Company>KLG Science</Company>
@@ -14,7 +14,7 @@
     <Platforms>AnyCPU;x64</Platforms>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <Deterministic>false</Deterministic>
     <Description>KLBot机器人核心库。可用于KLBot机器人模块开发和其他可执行程序开发。</Description>
@@ -26,35 +26,35 @@
     <AnalysisLevel>6.0</AnalysisLevel>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile></DocumentationFile>
     <Optimize>false</Optimize>
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DocumentationFile />
     <Optimize>false</Optimize>
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Ref_Only|x64'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <Compile Remove="MessageDriver\Mirai\**" />
     <EmbeddedResource Remove="MessageDriver\Mirai\**" />
